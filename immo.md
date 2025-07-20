@@ -130,3 +130,8 @@ src/
 - Organisation modulaire : `api/`, `utils/`, `services/`
 - Fixtures pour les rôles et permissions
 - Ajout de tests (unitaires et API)
+
+## Regles
+
+- voici le site pour la migration et le build: imo.intrapro.net
+- Le serveur est configuré en production et servi sur le port 80 a l'adresse : https://imo.intrapro.net

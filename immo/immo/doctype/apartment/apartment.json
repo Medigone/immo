@@ -1,0 +1,94 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-01-01 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "proprietaire",
+  "address",
+  "description",
+  "default_price_per_night",
+  "custom_price",
+  "is_available"
+ ],
+ "fields": [
+  {
+   "fieldname": "address",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Adresse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "default_price_per_night",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Prix par nuit par d\u00e9faut",
+   "reqd": 1
+  },
+  {
+   "description": "Laissez vide pour utiliser le prix par d\u00e9faut de l'appartement",
+   "fieldname": "custom_price",
+   "fieldtype": "Currency",
+   "label": "Prix personnalis\u00e9"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_available",
+   "fieldtype": "Check",
+   "label": "Disponible"
+  },
+  {
+   "fieldname": "proprietaire",
+   "fieldtype": "Link",
+   "label": "Propri\u00e9taire",
+   "options": "Owner"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-20 22:48:08.639707",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Apartment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Owner",
+   "write": 1
+  },
+  {
+   "print": 1,
+   "read": 1,
+   "role": "Guest"
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

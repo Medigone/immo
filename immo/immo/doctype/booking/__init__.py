@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-# Frappe
-import frappe
-
-# Module Immo
+# Doctype Booking 
