@@ -75,7 +75,7 @@
    "fieldname": "commissions_tab",
    "fieldtype": "Table",
    "label": "Commissions",
-   "options": "Commission",
+   "options": "Commission Item",
    "read_only": 1
   }
  ],

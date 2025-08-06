@@ -153,12 +153,12 @@ class TestReferent(unittest.TestCase):
 		})
 		appartement.insert()
 		
-		# Crée une location courte durée de test
+		# Crée une location courte duree de test
 		today = datetime.now().date()
 		future_date = today + timedelta(days=5)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": appartement.name,
 			"locataire_nom": "Test Locataire Perf",
 			"locataire_email": "locataire.perf@example.com",
@@ -181,7 +181,7 @@ class TestReferent(unittest.TestCase):
 	
 	def tearDown(self):
 		"""Nettoyage après chaque test"""
-		frappe.db.delete("Location Courte Durée", {"locataire_nom": ["like", "Test%"]})
+		frappe.db.delete("Location Courte Duree", {"locataire_nom": ["like", "Test%"]})
 		frappe.db.delete("Commission", {"referent_id": ["like", "REF-%"]})
 		frappe.db.delete("Appartement", {"adresse_complete": ["like", "Test%"]})
 		frappe.db.delete("Proprietaire", {"nom_complet": ["like", "Test%"]})

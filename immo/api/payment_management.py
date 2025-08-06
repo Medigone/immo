@@ -206,9 +206,9 @@ def get_payment_status_summary(location_id=None, appartement_id=None, proprietai
 				SUM(CASE WHEN pl.statut = 'Confirmé' THEN pl.montant ELSE 0 END) as montant_confirme,
 				SUM(CASE WHEN pl.statut = 'En attente' THEN pl.montant ELSE 0 END) as montant_en_attente
 			FROM `tabPaiement Locataire` pl
-			LEFT JOIN `tabMensualité` m ON pl.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pl.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Durée` lcd ON pl.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabMensualite` m ON pl.mensualite_id = m.name
+			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pl.location_longue_duree_id = lld.name)
+			LEFT JOIN `tabLocation Courte Duree` lcd ON pl.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE {where_clause}
 				AND pl.date_paiement BETWEEN '{start_date}' AND '{end_date}'
@@ -227,9 +227,9 @@ def get_payment_status_summary(location_id=None, appartement_id=None, proprietai
 				SUM(CASE WHEN pp.statut = 'Payé' THEN pp.montant ELSE 0 END) as montant_paye,
 				SUM(CASE WHEN pp.statut = 'En attente' THEN pp.montant ELSE 0 END) as montant_en_attente_versement
 			FROM `tabPaiement Propriétaire` pp
-			LEFT JOIN `tabMensualité` m ON pp.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Durée` lcd ON pp.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
+			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
+			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE {where_clause}
 				AND pp.date_paiement BETWEEN '{start_date}' AND '{end_date}'
@@ -376,10 +376,10 @@ def get_overdue_payments(days_overdue=30):
 				a.adresse as appartement_adresse,
 				p.nom_complet as proprietaire_nom,
 				DATEDIFF(CURDATE(), STR_TO_DATE(CONCAT(m.mois_annee, '-01'), '%m/%Y-%d')) as jours_retard
-			FROM `tabMensualité` m
+			FROM `tabMensualite` m
 			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE m.statut_paiement_locataire = 'En attente'
 				AND STR_TO_DATE(CONCAT(m.mois_annee, '-01'), '%m/%Y-%d') <= %s
 				AND m.docstatus != 2
@@ -399,12 +399,12 @@ def get_overdue_payments(days_overdue=30):
 				p.nom_complet as proprietaire_nom,
 				p.email as proprietaire_email,
 				DATEDIFF(CURDATE(), pp.date_paiement) as jours_retard
-			FROM `tabPaiement Propriétaire` pp
-			LEFT JOIN `tabMensualité` m ON pp.mensualite_id = m.name
+			FROM `tabPaiement Proprietaire` pp
+			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Durée` lcd ON pp.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
-			LEFT JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			LEFT JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE pp.statut = 'En attente'
 				AND pp.date_paiement <= %s
 				AND pp.docstatus != 2

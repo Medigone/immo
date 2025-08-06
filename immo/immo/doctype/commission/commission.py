@@ -24,11 +24,11 @@ class Commission(Document):
 				frappe.throw(_("Le référent {0} n'est pas actif").format(referent.nom_complet))
 	
 	def validate_location_status(self):
-		"""Valide que la location courte durée existe et est confirmée"""
+		"""Valide que la location courte durée existe et n'est pas annulée"""
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
-			if location.statut not in ["Confirmé", "Terminé"]:
-				frappe.throw(_("La location doit être confirmée pour générer une commission"))
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
+			if location.statut == "Annulé":
+				frappe.throw(_("Impossible de créer une commission pour une location annulée"))
 	
 	def validate_commission_amount(self):
 		"""Valide le montant de la commission"""
@@ -55,7 +55,7 @@ class Commission(Document):
 	
 	def calculate_commission_amount(self):
 		"""Calcule le montant de la commission basé sur la location"""
-		location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+		location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 		referent = frappe.get_doc("Referent", self.referent_id)
 		
 		# Utilise le pourcentage de la commission ou celui par défaut du référent
@@ -70,7 +70,7 @@ class Commission(Document):
 		"""Actions après mise à jour"""
 		# Met à jour la commission dans la location courte durée
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			location.commission_referent = self.montant_commission
 			location.save()
 	
@@ -78,7 +78,7 @@ class Commission(Document):
 		"""Actions lors de l'annulation"""
 		# Remet à zéro la commission dans la location
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			location.commission_referent = 0
 			location.save()
 	
@@ -100,7 +100,7 @@ class Commission(Document):
 	@frappe.whitelist()
 	def get_commission_details(self):
 		"""Récupère les détails complets de la commission"""
-		location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+		location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 		referent = frappe.get_doc("Referent", self.referent_id)
 		appartement = frappe.get_doc("Appartement", location.appartement_id)
 		
@@ -136,7 +136,7 @@ class Commission(Document):
 	@frappe.whitelist()
 	def calculate_net_margin_after_commission(self):
 		"""Calcule la marge nette après déduction de la commission"""
-		location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+		location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 		
 		marge_brute = location.marge_totale or 0
 		commission = self.montant_commission or 0

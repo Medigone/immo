@@ -49,7 +49,7 @@ def calculate_location_longue_duree_margin(loyer_locataire, loyer_proprietaire, 
 
 @frappe.whitelist()
 def calculate_location_courte_duree_margin(prix_locataire_nuit, prix_proprietaire_nuit, nombre_nuits, charges_sejour=0):
-	"""Calcule la marge pour une location courte durée"""
+	"""Calcule la marge pour une location courte duree"""
 	try:
 		prix_locataire_nuit = flt(prix_locataire_nuit)
 		prix_proprietaire_nuit = flt(prix_proprietaire_nuit)
@@ -89,7 +89,7 @@ def calculate_location_courte_duree_margin(prix_locataire_nuit, prix_proprietair
 		}
 		
 	except Exception as e:
-		frappe.log_error(f"Erreur calcul marge location courte durée: {str(e)}")
+		frappe.log_error(f"Erreur calcul marge location courte duree: {str(e)}")
 		return {
 			"success": False,
 			"error": str(e)
@@ -150,7 +150,7 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 				SUM(m.marge_nette) as total_marge_nette,
 				COUNT(m.name) as nombre_mensualites,
 				AVG(m.marge_mensuelle) as marge_moyenne_mensuelle
-			FROM `tabMensualité` m
+			FROM `tabMensualite` m
 			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
 			WHERE lld.appartement_id = %s
 				AND m.creation BETWEEN %s AND %s
@@ -164,7 +164,7 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 				SUM(lcd.marge_nette) as total_marge_nette_courte_duree,
 				COUNT(lcd.name) as nombre_locations_courtes,
 				AVG(lcd.marge_par_nuit) as marge_moyenne_par_nuit
-			FROM `tabLocation Courte Durée` lcd
+			FROM `tabLocation Courte Duree` lcd
 			WHERE lcd.appartement_id = %s
 				AND lcd.date_debut BETWEEN %s AND %s
 				AND lcd.docstatus != 2
@@ -177,7 +177,7 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 				COUNT(c.name) as nombre_commissions,
 				AVG(c.pourcentage_commission) as pourcentage_moyen_commission
 			FROM `tabCommission` c
-			INNER JOIN `tabLocation Courte Durée` lcd ON c.location_courte_duree_id = lcd.name
+			INNER JOIN `tabLocation Courte Duree` lcd ON c.location_courte_duree_id = lcd.name
 			WHERE lcd.appartement_id = %s
 				AND c.creation BETWEEN %s AND %s
 				AND c.docstatus != 2

@@ -1,10 +1,9 @@
 # TODO:
 
-- [x] fix-appartement-proprietaire-reference: Corriger la référence 'Propriétaire' en 'Proprietaire' dans appartement.py ligne 20 (priority: High)
-- [x] search-accented-doctype-references: Rechercher toutes les références aux doctypes avec accents dans le projet (priority: High)
-- [x] fix-mensualite-references: Corriger toutes les références 'Mensualité' en 'Mensualite' (priority: High)
-- [x] fix-proprietaire-references: Corriger toutes les références 'Propriétaire' en 'Proprietaire' (priority: High)
-- [x] fix-referent-references: Corriger toutes les références 'Référent' en 'Referent' (priority: High)
-- [x] fix-json-links-references: Corriger les références avec accents dans les sections 'links' des fichiers JSON (priority: High)
-- [x] run-bench-migrate: Exécuter bench migrate pour synchroniser la base de données (priority: High)
-- [x] test-doctype-functionality: Tester que les doctypes fonctionnent correctement après corrections (priority: Medium)
+- [x] create_child_paiement_locataire: Create child table version of Paiement Locataire doctype with istable=1 and parent fields (priority: High)
+- [x] create_child_paiement_proprietaire: Create child table version of Paiement Proprietaire doctype with istable=1 and parent fields (priority: High)
+- [x] update_mensualite_table_fields: Update Mensualite doctype table field options to reference the new child table doctypes (priority: High)
+- [x] create_commission_item_child: Create Commission Item child table doctype with istable=1 and parent fields (priority: High)
+- [x] update_referent_table_field: Update Referent doctype commissions_tab field to reference Commission Item instead of Commission (priority: High)
+- [x] test_migration: Test the fix by running bench migrate and checking if the error is resolved (priority: Medium)
+- [ ] migrate_referent_fix: Run bench migrate to apply the Commission Item fix (**IN PROGRESS**) (priority: Medium)

@@ -43,7 +43,7 @@ class Referent(Document):
 	def update_active_short_term_rentals(self):
 		"""Met à jour les locations courtes durée actives si le référent devient inactif"""
 		active_rentals = frappe.get_all(
-			"Location Courte Durée",
+			"Location Courte Duree",
 			filters={
 				"referent_id": self.name,
 				"statut": ["in", ["Brouillon", "Confirmé"]]
@@ -52,7 +52,7 @@ class Referent(Document):
 		)
 		
 		for rental in active_rentals:
-			rental_doc = frappe.get_doc("Location Courte Durée", rental.name)
+			rental_doc = frappe.get_doc("Location Courte Duree", rental.name)
 			rental_doc.add_comment(
 				"Comment",
 				f"Référent {self.nom_complet} désactivé - Commission mise à jour"
@@ -108,7 +108,7 @@ class Referent(Document):
 	def get_recent_short_term_rentals(self, limit=10):
 		"""Récupère les locations courtes durée récentes du référent"""
 		return frappe.get_all(
-			"Location Courte Durée",
+			"Location Courte Duree",
 			filters={"referent_id": self.name},
 			fields=[
 				"name", "appartement_id", "locataire_nom", "date_debut",
@@ -129,7 +129,7 @@ class Referent(Document):
 		
 		# Récupère les locations courtes durée de l'année
 		rentals = frappe.get_all(
-			"Location Courte Durée",
+			"Location Courte Duree",
 			filters={
 				"referent_id": self.name,
 				"date_debut": ["between", [start_date, end_date]]

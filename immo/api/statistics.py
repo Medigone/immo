@@ -40,11 +40,11 @@ def get_dashboard_statistics(proprietaire_id=None, period="current_month"):
 				COUNT(DISTINCT lld.name) as total_locations_longues,
 				COUNT(DISTINCT lcd.name) as total_locations_courtes,
 				COUNT(DISTINCT r.name) as total_referents
-			FROM `tabPropriétaire` p
+			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
-			LEFT JOIN `tabRéférent` r ON r.statut = 'Actif'
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
+			LEFT JOIN `tabReferent` r ON r.actif = 1
 			WHERE 1=1 {owner_filter}
 		""", as_dict=True)[0]
 		
@@ -74,11 +74,11 @@ def get_dashboard_statistics(proprietaire_id=None, period="current_month"):
 				-- Commissions
 				SUM(CASE WHEN c.creation BETWEEN '{start_date}' AND '{end_date}' 
 						 THEN c.montant_commission ELSE 0 END) as total_commissions
-			FROM `tabPropriétaire` p
+			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id
 			LEFT JOIN `tabCommission` c ON lcd.name = c.location_courte_duree_id
 			WHERE 1=1 {owner_filter}
@@ -102,7 +102,7 @@ def get_dashboard_statistics(proprietaire_id=None, period="current_month"):
 						   THEN 1 END) as paiements_proprietaires_en_attente,
 				SUM(CASE WHEN pp.statut = 'Payé' AND pp.creation BETWEEN '{start_date}' AND '{end_date}' 
 						 THEN pp.montant_net ELSE 0 END) as montant_proprietaires_paye
-			FROM `tabPropriétaire` p
+			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabPaiement Locataire` pl ON a.name = pl.appartement_id
 			LEFT JOIN `tabPaiement Propriétaire` pp ON a.name = pp.appartement_id
@@ -119,10 +119,10 @@ def get_dashboard_statistics(proprietaire_id=None, period="current_month"):
 										 THEN a.name END) as appartements_loues_cd,
 				AVG(CASE WHEN lcd.date_debut BETWEEN '{start_date}' AND '{end_date}' 
 						 THEN lcd.nombre_nuits END) as duree_moyenne_cd
-			FROM `tabPropriétaire` p
+			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			WHERE 1=1 {owner_filter}
 		""", as_dict=True)[0]
 		
@@ -226,11 +226,11 @@ def get_performance_metrics(proprietaire_id=None, period_months=12):
 				AVG(COALESCE(lcd.marge_par_nuit, 0)) as marge_moyenne_nuit
 				
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id 
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id 
 				AND m.date_echeance BETWEEN '{start_date}' AND '{end_date}'
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id 
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id 
 				AND lcd.date_debut BETWEEN '{start_date}' AND '{end_date}'
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id 
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
@@ -250,11 +250,11 @@ def get_performance_metrics(proprietaire_id=None, period_months=12):
 				SUM(COALESCE(ch.montant_total, 0)) as charges_mois,
 				COUNT(DISTINCT COALESCE(m.name, lcd.name)) as operations_mois
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id 
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id 
 				AND m.date_echeance BETWEEN '{start_date}' AND '{end_date}'
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id 
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id 
 				AND lcd.date_debut BETWEEN '{start_date}' AND '{end_date}'
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id 
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
@@ -278,13 +278,13 @@ def get_performance_metrics(proprietaire_id=None, period_months=12):
 				SUM(CASE WHEN c.statut = 'Payé' THEN c.montant_commission ELSE 0 END) as commissions_payees,
 				(SUM(CASE WHEN c.statut = 'Payé' THEN c.montant_commission ELSE 0 END) / 
 				 NULLIF(SUM(c.montant_commission), 0) * 100) as taux_paiement
-			FROM `tabRéférent` r
+			FROM `tabReferent` r
 			LEFT JOIN `tabCommission` c ON r.name = c.referent_id 
 				AND c.creation BETWEEN '{start_date}' AND '{end_date}'
-			LEFT JOIN `tabLocation Courte Durée` lcd ON c.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON c.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON lcd.appartement_id = a.name
-			LEFT JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
-			WHERE r.statut = 'Actif' {owner_filter.replace('p.name', 'p.name') if owner_filter else ''}
+			LEFT JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
+			WHERE r.actif = 1 {owner_filter.replace('p.name', 'p.name') if owner_filter else ''}
 			GROUP BY r.name
 			HAVING nombre_commissions > 0
 			ORDER BY total_commissions DESC
@@ -410,12 +410,12 @@ def get_comparative_analysis(proprietaire_ids=None, period="current_year"):
 				AVG(COALESCE(m.marge_mensuelle, 0)) as marge_moyenne_mensuelle,
 				AVG(COALESCE(lcd.marge_par_nuit, 0)) as marge_moyenne_nuit
 				
-			FROM `tabPropriétaire` p
+			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id 
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id 
 				AND m.date_echeance BETWEEN '{start_date}' AND '{end_date}'
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id 
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id 
 				AND lcd.date_debut BETWEEN '{start_date}' AND '{end_date}'
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id 
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
@@ -536,11 +536,11 @@ def get_predictive_analytics(proprietaire_id=None, forecast_months=6):
 				COUNT(DISTINCT COALESCE(m.name, lcd.name)) as operations,
 				COUNT(DISTINCT a.name) as appartements_actifs
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id 
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id 
 				AND m.date_echeance BETWEEN '{start_date}' AND '{end_date}'
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id 
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id 
 				AND lcd.date_debut BETWEEN '{start_date}' AND '{end_date}'
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id 
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'

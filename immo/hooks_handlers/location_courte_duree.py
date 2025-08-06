@@ -47,7 +47,7 @@ def check_date_overlap(doc):
 	# Recherche les réservations existantes qui se chevauchent
 	overlapping_bookings = frappe.db.sql("""
 		SELECT name, date_debut, date_fin, locataire_nom
-		FROM `tabLocation Courte Durée`
+		FROM `tabLocation Courte Duree`
 		WHERE appartement_id = %s
 			AND name != %s
 			AND statut IN ('Confirmé', 'En cours')
@@ -72,7 +72,7 @@ def check_date_overlap(doc):
 	# Vérifie aussi les conflits avec les locations longue durée
 	overlapping_long_term = frappe.db.sql("""
 		SELECT name, date_debut, date_fin, locataire_nom
-		FROM `tabLocation Longue Durée`
+		FROM `tabLocation Longue Duree`
 		WHERE appartement_id = %s
 			AND statut = 'Actif'
 			AND (
@@ -92,7 +92,7 @@ def check_date_overlap(doc):
 
 def calculate_amounts_and_margins(doc):
 	"""Calcule automatiquement les montants et marges"""
-	if not doc.date_debut or not doc.date_fin or not doc.prix_par_nuit:
+	if not doc.date_debut or not doc.date_fin or not doc.prix_journalier_locataire:
 		return
 	
 	# Calcule le nombre de nuits
@@ -103,41 +103,37 @@ def calculate_amounts_and_margins(doc):
 	doc.nombre_nuits = nights
 	
 	# Calcule le montant total locataire
-	doc.montant_total_locataire = doc.prix_par_nuit * nights
+	doc.montant_total_locataire = doc.prix_journalier_locataire * nights
 	
 	# Récupère le prix propriétaire par défaut si pas défini
-	if not doc.prix_par_nuit_proprietaire:
+	if not doc.prix_journalier_proprietaire:
 		# Récupère le prix par défaut du propriétaire
 		appartement = frappe.get_doc("Appartement", doc.appartement_id)
 		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
-		if proprietaire.prix_par_nuit_defaut:
-			doc.prix_par_nuit_proprietaire = proprietaire.prix_par_nuit_defaut
+		if proprietaire.prix_journalier_defaut:
+			doc.prix_journalier_proprietaire = proprietaire.prix_journalier_defaut
 		else:
 			# Par défaut, 80% du prix locataire
-			doc.prix_par_nuit_proprietaire = doc.prix_par_nuit * 0.8
+			doc.prix_journalier_proprietaire = doc.prix_journalier_locataire * 0.8
 	
 	# Calcule le montant total propriétaire
-	doc.montant_total_proprietaire = doc.prix_par_nuit_proprietaire * nights
+	doc.montant_total_proprietaire = doc.prix_journalier_proprietaire * nights
 	
 	# Calcule la marge
 	doc.marge_totale = doc.montant_total_locataire - doc.montant_total_proprietaire
-	
-	# Calcule la marge par nuit
-	if nights > 0:
-		doc.marge_par_nuit = doc.marge_totale / nights
 
 
 def validate_amounts(doc):
 	"""Valide les montants"""
-	if doc.prix_par_nuit and doc.prix_par_nuit <= 0:
-		frappe.throw("Le prix par nuit doit être positif")
+	if doc.prix_journalier_locataire and doc.prix_journalier_locataire <= 0:
+		frappe.throw("Le prix journalier locataire doit être positif")
 	
-	if doc.prix_par_nuit_proprietaire and doc.prix_par_nuit_proprietaire <= 0:
-		frappe.throw("Le prix par nuit propriétaire doit être positif")
+	if doc.prix_journalier_proprietaire and doc.prix_journalier_proprietaire <= 0:
+		frappe.throw("Le prix journalier propriétaire doit être positif")
 	
-	if (doc.prix_par_nuit and doc.prix_par_nuit_proprietaire and 
-		doc.prix_par_nuit < doc.prix_par_nuit_proprietaire):
+	if (doc.prix_journalier_locataire and doc.prix_journalier_proprietaire and 
+		doc.prix_journalier_locataire < doc.prix_journalier_proprietaire):
 		frappe.throw("Le prix locataire ne peut pas être inférieur au prix propriétaire")
 
 
@@ -168,7 +164,7 @@ def update_apartment_status(doc):
 	elif doc.statut in ["Terminé", "Annulé"]:
 		# Vérifie s'il n'y a pas d'autres réservations actives pour aujourd'hui
 		today = nowdate()
-		active_bookings = frappe.db.exists("Location Courte Durée", {
+		active_bookings = frappe.db.exists("Location Courte Duree", {
 			"appartement_id": doc.appartement_id,
 			"statut": ["in", ["Confirmé", "En cours"]],
 			"date_debut": ["<=", today],
@@ -177,13 +173,13 @@ def update_apartment_status(doc):
 		})
 		
 		# Vérifie aussi les locations longue durée
-		long_term_active = frappe.db.exists("Location Longue Durée", {
+		long_term_active = frappe.db.exists("Location Longue Duree", {
 			"appartement_id": doc.appartement_id,
 			"statut": "Actif"
 		})
 		
 		if not active_bookings and not long_term_active:
-			frappe.db.set_value("Appartement", doc.appartement_id, "statut", "Disponible")
+			frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
 
 
 def update_related_commissions(doc):
@@ -197,8 +193,10 @@ def update_related_commissions(doc):
 		comm_doc = frappe.get_doc("Commission", commission.name)
 		# Recalcule le montant de la commission basé sur la nouvelle marge
 		if comm_doc.pourcentage_commission and doc.marge_totale:
-			comm_doc.montant_commission = (doc.marge_totale * comm_doc.pourcentage_commission) / 100
-			comm_doc.save(ignore_permissions=True)
+			new_amount = (doc.marge_totale * comm_doc.pourcentage_commission) / 100
+			# Utilise frappe.db.set_value pour éviter les hooks récursifs
+			frappe.db.set_value("Commission", commission.name, "montant_commission", new_amount)
+			frappe.db.commit()
 
 
 def cancel_related_commissions(doc):
@@ -218,7 +216,7 @@ def reset_apartment_status(doc):
 	"""Remet l'appartement en statut disponible si nécessaire"""
 	# Vérifie s'il n'y a pas d'autres réservations actives
 	today = nowdate()
-	active_bookings = frappe.db.exists("Location Courte Durée", {
+	active_bookings = frappe.db.exists("Location Courte Duree", {
 		"appartement_id": doc.appartement_id,
 		"statut": ["in", ["Confirmé", "En cours"]],
 		"date_debut": ["<=", today],
@@ -227,13 +225,13 @@ def reset_apartment_status(doc):
 	})
 	
 	# Vérifie aussi les locations longue durée
-	long_term_active = frappe.db.exists("Location Longue Durée", {
+	long_term_active = frappe.db.exists("Location Longue Duree", {
 		"appartement_id": doc.appartement_id,
 		"statut": "Actif"
 	})
 	
 	if not active_bookings and not long_term_active:
-		frappe.db.set_value("Appartement", doc.appartement_id, "statut", "Disponible")
+		frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
 
 
 def calculate_dynamic_pricing(doc):
@@ -242,12 +240,12 @@ def calculate_dynamic_pricing(doc):
 	# basées sur la saison, la demande, les événements locaux, etc.
 	
 	# Pour l'instant, applique les règles de base
-	if not doc.prix_par_nuit and doc.appartement_id:
+	if not doc.prix_journalier_locataire and doc.appartement_id:
 		# Récupère le prix de base de l'appartement ou du propriétaire
 		appartement = frappe.get_doc("Appartement", doc.appartement_id)
 		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
-		base_price = proprietaire.prix_par_nuit_defaut or 50  # Prix par défaut
+		base_price = proprietaire.prix_journalier_defaut or 50  # Prix par défaut
 		
 		# Applique des ajustements saisonniers (exemple simple)
 		if doc.date_debut:
@@ -259,4 +257,4 @@ def calculate_dynamic_pricing(doc):
 			elif start_date.month in [5, 6, 9]:
 				base_price *= 1.1
 		
-		doc.prix_par_nuit = base_price
+		doc.prix_journalier_locataire = base_price

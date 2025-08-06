@@ -81,11 +81,11 @@ def validate_apartment_location_consistency(doc):
 		if location.appartement_id != doc.appartement_id:
 			frappe.throw("La location longue durée ne correspond pas à l'appartement sélectionné")
 	
-	# Vérifie la cohérence avec la location courte durée si spécifiée
+	# Vérifie la cohérence avec la location courte duree si spécifiée
 	if doc.location_courte_duree_id:
-		location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 		if location.appartement_id != doc.appartement_id:
-			frappe.throw("La location courte durée ne correspond pas à l'appartement sélectionné")
+			frappe.throw("La location courte duree ne correspond pas à l'appartement sélectionné")
 	
 	# Ne peut pas avoir les deux types de location en même temps
 	if doc.location_longue_duree_id and doc.location_courte_duree_id:
@@ -294,7 +294,7 @@ def notify_tenant_charge_validated(doc):
 			locataire_nom = location.locataire_nom
 		
 		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 		

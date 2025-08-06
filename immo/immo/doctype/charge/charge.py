@@ -33,9 +33,9 @@ class Charge(Document):
 				frappe.throw(_("La location longue durée ne correspond pas à l'appartement sélectionné"))
 		
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			if location.appartement_id != self.appartement_id:
-				frappe.throw(_("La location courte durée ne correspond pas à l'appartement sélectionné"))
+				frappe.throw(_("La location courte duree ne correspond pas à l'appartement sélectionné"))
 	
 	def validate_amount(self):
 		"""Valide le montant de la charge"""
@@ -233,7 +233,7 @@ class Charge(Document):
 			}
 		
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			details["location_courte_duree"] = {
 				"locataire_nom": location.locataire_nom,
 				"locataire_email": location.locataire_email,
@@ -346,7 +346,7 @@ class Charge(Document):
 				recipient_email = location.locataire_email
 				recipient_name = location.locataire_nom
 			elif self.location_courte_duree_id:
-				location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+				location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 				recipient_email = location.locataire_email
 				recipient_name = location.locataire_nom
 			else:

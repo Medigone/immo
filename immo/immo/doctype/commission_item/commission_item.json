@@ -1,0 +1,86 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2025-01-16 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "referent_id",
+  "location_courte_duree_id",
+  "montant_commission",
+  "date_commission",
+  "statut_paiement",
+  "date_paiement",
+  "methode_paiement",
+  "reference_paiement",
+  "commentaires"
+ ],
+ "fields": [
+  {
+   "fieldname": "referent_id",
+   "fieldtype": "Link",
+   "label": "Référent",
+   "options": "Referent"
+  },
+  {
+   "fieldname": "location_courte_duree_id",
+   "fieldtype": "Link",
+   "label": "Location Courte Duree",
+   "options": "Location Courte Duree"
+  },
+  {
+   "fieldname": "montant_commission",
+   "fieldtype": "Currency",
+   "label": "Montant Commission",
+   "precision": "2"
+  },
+  {
+   "fieldname": "date_commission",
+   "fieldtype": "Date",
+   "label": "Date Commission"
+  },
+  {
+   "fieldname": "statut_paiement",
+   "fieldtype": "Select",
+   "label": "Statut Paiement",
+   "options": "En attente\nPayé\nAnnulé"
+  },
+  {
+   "fieldname": "date_paiement",
+   "fieldtype": "Date",
+   "label": "Date Paiement"
+  },
+  {
+   "fieldname": "methode_paiement",
+   "fieldtype": "Select",
+   "label": "Méthode Paiement",
+   "options": "Virement\nChèque\nEspèces\nCarte bancaire"
+  },
+  {
+   "fieldname": "reference_paiement",
+   "fieldtype": "Data",
+   "label": "Référence Paiement"
+  },
+  {
+   "fieldname": "commentaires",
+   "fieldtype": "Text",
+   "label": "Commentaires"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-16 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Commission Item",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

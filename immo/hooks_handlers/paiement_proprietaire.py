@@ -137,7 +137,7 @@ def update_proprietaire_statistics(doc):
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire_id = appartement.proprietaire_id
 		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire_id = appartement.proprietaire_id
 		
@@ -155,9 +155,9 @@ def update_proprietaire_statistics(doc):
 				COUNT(CASE WHEN pp.statut = 'Payé' THEN 1 END) as paiements_effectues,
 				COUNT(CASE WHEN pp.statut = 'En attente' THEN 1 END) as paiements_en_attente
 			FROM `tabPaiement Propriétaire` pp
-			LEFT JOIN `tabMensualité` m ON pp.mensualite_id = m.name
+			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Durée` lcd ON pp.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE a.proprietaire_id = %s
 				AND pp.docstatus != 2
@@ -195,7 +195,7 @@ def update_location_payout_statistics(doc):
 		location_type = "Location Longue Durée"
 	elif doc.location_courte_duree_id:
 		location_id = doc.location_courte_duree_id
-		location_type = "Location Courte Durée"
+		location_type = "Location Courte Duree"
 	
 	if not location_id:
 		return
@@ -214,7 +214,7 @@ def update_location_payout_statistics(doc):
 			FROM `tabPaiement Propriétaire`
 			WHERE (
 				(mensualite_id IN (
-					SELECT name FROM `tabMensualité` 
+					SELECT name FROM `tabMensualite` 
 					WHERE location_longue_duree_id = %s
 				))
 				OR location_longue_duree_id = %s
@@ -252,7 +252,7 @@ def update_apartment_payout_statistics(doc):
 		location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_courte_duree_id:
-		location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 		appartement_id = location.appartement_id
 	
 	if not appartement_id:
@@ -268,9 +268,9 @@ def update_apartment_payout_statistics(doc):
 				COUNT(pp.name) as nombre_versements_annee,
 				AVG(pp.montant) as montant_moyen_versement
 			FROM `tabPaiement Propriétaire` pp
-			LEFT JOIN `tabMensualité` m ON pp.mensualite_id = m.name
+			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Durée` lcd ON pp.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
 				AND pp.statut = 'Payé'
 				AND pp.docstatus != 2
@@ -328,7 +328,7 @@ def notify_payout_completed(doc):
 			appartement_adresse = appartement.adresse
 		
 		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -390,7 +390,7 @@ def notify_payout_rejected(doc):
 			proprietaire_nom = proprietaire.nom_complet
 		
 		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -482,7 +482,7 @@ def auto_schedule_payouts():
 				m.date_paiement_locataire,
 				lld.appartement_id,
 				a.proprietaire_id
-			FROM `tabMensualité` m
+			FROM `tabMensualite` m
 			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE m.statut_paiement_locataire = 'Payé'
@@ -536,11 +536,11 @@ def calculate_owner_performance_metrics(proprietaire_id, start_date=None, end_da
 				COUNT(CASE WHEN pp.statut = 'Payé' THEN 1 END) as versements_payes,
 				COUNT(CASE WHEN pp.statut = 'En attente' THEN 1 END) as versements_en_attente,
 				COUNT(CASE WHEN pp.statut = 'Rejeté' THEN 1 END) as versements_rejetes
-			FROM `tabPropriétaire` p
+			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
 			LEFT JOIN `tabPaiement Propriétaire` pp ON (m.name = pp.mensualite_id OR lld.name = pp.location_longue_duree_id OR lcd.name = pp.location_courte_duree_id)
 			WHERE p.name = %s
 				AND (pp.date_paiement IS NULL OR pp.date_paiement BETWEEN %s AND %s)

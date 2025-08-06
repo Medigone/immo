@@ -56,7 +56,7 @@ class Appartement(Document):
 			})
 		
 		# Vérifie les locations courte durée actives
-		active_short_term = frappe.get_all("Location Courte Durée",
+		active_short_term = frappe.get_all("Location Courte Duree",
 			filters={
 				"appartement_id": self.name,
 				"statut": ["in", ["Confirmé", "En cours"]]
@@ -76,7 +76,7 @@ class Appartement(Document):
 	@frappe.whitelist()
 	def get_locations_courte_duree(self):
 		"""Retourne les locations courte durée de l'appartement"""
-		return frappe.get_all("Location Courte Durée",
+		return frappe.get_all("Location Courte Duree",
 			filters={"appartement_id": self.name},
 			fields=["name", "locataire_nom", "date_debut", "date_fin", "montant_total_locataire", "statut"],
 			order_by="date_debut desc")
@@ -101,10 +101,13 @@ class Appartement(Document):
 		revenues = frappe.db.sql("""
 			SELECT SUM(montant) as total
 			FROM `tabPaiement Locataire`
-			WHERE location_id IN (
-				SELECT name FROM `tabLocation Longue Durée` WHERE appartement_id = %s
-				UNION
-				SELECT name FROM `tabLocation Courte Durée` WHERE appartement_id = %s
+			WHERE (
+				location_longue_duree_id IN (
+					SELECT name FROM `tabLocation Longue Duree` WHERE appartement_id = %s
+				)
+				OR location_courte_duree_id IN (
+					SELECT name FROM `tabLocation Courte Duree` WHERE appartement_id = %s
+				)
 			)
 			AND date_paiement BETWEEN %s AND %s
 			AND statut = 'Payé'

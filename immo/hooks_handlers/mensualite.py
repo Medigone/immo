@@ -126,7 +126,7 @@ def update_location_statistics(doc):
 			AVG(marge_mensuelle) as marge_moyenne,
 			SUM(montant_loyer_locataire) as total_encaisse,
 			SUM(montant_loyer_proprietaire) as total_verse
-		FROM `tabMensualité`
+		FROM `tabMensualite`
 		WHERE location_longue_duree_id = %s
 			AND docstatus != 2
 	""", (doc.location_longue_duree_id,), as_dict=True)
@@ -201,7 +201,7 @@ def update_location_real_margins(doc):
 		SELECT 
 			AVG(marge_mensuelle) as marge_reelle_moyenne,
 			SUM(marge_mensuelle) as marge_reelle_totale
-		FROM `tabMensualité`
+		FROM `tabMensualite`
 		WHERE location_longue_duree_id = %s
 			AND statut_paiement_locataire = 'Payé'
 			AND statut_paiement_proprietaire = 'Payé'

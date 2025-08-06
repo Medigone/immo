@@ -58,15 +58,15 @@ class TestPaiementLocataire(unittest.TestCase):
 		})
 		self.mensualite.insert()
 		
-		# Crée une location courte durée de test
+		# Crée une location courte duree de test
 		self.location_courte = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Paul Durand",
 			"locataire_email": "paul.durand@test.com",
 			"date_debut": add_days(nowdate(), 30),
 			"date_fin": add_days(nowdate(), 35),
-			"prix_par_nuit": 80,
+			"prix_journalier_locataire": 80,
 			"statut": "Confirmé"
 		})
 		self.location_courte.insert()
@@ -94,7 +94,7 @@ class TestPaiementLocataire(unittest.TestCase):
 		self.assertEqual(paiement.location_longue_duree_id, self.location_longue.name)
 	
 	def test_create_paiement_location_courte(self):
-		"""Test de création d'un paiement pour une location courte durée"""
+		"""Test de création d'un paiement pour une location courte duree"""
 		paiement = frappe.get_doc({
 			"doctype": "Paiement Locataire",
 			"location_courte_duree_id": self.location_courte.name,

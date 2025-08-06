@@ -168,11 +168,11 @@
   },
   {
    "link_doctype": "Paiement Locataire",
-   "link_fieldname": "location_id"
+   "link_fieldname": "location_courte_duree_id"
   },
   {
    "link_doctype": "Paiement Proprietaire",
-   "link_fieldname": "location_id"
+   "link_fieldname": "location_courte_duree_id"
   }
  ],
  "modified": "2024-01-01 00:00:00.000000",

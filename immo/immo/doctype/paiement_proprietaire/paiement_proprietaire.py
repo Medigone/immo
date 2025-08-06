@@ -19,7 +19,7 @@ class PaiementProprietaire(Document):
 	def validate_location_reference(self):
 		"""Valide qu'au moins une référence de location est fournie"""
 		if not self.mensualite_id and not self.location_longue_duree_id and not self.location_courte_duree_id:
-			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Durée ou Location Courte Durée) est obligatoire"))
+			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Durée ou Location Courte Duree) est obligatoire"))
 		
 		# Vérifie que les références existent et sont valides
 		if self.mensualite_id:
@@ -33,9 +33,9 @@ class PaiementProprietaire(Document):
 				frappe.throw(_("La location longue durée doit être active ou terminée"))
 		
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			if location.statut not in ["Confirmé", "Terminé"]:
-				frappe.throw(_("La location courte durée doit être confirmée ou terminée"))
+				frappe.throw(_("La location courte duree doit être confirmée ou terminée"))
 	
 	def validate_amount(self):
 		"""Valide le montant du paiement"""
@@ -207,7 +207,7 @@ class PaiementProprietaire(Document):
 			}
 		
 		if self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			details["location_courte_duree"] = {
@@ -250,7 +250,7 @@ class PaiementProprietaire(Document):
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 		elif self.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Durée", self.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -383,7 +383,7 @@ class PaiementProprietaire(Document):
 				fields=["name"]
 			)
 			locations_courtes = frappe.get_all(
-				"Location Courte Durée",
+				"Location Courte Duree",
 				filters={"appartement_id": ["in", appartement_ids]},
 				fields=["name"]
 			)

@@ -7,12 +7,12 @@ from datetime import datetime, timedelta
 
 
 class TestLocationCourteDuree(unittest.TestCase):
-	"""Tests pour le doctype Location Courte Durée"""
+	"""Tests pour le doctype Location Courte Duree"""
 	
 	def setUp(self):
 		"""Configuration avant chaque test"""
 		# Nettoie les données de test
-		frappe.db.delete("Location Courte Durée", {"locataire_nom": ["like", "Test%"]})
+		frappe.db.delete("Location Courte Duree", {"locataire_nom": ["like", "Test%"]})
 		frappe.db.delete("Appartement", {"adresse_complete": ["like", "Test%"]})
 		frappe.db.delete("Proprietaire", {"nom_complet": ["like", "Test%"]})
 		frappe.db.delete("Referent", {"nom_complet": ["like", "Test%"]})
@@ -50,12 +50,12 @@ class TestLocationCourteDuree(unittest.TestCase):
 		self.referent.insert()
 	
 	def test_create_location_courte_duree(self):
-		"""Test de création d'une location courte durée"""
+		"""Test de création d'une location courte duree"""
 		today = datetime.now().date()
 		future_date = today + timedelta(days=7)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Locataire Court",
 			"locataire_email": "locataire.court@example.com",
@@ -80,7 +80,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 		future_date = today + timedelta(days=3)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Nuits",
 			"date_debut": today,
@@ -98,7 +98,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 		future_date = today + timedelta(days=5)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Commission",
 			"date_debut": today,
@@ -120,7 +120,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 		yesterday = today - timedelta(days=1)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Date Invalid",
 			"date_debut": today,
@@ -138,7 +138,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 		future_date = today + timedelta(days=3)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Prix Invalid",
 			"date_debut": today,
@@ -156,7 +156,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 		future_date = today + timedelta(days=3)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Email Invalid",
 			"locataire_email": "email_invalide",
@@ -175,7 +175,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 		future_date = today + timedelta(days=2)
 		
 		location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Marge Nette",
 			"date_debut": today,
@@ -197,7 +197,7 @@ class TestLocationCourteDuree(unittest.TestCase):
 	
 	def tearDown(self):
 		"""Nettoyage après chaque test"""
-		frappe.db.delete("Location Courte Durée", {"locataire_nom": ["like", "Test%"]})
+		frappe.db.delete("Location Courte Duree", {"locataire_nom": ["like", "Test%"]})
 		frappe.db.delete("Appartement", {"adresse_complete": ["like", "Test%"]})
 		frappe.db.delete("Proprietaire", {"nom_complet": ["like", "Test%"]})
 		frappe.db.delete("Referent", {"nom_complet": ["like", "Test%"]})

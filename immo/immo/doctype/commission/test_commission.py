@@ -13,7 +13,7 @@ class TestCommission(unittest.TestCase):
 		"""Configuration avant chaque test"""
 		# Nettoie les données de test
 		frappe.db.delete("Commission", {"referent_id": ["like", "REF-%"]})
-		frappe.db.delete("Location Courte Durée", {"locataire_nom": ["like", "Test%"]})
+		frappe.db.delete("Location Courte Duree", {"locataire_nom": ["like", "Test%"]})
 		frappe.db.delete("Appartement", {"adresse_complete": ["like", "Test%"]})
 		frappe.db.delete("Proprietaire", {"nom_complet": ["like", "Test%"]})
 		frappe.db.delete("Referent", {"nom_complet": ["like", "Test%"]})
@@ -50,12 +50,12 @@ class TestCommission(unittest.TestCase):
 		})
 		self.referent.insert()
 		
-		# Crée une location courte durée de test
+		# Crée une location courte duree de test
 		today = datetime.now().date()
 		future_date = today + timedelta(days=4)
 		
 		self.location = frappe.get_doc({
-			"doctype": "Location Courte Durée",
+			"doctype": "Location Courte Duree",
 			"appartement_id": self.appartement.name,
 			"locataire_nom": "Test Locataire Commission",
 			"locataire_email": "locataire.commission@example.com",
@@ -236,7 +236,7 @@ class TestCommission(unittest.TestCase):
 	def tearDown(self):
 		"""Nettoyage après chaque test"""
 		frappe.db.delete("Commission", {"referent_id": ["like", "REF-%"]})
-		frappe.db.delete("Location Courte Durée", {"locataire_nom": ["like", "Test%"]})
+		frappe.db.delete("Location Courte Duree", {"locataire_nom": ["like", "Test%"]})
 		frappe.db.delete("Appartement", {"adresse_complete": ["like", "Test%"]})
 		frappe.db.delete("Proprietaire", {"nom_complet": ["like", "Test%"]})
 		frappe.db.delete("Referent", {"nom_complet": ["like", "Test%"]})

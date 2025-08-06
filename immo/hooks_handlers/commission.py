@@ -40,6 +40,10 @@ def on_cancel(doc, method):
 
 def validate_commission_percentage(doc):
 	"""Valide le pourcentage de commission"""
+	# Vérifie que le pourcentage de commission n'est pas None
+	if doc.pourcentage_commission is None:
+		frappe.throw("Le pourcentage de commission est requis")
+	
 	if doc.pourcentage_commission < 0 or doc.pourcentage_commission > 100:
 		frappe.throw("Le pourcentage de commission doit être entre 0 et 100%")
 	
@@ -58,18 +62,14 @@ def calculate_commission_amount(doc):
 		return
 	
 	try:
-		# Récupère la location courte durée
-		location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+		# Récupère la location courte duree
+		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 		
 		# Calcule la commission basée sur la marge totale
 		if location.marge_totale:
 			doc.montant_commission = (location.marge_totale * doc.pourcentage_commission) / 100
-			
-			# Calcule aussi la marge nette après commission
-			doc.marge_nette_apres_commission = location.marge_totale - doc.montant_commission
 		else:
 			doc.montant_commission = 0
-			doc.marge_nette_apres_commission = 0
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur lors du calcul de la commission: {str(e)}")
@@ -77,16 +77,16 @@ def calculate_commission_amount(doc):
 
 def validate_data_consistency(doc):
 	"""Valide la cohérence des données"""
-	# Vérifie que la location existe et est confirmée
+	# Vérifie que la location existe et n'est pas annulée
 	if doc.location_courte_duree_id:
-		location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
-		if location.statut not in ["Confirmé", "En cours", "Terminé"]:
-			frappe.throw("La commission ne peut être créée que pour une location confirmée")
+		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
+		if location.statut == "Annulé":
+			frappe.throw("Impossible de créer une commission pour une location annulée")
 	
 	# Vérifie que le référent existe et est actif
 	if doc.referent_id:
 		referent = frappe.get_doc("Referent", doc.referent_id)
-		if referent.statut != "Actif":
+		if not referent.actif:
 			frappe.throw("Le référent doit être actif pour recevoir une commission")
 	
 	# Vérifie qu'il n'y a pas déjà une commission pour cette location et ce référent
@@ -130,41 +130,15 @@ def update_referent_statistics(doc):
 			AND docstatus != 2
 	""", (doc.referent_id,), as_dict=True)
 	
-	if stats:
-		stat = stats[0]
-		# Met à jour le référent avec les nouvelles statistiques
-		frappe.db.set_value("Referent", doc.referent_id, {
-			"total_commissions_gagnees": stat.total_montant or 0,
-			"commissions_payees": stat.montant_paye or 0,
-			"commissions_en_attente": stat.montant_en_attente or 0,
-			"nombre_locations_referees": stat.nombre_locations or 0,
-			"pourcentage_commission_moyen": stat.pourcentage_moyen or 0
-		})
+	# Les statistiques sont calculées dynamiquement via les méthodes du DocType Referent
+	# Pas besoin de les stocker en base de données
 
 
 def update_location_net_margin(doc):
 	"""Met à jour la marge nette de la location après commission"""
-	if not doc.location_courte_duree_id:
-		return
-	
-	# Calcule la marge nette totale après toutes les commissions
-	total_commissions = frappe.db.sql("""
-		SELECT SUM(montant_commission) as total
-		FROM `tabCommission`
-		WHERE location_courte_duree_id = %s
-			AND docstatus != 2
-	""", (doc.location_courte_duree_id,), as_dict=True)
-	
-	total_commission_amount = total_commissions[0].total if total_commissions else 0
-	
-	# Met à jour la location avec la marge nette
-	location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
-	marge_nette = location.marge_totale - (total_commission_amount or 0)
-	
-	frappe.db.set_value("Location Courte Durée", doc.location_courte_duree_id, {
-		"marge_nette_apres_commission": marge_nette,
-		"total_commissions": total_commission_amount or 0
-	})
+	# Les statistiques de marge nette sont calculées dynamiquement
+	# via les méthodes du DocType Location Courte Duree
+	pass
 
 
 def notify_commission_status_change(doc):
@@ -184,7 +158,7 @@ def notify_commission_paid(doc):
 		
 		if referent.email:
 			# Récupère les informations de la location
-			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			
 			subject = f"Commission payée - {appartement.adresse}"
@@ -225,7 +199,7 @@ def notify_commission_rejected(doc):
 		referent = frappe.get_doc("Referent", doc.referent_id)
 		
 		if referent.email:
-			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			
 			subject = f"Commission rejetée - {appartement.adresse}"
@@ -261,11 +235,11 @@ def notify_commission_rejected(doc):
 def auto_calculate_commission_on_location_completion(location_name):
 	"""Calcule automatiquement les commissions quand une location se termine"""
 	try:
-		location = frappe.get_doc("Location Courte Durée", location_name)
+		location = frappe.get_doc("Location Courte Duree", location_name)
 		
 		# Recherche les référents qui ont des commissions automatiques
 		auto_referents = frappe.get_all("Referent", {
-			"statut": "Actif",
+			"actif": 1,
 			"commission_automatique": 1
 		}, ["name", "pourcentage_commission_defaut"])
 		
@@ -312,7 +286,7 @@ def calculate_referent_performance_metrics(referent_id, period_start=None, perio
 			COUNT(CASE WHEN c.statut_paiement = 'Payé' THEN 1 END) as commissions_payees,
 			COUNT(CASE WHEN c.statut_paiement = 'En attente' THEN 1 END) as commissions_en_attente
 		FROM `tabCommission` c
-		JOIN `tabLocation Courte Durée` l ON c.location_courte_duree_id = l.name
+		JOIN `tabLocation Courte Duree` l ON c.location_courte_duree_id = l.name
 		WHERE c.referent_id = %s
 			AND c.docstatus != 2
 			{date_filter}
@@ -352,8 +326,8 @@ def generate_commission_report(referent_id=None, period_start=None, period_end=N
 			c.methode_paiement,
 			c.creation as date_creation_commission
 		FROM `tabCommission` c
-		JOIN `tabRéférent` r ON c.referent_id = r.name
-		JOIN `tabLocation Courte Durée` l ON c.location_courte_duree_id = l.name
+		JOIN `tabReferent` r ON c.referent_id = r.name
+		JOIN `tabLocation Courte Duree` l ON c.location_courte_duree_id = l.name
 		JOIN `tabAppartement` a ON l.appartement_id = a.name
 		{where_clause}
 		AND c.docstatus != 2

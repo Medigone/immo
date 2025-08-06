@@ -149,8 +149,8 @@ def generate_monthly_payments(doc):
 def update_apartment_status(doc):
 	"""Met à jour le statut de l'appartement"""
 	if doc.statut == "Actif":
-		# Marque l'appartement comme occupé
-		frappe.db.set_value("Appartement", doc.appartement_id, "statut", "Occupé")
+		# Marque l'appartement comme non disponible
+		frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 0)
 	elif doc.statut in ["Terminé", "Annulé"]:
 		# Vérifie s'il n'y a pas d'autres locations actives
 		other_active = frappe.db.exists("Location Longue Durée", {
@@ -160,7 +160,7 @@ def update_apartment_status(doc):
 		})
 		
 		if not other_active:
-			frappe.db.set_value("Appartement", doc.appartement_id, "statut", "Disponible")
+			frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
 
 
 def update_existing_mensualites_margins(doc):
@@ -201,7 +201,7 @@ def reset_apartment_status(doc):
 	})
 	
 	if not other_active:
-		frappe.db.set_value("Appartement", doc.appartement_id, "statut", "Disponible")
+		frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
 
 
 def get_months_between_dates(start_date, end_date):

@@ -209,7 +209,7 @@ def send_commission_notification(commission_id, notification_type):
 			}
 		
 		# Récupération des informations de la location
-		location = frappe.get_doc("Location Courte Durée", commission.location_courte_duree_id)
+		location = frappe.get_doc("Location Courte Duree", commission.location_courte_duree_id)
 		appartement = frappe.get_doc("Appartement", location.appartement_id)
 		
 		# Préparation des données pour le template
@@ -544,7 +544,7 @@ def get_proprietaire_monthly_data(proprietaire_id, start_date, end_date):
 				SUM(m.loyer_proprietaire) as revenus_longue_duree,
 				SUM(m.marge_mensuelle) as marge_longue_duree,
 				COUNT(m.name) as nombre_mensualites
-			FROM `tabMensualité` m
+			FROM `tabMensualite` m
 			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
@@ -558,7 +558,7 @@ def get_proprietaire_monthly_data(proprietaire_id, start_date, end_date):
 				SUM(lcd.total_proprietaire) as revenus_courte_duree,
 				SUM(lcd.marge_totale) as marge_courte_duree,
 				COUNT(lcd.name) as nombre_locations
-			FROM `tabLocation Courte Durée` lcd
+			FROM `tabLocation Courte Duree` lcd
 			INNER JOIN `tabAppartement` a ON lcd.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
 				AND lcd.date_debut BETWEEN %s AND %s

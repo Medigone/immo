@@ -157,14 +157,14 @@
    "fieldname": "paiements_locataire_tab",
    "fieldtype": "Table",
    "label": "Paiements Locataire",
-   "options": "Paiement Locataire",
+   "options": "Paiement Locataire Item",
    "read_only": 1
   },
   {
    "fieldname": "paiements_proprietaire_tab",
    "fieldtype": "Table",
    "label": "Paiements Propriétaire",
-   "options": "Paiement Proprietaire",
+   "options": "Paiement Proprietaire Item",
    "read_only": 1
   }
  ],

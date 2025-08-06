@@ -39,9 +39,9 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 				COUNT(m.name) as nombre_mensualites,
 				AVG(m.marge_mensuelle) as marge_moyenne
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-			LEFT JOIN `tabMensualité` m ON lld.name = m.location_longue_duree_id
+			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
 			WHERE {where_clause}
 				AND (m.creation IS NULL OR m.creation BETWEEN '{start_date}' AND '{end_date}')
 				AND (m.docstatus IS NULL OR m.docstatus != 2)
@@ -63,8 +63,8 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 				SUM(lcd.nombre_nuits) as total_nuits,
 				AVG(lcd.marge_par_nuit) as marge_moyenne_nuit
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			WHERE {where_clause}
 				AND (lcd.date_debut IS NULL OR lcd.date_debut BETWEEN '{start_date}' AND '{end_date}')
 				AND (lcd.docstatus IS NULL OR lcd.docstatus != 2)
@@ -83,7 +83,7 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 				COUNT(ch.name) as nombre_charges,
 				AVG(ch.montant_total) as charge_moyenne
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id
 			WHERE {where_clause}
 				AND (ch.date_charge IS NULL OR ch.date_charge BETWEEN '{start_date}' AND '{end_date}')
@@ -102,8 +102,8 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 				AVG(c.pourcentage_commission) as pourcentage_moyen,
 				SUM(CASE WHEN c.statut = 'Payé' THEN c.montant_commission ELSE 0 END) as commissions_payees
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			LEFT JOIN `tabCommission` c ON lcd.name = c.location_courte_duree_id
 			WHERE {where_clause}
 				AND (c.creation IS NULL OR c.creation BETWEEN '{start_date}' AND '{end_date}')
@@ -273,7 +273,7 @@ def generate_occupancy_report(start_date=None, end_date=None, appartement_id=Non
 					END
 				) as jours_occupation_longue
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
 				AND lld.statut IN ('Actif', 'Terminé')
 				AND lld.date_debut <= '{end_date}'
@@ -297,7 +297,7 @@ def generate_occupancy_report(start_date=None, end_date=None, appartement_id=Non
 					END
 				) as jours_occupation_courte
 			FROM `tabAppartement` a
-			LEFT JOIN `tabLocation Courte Durée` lcd ON a.name = lcd.appartement_id
+			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 				AND lcd.statut IN ('Confirmé', 'Terminé')
 				AND lcd.date_debut <= '{end_date}'
 				AND lcd.date_fin >= '{start_date}'
@@ -400,9 +400,9 @@ def generate_commission_report(start_date=None, end_date=None, referent_id=None)
 				COUNT(DISTINCT a.name) as nombre_appartements_referes,
 				SUM(lcd.marge_totale) as marge_totale_generee,
 				SUM(lcd.marge_nette) as marge_nette_generee
-			FROM `tabRéférent` r
+			FROM `tabReferent` r
 			LEFT JOIN `tabCommission` c ON r.name = c.referent_id
-			LEFT JOIN `tabLocation Courte Durée` lcd ON c.location_courte_duree_id = lcd.name
+			LEFT JOIN `tabLocation Courte Duree` lcd ON c.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON lcd.appartement_id = a.name
 			WHERE {where_clause}
 				AND (c.creation IS NULL OR c.creation BETWEEN '{start_date}' AND '{end_date}')
@@ -429,10 +429,10 @@ def generate_commission_report(start_date=None, end_date=None, referent_id=None)
 				a.adresse as appartement_adresse,
 				p.nom_complet as proprietaire_nom
 			FROM `tabCommission` c
-			INNER JOIN `tabRéférent` r ON c.referent_id = r.name
-			INNER JOIN `tabLocation Courte Durée` lcd ON c.location_courte_duree_id = lcd.name
+			INNER JOIN `tabReferent` r ON c.referent_id = r.name
+			INNER JOIN `tabLocation Courte Duree` lcd ON c.location_courte_duree_id = lcd.name
 			INNER JOIN `tabAppartement` a ON lcd.appartement_id = a.name
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE {where_clause}
 				AND c.creation BETWEEN '{start_date}' AND '{end_date}'
 				AND c.docstatus != 2
@@ -521,7 +521,7 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 				COUNT(CASE WHEN ch.statut = 'Payée' THEN 1 END) as charges_payees,
 				COUNT(CASE WHEN ch.statut = 'Remboursée' THEN 1 END) as charges_remboursees
 			FROM `tabAppartement` a
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id
 			WHERE {where_clause}
 				AND (ch.date_charge IS NULL OR ch.date_charge BETWEEN '{start_date}' AND '{end_date}')
@@ -542,7 +542,7 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 				COUNT(DISTINCT ch.appartement_id) as appartements_concernes
 			FROM `tabCharge` ch
 			INNER JOIN `tabAppartement` a ON ch.appartement_id = a.name
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE {where_clause}
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
 				AND ch.docstatus != 2
@@ -559,7 +559,7 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 				AVG(ch.montant_total) as montant_moyen
 			FROM `tabCharge` ch
 			INNER JOIN `tabAppartement` a ON ch.appartement_id = a.name
-			INNER JOIN `tabPropriétaire` p ON a.proprietaire_id = p.name
+			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE {where_clause}
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
 				AND ch.docstatus != 2

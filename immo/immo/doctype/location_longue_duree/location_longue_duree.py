@@ -116,7 +116,7 @@ class LocationLongueDuree(Document):
 	def get_paiements_locataire(self):
 		"""Retourne les paiements du locataire"""
 		return frappe.get_all("Paiement Locataire",
-			filters={"location_id": self.name, "type_location": "Location Longue Durée"},
+			filters={"location_longue_duree_id": self.name},
 			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
 			order_by="date_paiement desc")
 	
@@ -124,7 +124,7 @@ class LocationLongueDuree(Document):
 	def get_paiements_proprietaire(self):
 		"""Retourne les paiements au propriétaire"""
 		return frappe.get_all("Paiement Propriétaire",
-			filters={"location_id": self.name, "type_location": "Location Longue Durée"},
+			filters={"location_longue_duree_id": self.name},
 			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
 			order_by="date_paiement desc")
 	

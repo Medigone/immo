@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import getdate
 from datetime import datetime, timedelta
 
 
@@ -27,12 +28,12 @@ class LocationCourteDuree(Document):
 	def validate_dates(self):
 		"""Valide les dates de location"""
 		if self.date_debut and self.date_fin:
-			if self.date_fin <= self.date_debut:
+			date_debut = getdate(self.date_debut)
+			date_fin = getdate(self.date_fin)
+			if date_fin <= date_debut:
 				frappe.throw("La date de fin doit être postérieure à la date de début")
 		
-		if self.date_debut and self.date_debut < datetime.now().date():
-			if self.is_new():
-				frappe.throw("La date de début ne peut pas être dans le passé")
+
 	
 	def validate_prix(self):
 		"""Valide que les prix sont positifs"""
@@ -114,15 +115,19 @@ class LocationCourteDuree(Document):
 		
 		if not existing_commission:
 			referent = frappe.get_doc("Referent", self.referent_id)
+			
+			# Vérification que le référent a un pourcentage de commission défini
+			if not referent.pourcentage_commission_defaut:
+				frappe.throw(f"Le référent {referent.nom_complet} n'a pas de pourcentage de commission défini")
+			
 			commission = frappe.get_doc({
 				"doctype": "Commission",
 				"location_courte_duree_id": self.name,
 				"referent_id": self.referent_id,
-				"montant": self.commission_referent,
-				"pourcentage": referent.pourcentage_commission_defaut,
-				"statut": "Due",
-				"date_due": self.date_fin,
-				"methode_paiement": referent.methode_paiement
+				"montant_commission": self.commission_referent,
+				"pourcentage_commission": referent.pourcentage_commission_defaut,
+				"statut_paiement": "En attente",
+				"date_creation": self.date_fin
 			})
 			commission.insert()
 			frappe.msgprint(f"Commission créée pour le référent {referent.nom_complet}")
@@ -132,13 +137,13 @@ class LocationCourteDuree(Document):
 		"""Retourne la commission associée à cette location"""
 		return frappe.get_all("Commission",
 			filters={"location_courte_duree_id": self.name},
-			fields=["name", "montant", "pourcentage", "statut", "date_due", "date_paiement"])
+			fields=["name", "montant_commission", "pourcentage_commission", "statut_paiement", "date_creation", "date_paiement"])
 	
 	@frappe.whitelist()
 	def get_paiements_locataire(self):
 		"""Retourne les paiements du locataire"""
 		return frappe.get_all("Paiement Locataire",
-			filters={"location_id": self.name, "type_location": "Location Courte Durée"},
+			filters={"location_courte_duree_id": self.name},
 			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
 			order_by="date_paiement desc")
 	
@@ -146,7 +151,7 @@ class LocationCourteDuree(Document):
 	def get_paiements_proprietaire(self):
 		"""Retourne les paiements au propriétaire"""
 		return frappe.get_all("Paiement Propriétaire",
-			filters={"location_id": self.name, "type_location": "Location Courte Durée"},
+			filters={"location_courte_duree_id": self.name},
 			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
 			order_by="date_paiement desc")
 	
@@ -179,7 +184,7 @@ class LocationCourteDuree(Document):
 			return {"available": False, "message": "Données incomplètes"}
 		
 		# Vérifie les conflits avec d'autres locations courte durée
-		conflicting_short = frappe.get_all("Location Courte Durée",
+		conflicting_short = frappe.get_all("Location Courte Duree",
 			filters={
 				"appartement_id": self.appartement_id,
 				"statut": ["in", ["Confirmé", "En cours"]],
@@ -187,7 +192,7 @@ class LocationCourteDuree(Document):
 			})
 		
 		for location in conflicting_short:
-			loc_doc = frappe.get_doc("Location Courte Durée", location.name)
+			loc_doc = frappe.get_doc("Location Courte Duree", location.name)
 			if (self.date_debut <= loc_doc.date_fin and self.date_fin >= loc_doc.date_debut):
 				return {
 					"available": False, 
