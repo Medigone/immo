@@ -137,13 +137,41 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Location Longue Durée": {
+		"on_update": "immo.hooks_handlers.location_longue_duree.on_update",
+		"on_cancel": "immo.hooks_handlers.location_longue_duree.on_cancel",
+		"validate": "immo.hooks_handlers.location_longue_duree.validate"
+	},
+	"Location Courte Durée": {
+		"on_update": "immo.hooks_handlers.location_courte_duree.on_update",
+		"on_cancel": "immo.hooks_handlers.location_courte_duree.on_cancel",
+		"validate": "immo.hooks_handlers.location_courte_duree.validate"
+	},
+	"Mensualité": {
+		"on_update": "immo.hooks_handlers.mensualite.on_update",
+		"on_cancel": "immo.hooks_handlers.mensualite.on_cancel",
+		"validate": "immo.hooks_handlers.mensualite.validate"
+	},
+	"Charge": {
+		"on_update": "immo.hooks_handlers.charge.on_update",
+		"on_cancel": "immo.hooks_handlers.charge.on_cancel",
+		"validate": "immo.hooks_handlers.charge.validate"
+	},
+	"Commission": {
+		"on_update": "immo.hooks_handlers.commission.on_update",
+		"on_cancel": "immo.hooks_handlers.commission.on_cancel",
+		"validate": "immo.hooks_handlers.commission.validate"
+	},
+	"Paiement Locataire": {
+		"on_update": "immo.hooks_handlers.paiement_locataire.on_update",
+		"on_cancel": "immo.hooks_handlers.paiement_locataire.on_cancel"
+	},
+	"Paiement Propriétaire": {
+		"on_update": "immo.hooks_handlers.paiement_proprietaire.on_update",
+		"on_cancel": "immo.hooks_handlers.paiement_proprietaire.on_cancel"
+	}
+}
 
 # Scheduled Tasks
 # ---------------

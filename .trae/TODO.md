@@ -1,0 +1,16 @@
+# TODO:
+
+- [x] cleanup-old-doctypes: Supprimer les anciens doctypes (owner, apartment, booking, maintenance_charge, owner_payout, pricing_rule) (priority: High)
+- [x] create-proprietaire: Créer le doctype Propriétaire avec tous les champs nécessaires (priority: High)
+- [x] create-appartement: Créer le doctype Appartement avec liaison vers Propriétaire (priority: High)
+- [x] create-location-longue-duree: Créer le doctype Location Longue Durée pour les contrats mensuels (priority: High)
+- [x] create-location-courte-duree: Créer le doctype Location Courte Durée pour les réservations journalières (priority: High)
+- [x] implement-hooks: Implémenter les hooks de calcul automatique des marges (priority: High)
+- [x] create-referent: Créer le doctype Référent pour les commissions (priority: Medium)
+- [x] create-commission: Créer le doctype Commission pour le suivi des paiements référents (priority: Medium)
+- [x] create-mensualite: Créer le doctype Mensualité pour le suivi des échéances (priority: Medium)
+- [x] create-paiement-locataire: Créer le doctype Paiement Locataire pour les encaissements (priority: Medium)
+- [x] create-paiement-proprietaire: Créer le doctype Paiement Propriétaire pour les versements (priority: Medium)
+- [x] create-charge: Créer le doctype Charge pour la gestion des dépenses (priority: Medium)
+- [x] create-apis: Créer les APIs REST pour les calculs de marges (priority: Medium)
+- [x] update-modules: Mettre à jour le fichier modules.txt avec les nouveaux doctypes (priority: Low)

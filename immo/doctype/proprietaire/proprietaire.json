@@ -1,0 +1,117 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 00:00:00.000000",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "nom_complet",
+  "contact_section",
+  "email",
+  "telephone",
+  "adresse",
+  "paiement_section",
+  "methode_paiement",
+  "iban",
+  "statut_section",
+  "actif"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Série de nommage",
+   "options": "PROP-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "nom_complet",
+   "fieldtype": "Data",
+   "label": "Nom complet",
+   "reqd": 1
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Informations de contact"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "telephone",
+   "fieldtype": "Data",
+   "label": "Téléphone"
+  },
+  {
+   "fieldname": "adresse",
+   "fieldtype": "Text",
+   "label": "Adresse"
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "paiement_section",
+   "fieldtype": "Section Break",
+   "label": "Informations de paiement"
+  },
+  {
+   "default": "Virement",
+   "fieldname": "methode_paiement",
+   "fieldtype": "Select",
+   "label": "Méthode de paiement",
+   "options": "Virement\nChèque\nEspèces\nPayPal"
+  },
+  {
+   "fieldname": "iban",
+   "fieldtype": "Data",
+   "label": "IBAN"
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "statut_section",
+   "fieldtype": "Section Break",
+   "label": "Statut"
+  },
+  {
+   "default": 1,
+   "fieldname": "actif",
+   "fieldtype": "Check",
+   "label": "Actif"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Propriétaire",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "nom_complet",
+ "track_changes": 1
+}
