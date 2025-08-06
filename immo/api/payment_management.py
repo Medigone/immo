@@ -31,7 +31,7 @@ def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month
 			mois_annee = f"{current_date.month:02d}/{current_date.year}"
 			
 			# Vérifie si une mensualité existe pour ce mois
-			mensualite = frappe.db.get_value("Mensualité", {
+			mensualite = frappe.db.get_value("Mensualite", {
 				"location_longue_duree_id": location_longue_duree_id,
 				"mois_annee": mois_annee
 			}, "name")
@@ -39,7 +39,7 @@ def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month
 			if not mensualite:
 				# Crée la mensualité si elle n'existe pas
 				mensualite_doc = frappe.get_doc({
-					"doctype": "Mensualité",
+					"doctype": "Mensualite",
 					"location_longue_duree_id": location_longue_duree_id,
 					"mois_annee": mois_annee,
 					"loyer_locataire": location.loyer_locataire,
@@ -118,7 +118,7 @@ def schedule_owner_payouts(location_longue_duree_id, start_month, end_month, pay
 			mois_annee = f"{current_date.month:02d}/{current_date.year}"
 			
 			# Vérifie si une mensualité existe pour ce mois
-			mensualite = frappe.db.get_value("Mensualité", {
+			mensualite = frappe.db.get_value("Mensualite", {
 				"location_longue_duree_id": location_longue_duree_id,
 				"mois_annee": mois_annee
 			}, "name")
@@ -307,7 +307,7 @@ def reconcile_payments_with_mensualites(location_longue_duree_id):
 				mois_annee = f"{payment_date.month:02d}/{payment_date.year}"
 				
 				# Recherche une mensualité correspondante
-				mensualite = frappe.db.get_value("Mensualité", {
+				mensualite = frappe.db.get_value("Mensualite", {
 					"location_longue_duree_id": location_longue_duree_id,
 					"mois_annee": mois_annee
 				}, "name")
@@ -317,7 +317,7 @@ def reconcile_payments_with_mensualites(location_longue_duree_id):
 					frappe.db.set_value("Paiement Locataire", payment.name, "mensualite_id", mensualite)
 					
 					# Met à jour la mensualité
-					frappe.db.set_value("Mensualité", mensualite, {
+					frappe.db.set_value("Mensualite", mensualite, {
 						"statut_paiement_locataire": "Payé",
 						"date_paiement_locataire": payment.date_paiement
 					})

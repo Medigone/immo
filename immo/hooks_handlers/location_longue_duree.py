@@ -101,7 +101,7 @@ def validate_amounts(doc):
 
 def has_existing_mensualites(doc):
 	"""Vérifie s'il existe déjà des mensualités pour cette location"""
-	existing_count = frappe.db.count("Mensualité", {
+	existing_count = frappe.db.count("Mensualite", {
 		"location_longue_duree_id": doc.name
 	})
 	return existing_count > 0
@@ -120,7 +120,7 @@ def generate_monthly_payments(doc):
 		mois_annee = current_date.strftime("%m/%Y")
 		
 		# Vérifie si la mensualité existe déjà
-		existing = frappe.db.exists("Mensualité", {
+		existing = frappe.db.exists("Mensualite", {
 			"location_longue_duree_id": doc.name,
 			"mois_annee": mois_annee
 		})
@@ -131,7 +131,7 @@ def generate_monthly_payments(doc):
 			
 			# Crée la mensualité
 			mensualite = frappe.get_doc({
-				"doctype": "Mensualité",
+				"doctype": "Mensualite",
 				"location_longue_duree_id": doc.name,
 				"mois_annee": mois_annee,
 				"date_echeance": date_echeance,
@@ -167,7 +167,7 @@ def update_existing_mensualites_margins(doc):
 	"""Met à jour les marges des mensualités existantes"""
 	# Met à jour toutes les mensualités futures
 	frappe.db.sql("""
-		UPDATE `tabMensualité`
+		UPDATE `tabMensualite`
 		SET montant_loyer_locataire = %s,
 			montant_loyer_proprietaire = %s,
 			marge_mensuelle = %s
@@ -180,13 +180,13 @@ def update_existing_mensualites_margins(doc):
 
 def cancel_related_mensualites(doc):
 	"""Annule toutes les mensualités associées"""
-	mensualites = frappe.get_all("Mensualité", {
+	mensualites = frappe.get_all("Mensualite", {
 		"location_longue_duree_id": doc.name,
 		"docstatus": 1
 	})
 	
 	for mensualite in mensualites:
-		mens_doc = frappe.get_doc("Mensualité", mensualite.name)
+		mens_doc = frappe.get_doc("Mensualite", mensualite.name)
 		if mens_doc.docstatus == 1:
 			mens_doc.cancel()
 

@@ -129,7 +129,7 @@ def update_mensualite_margins(doc):
 		mois_annee = f"{charge_date.month:02d}/{charge_date.year}"
 		
 		# Recherche la mensualité correspondante
-		mensualite = frappe.db.get_value("Mensualité", {
+		mensualite = frappe.db.get_value("Mensualite", {
 			"location_longue_duree_id": doc.location_longue_duree_id,
 			"mois_annee": mois_annee
 		}, "name")
@@ -148,7 +148,7 @@ def revert_mensualite_margins(doc):
 		charge_date = getdate(doc.date_charge)
 		mois_annee = f"{charge_date.month:02d}/{charge_date.year}"
 		
-		mensualite = frappe.db.get_value("Mensualité", {
+		mensualite = frappe.db.get_value("Mensualite", {
 			"location_longue_duree_id": doc.location_longue_duree_id,
 			"mois_annee": mois_annee
 		}, "name")
@@ -159,7 +159,7 @@ def revert_mensualite_margins(doc):
 
 def recalculate_mensualite_charges(mensualite_name):
 	"""Recalcule les charges d'une mensualité"""
-	mensualite = frappe.get_doc("Mensualité", mensualite_name)
+	mensualite = frappe.get_doc("Mensualite", mensualite_name)
 	
 	# Récupère toutes les charges validées pour ce mois
 	mois, annee = map(int, mensualite.mois_annee.split('/'))
@@ -250,7 +250,7 @@ def notify_owner_charge_validated(doc):
 	try:
 		# Récupère les informations du propriétaire
 		appartement = frappe.get_doc("Appartement", doc.appartement_id)
-		proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
 		if proprietaire.email:
 			# Prépare le contenu de l'email

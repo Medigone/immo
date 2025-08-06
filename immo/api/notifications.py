@@ -184,7 +184,7 @@ def send_commission_notification(commission_id, notification_type):
 	"""Envoie une notification de commission"""
 	try:
 		commission = frappe.get_doc("Commission", commission_id)
-		referent = frappe.get_doc("Référent", commission.referent_id)
+		referent = frappe.get_doc("Referent", commission.referent_id)
 		
 		if not referent.email:
 			return {
@@ -286,7 +286,7 @@ def send_monthly_summary(proprietaire_id=None, month=None, year=None):
 			filters["name"] = proprietaire_id
 		
 		proprietaires = frappe.get_all(
-			"Propriétaire",
+			"Proprietaire",
 			filters=filters,
 			fields=["name", "nom_complet", "email"]
 		)

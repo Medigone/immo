@@ -661,7 +661,7 @@ def export_report_to_excel(report_type, report_data, filename=None):
 			worksheet = workbook.add_worksheet('Rapport Financier')
 			
 			# En-têtes
-			headers = ['Appartement', 'Propriétaire', 'Revenus Locataire', 'Revenus Propriétaire', 
+			headers = ['Appartement', 'Proprietaire', 'Revenus Locataire', 'Revenus Propriétaire', 
 					  'Marge Brute', 'Marge Nette', 'Charges', 'Commissions', 'Marge Finale']
 			
 			for col, header in enumerate(headers):
@@ -698,7 +698,7 @@ def export_report_to_excel(report_type, report_data, filename=None):
 		elif report_type == "occupancy":
 			worksheet = workbook.add_worksheet('Taux Occupation')
 			
-			headers = ['Appartement', 'Propriétaire', 'Jours Occupation LD', 'Jours Occupation CD', 
+			headers = ['Appartement', 'Proprietaire', 'Jours Occupation LD', 'Jours Occupation CD', 
 					  'Total Jours Occupation', 'Taux Occupation %', 'Jours Libres']
 			
 			for col, header in enumerate(headers):

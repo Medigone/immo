@@ -265,7 +265,7 @@ def get_proprietaire_margin_summary(proprietaire_id, start_date=None, end_date=N
 			end_date = nowdate()
 		
 		# Vérification de l'existence du propriétaire
-		if not frappe.db.exists("Propriétaire", proprietaire_id):
+		if not frappe.db.exists("Proprietaire", proprietaire_id):
 			frappe.throw(_("Propriétaire non trouvé"))
 		
 		# Récupère tous les appartements du propriétaire

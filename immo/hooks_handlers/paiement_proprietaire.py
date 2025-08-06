@@ -43,7 +43,7 @@ def update_mensualite_status(doc):
 	
 	try:
 		# Met à jour le statut de paiement propriétaire de la mensualité
-		frappe.db.set_value("Mensualité", doc.mensualite_id, {
+		frappe.db.set_value("Mensualite", doc.mensualite_id, {
 			"statut_paiement_proprietaire": "Payé",
 			"date_paiement_proprietaire": doc.date_paiement,
 			"methode_paiement_proprietaire": doc.methode_paiement,
@@ -51,10 +51,10 @@ def update_mensualite_status(doc):
 		})
 		
 		# Vérifie si la mensualité est complètement payée (locataire + propriétaire)
-		mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		if (mensualite.statut_paiement_locataire == "Payé" and 
 			mensualite.statut_paiement_proprietaire == "Payé"):
-			frappe.db.set_value("Mensualité", doc.mensualite_id, "statut_global", "Complète")
+			frappe.db.set_value("Mensualite", doc.mensualite_id, "statut_global", "Complète")
 			
 			# Génère automatiquement la mensualité suivante si configuré
 			generate_next_mensualite_if_needed(mensualite)
@@ -66,7 +66,7 @@ def update_mensualite_status(doc):
 def revert_mensualite_status(doc):
 	"""Remet le statut de la mensualité lors de l'annulation"""
 	try:
-		frappe.db.set_value("Mensualité", doc.mensualite_id, {
+		frappe.db.set_value("Mensualite", doc.mensualite_id, {
 			"statut_paiement_proprietaire": "En attente",
 			"date_paiement_proprietaire": None,
 			"methode_paiement_proprietaire": None,
@@ -93,7 +93,7 @@ def generate_next_mensualite_if_needed(mensualite):
 		next_mois_annee = f"{next_month_date.month:02d}/{next_month_date.year}"
 		
 		# Vérifie si la mensualité suivante n'existe pas déjà
-		existing_next = frappe.db.exists("Mensualité", {
+		existing_next = frappe.db.exists("Mensualite", {
 			"location_longue_duree_id": mensualite.location_longue_duree_id,
 			"mois_annee": next_mois_annee
 		})
@@ -105,7 +105,7 @@ def generate_next_mensualite_if_needed(mensualite):
 			
 			# Crée la mensualité suivante
 			next_mensualite = frappe.get_doc({
-				"doctype": "Mensualité",
+				"doctype": "Mensualite",
 				"location_longue_duree_id": mensualite.location_longue_duree_id,
 				"mois_annee": next_mois_annee,
 				"loyer_locataire": mensualite.loyer_locataire,
@@ -128,7 +128,7 @@ def update_proprietaire_statistics(doc):
 		proprietaire_id = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire_id = appartement.proprietaire_id
@@ -167,7 +167,7 @@ def update_proprietaire_statistics(doc):
 		if stats:
 			stat = stats[0]
 			# Met à jour le propriétaire avec les nouvelles statistiques
-			frappe.db.set_value("Propriétaire", proprietaire_id, {
+			frappe.db.set_value("Proprietaire", proprietaire_id, {
 				"total_verse_annee": stat.total_verse_annee or 0,
 				"total_net_verse_annee": stat.total_net_verse_annee or 0,
 				"total_frais_versement_annee": stat.total_frais_annee or 0,
@@ -187,7 +187,7 @@ def update_location_payout_statistics(doc):
 	# Détermine l'ID de la location selon le type
 	if doc.mensualite_id:
 		# Récupère la location via la mensualité
-		mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		location_id = mensualite.location_longue_duree_id
 		location_type = "Location Longue Durée"
 	elif doc.location_longue_duree_id:
@@ -245,7 +245,7 @@ def update_apartment_payout_statistics(doc):
 	
 	# Récupère l'ID de l'appartement
 	if doc.mensualite_id:
-		mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_longue_duree_id:
@@ -311,10 +311,10 @@ def notify_payout_completed(doc):
 		appartement_adresse = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 			appartement_adresse = appartement.adresse
@@ -322,7 +322,7 @@ def notify_payout_completed(doc):
 		elif doc.location_longue_duree_id:
 			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 			appartement_adresse = appartement.adresse
@@ -330,7 +330,7 @@ def notify_payout_completed(doc):
 		elif doc.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 			appartement_adresse = appartement.adresse
@@ -375,24 +375,24 @@ def notify_payout_rejected(doc):
 		proprietaire_nom = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 		
 		elif doc.location_longue_duree_id:
 			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 		
 		elif doc.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 		
@@ -435,10 +435,10 @@ def notify_payout_pending(doc):
 		proprietaire_nom = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 		

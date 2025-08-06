@@ -1,0 +1,139 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 00:00:00.000000",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "proprietaire_id",
+  "adresse_complete",
+  "description",
+  "caracteristiques_section",
+  "nombre_pieces",
+  "surface",
+  "prix_section",
+  "prix_journalier_defaut",
+  "prix_mensuel_defaut",
+  "statut_section",
+  "disponible"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Série de nommage",
+   "options": "APT-.YYYY.-",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proprietaire_id",
+   "fieldtype": "Link",
+   "label": "Propriétaire",
+   "options": "Proprietaire",
+   "reqd": 1
+  },
+  {
+   "fieldname": "adresse_complete",
+   "fieldtype": "Text",
+   "label": "Adresse complète",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description"
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "caracteristiques_section",
+   "fieldtype": "Section Break",
+   "label": "Caractéristiques"
+  },
+  {
+   "fieldname": "nombre_pieces",
+   "fieldtype": "Int",
+   "label": "Nombre de pièces",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "surface",
+   "fieldtype": "Float",
+   "label": "Surface (m²)",
+   "precision": 2
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "prix_section",
+   "fieldtype": "Section Break",
+   "label": "Prix par défaut"
+  },
+  {
+   "fieldname": "prix_journalier_defaut",
+   "fieldtype": "Currency",
+   "label": "Prix journalier par défaut",
+   "precision": 2
+  },
+  {
+   "fieldname": "prix_mensuel_defaut",
+   "fieldtype": "Currency",
+   "label": "Prix mensuel par défaut",
+   "precision": 2
+  },
+  {
+   "collapsible": 0,
+   "fieldname": "statut_section",
+   "fieldtype": "Section Break",
+   "label": "Statut"
+  },
+  {
+   "default": 1,
+   "fieldname": "disponible",
+   "fieldtype": "Check",
+   "label": "Disponible"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "link_doctype": "Location Longue Duree",
+   "link_fieldname": "appartement_id"
+  },
+  {
+   "link_doctype": "Location Courte Duree",
+   "link_fieldname": "appartement_id"
+  },
+  {
+   "link_doctype": "Charge",
+   "link_fieldname": "appartement_id"
+  }
+ ],
+ "modified": "2024-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Appartement",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "adresse_complete",
+ "track_changes": 1
+}

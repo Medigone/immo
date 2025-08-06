@@ -138,17 +138,17 @@ app_license = "mit"
 # Hook on document methods and events
 
 doc_events = {
-	"Location Longue Durée": {
+	"Location Longue Duree": {
 		"on_update": "immo.hooks_handlers.location_longue_duree.on_update",
 		"on_cancel": "immo.hooks_handlers.location_longue_duree.on_cancel",
 		"validate": "immo.hooks_handlers.location_longue_duree.validate"
 	},
-	"Location Courte Durée": {
+	"Location Courte Duree": {
 		"on_update": "immo.hooks_handlers.location_courte_duree.on_update",
 		"on_cancel": "immo.hooks_handlers.location_courte_duree.on_cancel",
 		"validate": "immo.hooks_handlers.location_courte_duree.validate"
 	},
-	"Mensualité": {
+	"Mensualite": {
 		"on_update": "immo.hooks_handlers.mensualite.on_update",
 		"on_cancel": "immo.hooks_handlers.mensualite.on_cancel",
 		"validate": "immo.hooks_handlers.mensualite.validate"
@@ -167,7 +167,7 @@ doc_events = {
 		"on_update": "immo.hooks_handlers.paiement_locataire.on_update",
 		"on_cancel": "immo.hooks_handlers.paiement_locataire.on_cancel"
 	},
-	"Paiement Propriétaire": {
+	"Paiement Proprietaire": {
 		"on_update": "immo.hooks_handlers.paiement_proprietaire.on_update",
 		"on_cancel": "immo.hooks_handlers.paiement_proprietaire.on_cancel"
 	}

@@ -85,7 +85,7 @@ def validate_data_consistency(doc):
 	
 	# Vérifie que le référent existe et est actif
 	if doc.referent_id:
-		referent = frappe.get_doc("Référent", doc.referent_id)
+		referent = frappe.get_doc("Referent", doc.referent_id)
 		if referent.statut != "Actif":
 			frappe.throw("Le référent doit être actif pour recevoir une commission")
 	
@@ -133,7 +133,7 @@ def update_referent_statistics(doc):
 	if stats:
 		stat = stats[0]
 		# Met à jour le référent avec les nouvelles statistiques
-		frappe.db.set_value("Référent", doc.referent_id, {
+		frappe.db.set_value("Referent", doc.referent_id, {
 			"total_commissions_gagnees": stat.total_montant or 0,
 			"commissions_payees": stat.montant_paye or 0,
 			"commissions_en_attente": stat.montant_en_attente or 0,
@@ -180,7 +180,7 @@ def notify_commission_paid(doc):
 	"""Notifie que la commission a été payée"""
 	try:
 		# Récupère les informations du référent
-		referent = frappe.get_doc("Référent", doc.referent_id)
+		referent = frappe.get_doc("Referent", doc.referent_id)
 		
 		if referent.email:
 			# Récupère les informations de la location
@@ -222,7 +222,7 @@ def notify_commission_rejected(doc):
 	"""Notifie que la commission a été rejetée"""
 	try:
 		# Récupère les informations du référent
-		referent = frappe.get_doc("Référent", doc.referent_id)
+		referent = frappe.get_doc("Referent", doc.referent_id)
 		
 		if referent.email:
 			location = frappe.get_doc("Location Courte Durée", doc.location_courte_duree_id)
@@ -264,7 +264,7 @@ def auto_calculate_commission_on_location_completion(location_name):
 		location = frappe.get_doc("Location Courte Durée", location_name)
 		
 		# Recherche les référents qui ont des commissions automatiques
-		auto_referents = frappe.get_all("Référent", {
+		auto_referents = frappe.get_all("Referent", {
 			"statut": "Actif",
 			"commission_automatique": 1
 		}, ["name", "pourcentage_commission_defaut"])

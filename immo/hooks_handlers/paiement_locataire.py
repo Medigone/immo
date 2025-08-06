@@ -39,7 +39,7 @@ def update_mensualite_status(doc):
 	
 	try:
 		# Met à jour le statut de paiement locataire de la mensualité
-		frappe.db.set_value("Mensualité", doc.mensualite_id, {
+		frappe.db.set_value("Mensualite", doc.mensualite_id, {
 			"statut_paiement_locataire": "Payé",
 			"date_paiement_locataire": doc.date_paiement,
 			"methode_paiement_locataire": doc.methode_paiement,
@@ -47,10 +47,10 @@ def update_mensualite_status(doc):
 		})
 		
 		# Vérifie si la mensualité est complètement payée (locataire + propriétaire)
-		mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		if (mensualite.statut_paiement_locataire == "Payé" and 
 			mensualite.statut_paiement_proprietaire == "Payé"):
-			frappe.db.set_value("Mensualité", doc.mensualite_id, "statut_global", "Complète")
+			frappe.db.set_value("Mensualite", doc.mensualite_id, "statut_global", "Complète")
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour de la mensualité: {str(e)}")
@@ -59,7 +59,7 @@ def update_mensualite_status(doc):
 def revert_mensualite_status(doc):
 	"""Remet le statut de la mensualité lors de l'annulation"""
 	try:
-		frappe.db.set_value("Mensualité", doc.mensualite_id, {
+		frappe.db.set_value("Mensualite", doc.mensualite_id, {
 			"statut_paiement_locataire": "En attente",
 			"date_paiement_locataire": None,
 			"methode_paiement_locataire": None,
@@ -78,7 +78,7 @@ def update_location_payment_statistics(doc):
 	# Détermine l'ID de la location selon le type
 	if doc.mensualite_id:
 		# Récupère la location via la mensualité
-		mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		location_id = mensualite.location_longue_duree_id
 		location_type = "Location Longue Durée"
 	elif doc.location_longue_duree_id:
@@ -136,7 +136,7 @@ def update_apartment_payment_statistics(doc):
 	
 	# Récupère l'ID de l'appartement
 	if doc.mensualite_id:
-		mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_longue_duree_id:
@@ -201,7 +201,7 @@ def notify_payment_confirmed(doc):
 		appartement_adresse = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
@@ -261,7 +261,7 @@ def send_payment_confirmation_to_owner(doc):
 		appartement_id = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			appartement_id = location.appartement_id
 		elif doc.location_longue_duree_id:
@@ -273,7 +273,7 @@ def send_payment_confirmation_to_owner(doc):
 		
 		if appartement_id:
 			appartement = frappe.get_doc("Appartement", appartement_id)
-			proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			
 			if proprietaire.email:
 				subject = f"Paiement reçu - {appartement.adresse}"
@@ -312,7 +312,7 @@ def notify_payment_rejected(doc):
 		locataire_nom = None
 		
 		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualité", doc.mensualite_id)
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
@@ -374,7 +374,7 @@ def auto_reconcile_payments():
 			payment_date = getdate(payment.date_paiement)
 			mois_annee = f"{payment_date.month:02d}/{payment_date.year}"
 			
-			mensualite = frappe.db.get_value("Mensualité", {
+			mensualite = frappe.db.get_value("Mensualite", {
 				"location_longue_duree_id": payment.location_longue_duree_id,
 				"mois_annee": mois_annee,
 				"statut_paiement_locataire": "En attente"
@@ -385,7 +385,7 @@ def auto_reconcile_payments():
 				frappe.db.set_value("Paiement Locataire", payment.name, "mensualite_id", mensualite)
 				
 				# Met à jour la mensualité
-				frappe.db.set_value("Mensualité", mensualite, {
+				frappe.db.set_value("Mensualite", mensualite, {
 					"statut_paiement_locataire": "Payé",
 					"date_paiement_locataire": payment.date_paiement
 				})

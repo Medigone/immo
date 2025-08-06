@@ -98,7 +98,7 @@ def validate_month_year_format(doc):
 def validate_uniqueness(doc):
 	"""Valide l'unicité de la mensualité pour une location et un mois donné"""
 	if doc.location_longue_duree_id and doc.mois_annee:
-		existing = frappe.db.exists("Mensualité", {
+		existing = frappe.db.exists("Mensualite", {
 			"location_longue_duree_id": doc.location_longue_duree_id,
 			"mois_annee": doc.mois_annee,
 			"name": ["!=", doc.name or ""]
@@ -167,7 +167,7 @@ def generate_next_mensualite(doc):
 			return
 		
 		# Vérifie si la mensualité suivante n'existe pas déjà
-		existing = frappe.db.exists("Mensualité", {
+		existing = frappe.db.exists("Mensualite", {
 			"location_longue_duree_id": doc.location_longue_duree_id,
 			"mois_annee": next_mois_annee
 		})
@@ -175,7 +175,7 @@ def generate_next_mensualite(doc):
 		if not existing:
 			# Crée la mensualité suivante
 			next_mensualite = frappe.get_doc({
-				"doctype": "Mensualité",
+				"doctype": "Mensualite",
 				"location_longue_duree_id": doc.location_longue_duree_id,
 				"mois_annee": next_mois_annee,
 				"date_echeance": next_date,

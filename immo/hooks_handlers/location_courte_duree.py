@@ -109,7 +109,7 @@ def calculate_amounts_and_margins(doc):
 	if not doc.prix_par_nuit_proprietaire:
 		# Récupère le prix par défaut du propriétaire
 		appartement = frappe.get_doc("Appartement", doc.appartement_id)
-		proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
 		if proprietaire.prix_par_nuit_defaut:
 			doc.prix_par_nuit_proprietaire = proprietaire.prix_par_nuit_defaut
@@ -245,7 +245,7 @@ def calculate_dynamic_pricing(doc):
 	if not doc.prix_par_nuit and doc.appartement_id:
 		# Récupère le prix de base de l'appartement ou du propriétaire
 		appartement = frappe.get_doc("Appartement", doc.appartement_id)
-		proprietaire = frappe.get_doc("Propriétaire", appartement.proprietaire_id)
+		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
 		base_price = proprietaire.prix_par_nuit_defaut or 50  # Prix par défaut
 		
