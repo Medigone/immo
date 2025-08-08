@@ -181,14 +181,12 @@ def update_existing_mensualites_margins(doc):
 def cancel_related_mensualites(doc):
 	"""Annule toutes les mensualités associées"""
 	mensualites = frappe.get_all("Mensualite", {
-		"location_longue_duree_id": doc.name,
-		"docstatus": 1
+		"location_longue_duree_id": doc.name
 	})
 	
 	for mensualite in mensualites:
 		mens_doc = frappe.get_doc("Mensualite", mensualite.name)
-		if mens_doc.docstatus == 1:
-			mens_doc.cancel()
+		mens_doc.cancel()
 
 
 def reset_apartment_status(doc):

@@ -7,8 +7,8 @@ from frappe.utils import nowdate, getdate
 
 def on_update(doc, method):
 	"""Actions après mise à jour du paiement locataire"""
-	# Met à jour le statut de la mensualité si confirmé
-	if doc.statut == "Confirmé" and doc.type_paiement == "Loyer mensuel":
+	# Met à jour le statut de la mensualité si c'est un loyer mensuel
+	if doc.type_paiement == "Loyer mensuel":
 		update_mensualite_status(doc)
 	
 	# Met à jour les statistiques de la location
@@ -17,19 +17,12 @@ def on_update(doc, method):
 	# Met à jour les statistiques de l'appartement
 	update_apartment_payment_statistics(doc)
 	
-	# Génère les notifications selon le statut
-	notify_payment_status_change(doc)
+	# Met à jour les métriques de la location bloc si liée à un bloc
+	if doc.location_bloc_id:
+		update_location_bloc_metrics_after_payment(doc)
 
 
-def on_cancel(doc, method):
-	"""Actions lors de l'annulation du paiement"""
-	# Remet à jour le statut de la mensualité
-	if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
-		revert_mensualite_status(doc)
-	
-	# Met à jour les statistiques
-	update_location_payment_statistics(doc)
-	update_apartment_payment_statistics(doc)
+
 
 
 def update_mensualite_status(doc):
@@ -38,37 +31,18 @@ def update_mensualite_status(doc):
 		return
 	
 	try:
-		# Met à jour le statut de paiement locataire de la mensualité
+		# Met à jour les informations de paiement locataire de la mensualité
 		frappe.db.set_value("Mensualite", doc.mensualite_id, {
-			"statut_paiement_locataire": "Payé",
 			"date_paiement_locataire": doc.date_paiement,
 			"methode_paiement_locataire": doc.methode_paiement,
-			"reference_paiement_locataire": doc.reference_financiere
+			"reference_paiement_locataire": doc.reference_paiement
 		})
-		
-		# Vérifie si la mensualité est complètement payée (locataire + propriétaire)
-		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		if (mensualite.statut_paiement_locataire == "Payé" and 
-			mensualite.statut_paiement_proprietaire == "Payé"):
-			frappe.db.set_value("Mensualite", doc.mensualite_id, "statut_global", "Complète")
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour de la mensualité: {str(e)}")
 
 
-def revert_mensualite_status(doc):
-	"""Remet le statut de la mensualité lors de l'annulation"""
-	try:
-		frappe.db.set_value("Mensualite", doc.mensualite_id, {
-			"statut_paiement_locataire": "En attente",
-			"date_paiement_locataire": None,
-			"methode_paiement_locataire": None,
-			"reference_paiement_locataire": None,
-			"statut_global": "En attente"
-		})
-		
-	except Exception as e:
-		frappe.log_error(f"Erreur lors de la remise à jour de la mensualité: {str(e)}")
+
 
 
 def update_location_payment_statistics(doc):
@@ -111,7 +85,7 @@ def update_location_payment_statistics(doc):
 				OR location_longue_duree_id = %s
 				OR location_courte_duree_id = %s
 			)
-			AND docstatus != 2
+
 		""", (location_id, location_id, location_id), as_dict=True)
 		
 		if stats:
@@ -164,7 +138,6 @@ def update_apartment_payment_statistics(doc):
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pl.location_courte_duree_id = lcd.name
 			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
 				AND pl.statut = 'Confirmé'
-				AND pl.docstatus != 2
 				AND YEAR(pl.date_paiement) = YEAR(CURDATE())
 		""", (appartement_id, appartement_id), as_dict=True)
 		
@@ -182,14 +155,7 @@ def update_apartment_payment_statistics(doc):
 		frappe.log_error(f"Erreur lors de la mise à jour des statistiques d'appartement: {str(e)}")
 
 
-def notify_payment_status_change(doc):
-	"""Notifie les changements de statut de paiement"""
-	if doc.has_value_changed("statut"):
-		if doc.statut == "Confirmé":
-			notify_payment_confirmed(doc)
-			send_payment_confirmation_to_owner(doc)
-		elif doc.statut == "Rejeté":
-			notify_payment_rejected(doc)
+
 
 
 def notify_payment_confirmed(doc):
@@ -358,12 +324,30 @@ def notify_payment_rejected(doc):
 		frappe.log_error(f"Erreur lors de l'envoi de notification de rejet: {str(e)}")
 
 
+def update_location_bloc_metrics_after_payment(doc):
+	"""Met à jour les métriques de la location bloc après un paiement locataire"""
+	try:
+		location_bloc = frappe.get_doc("Location Bloc", doc.location_bloc_id)
+		location_bloc.update_metrics()
+		# Utilise frappe.db.set_value pour éviter les conflits de timestamp
+		frappe.db.set_value("Location Bloc", doc.location_bloc_id, {
+			"paiements_prevus": location_bloc.paiements_prevus,
+			"total_encaisse": location_bloc.total_encaisse,
+			"paiements_totaux": location_bloc.paiements_totaux,
+			"marge_totale": location_bloc.marge_totale,
+			"rentabilite_pourcentage": location_bloc.rentabilite_pourcentage,
+			"taux_occupation": location_bloc.taux_occupation
+		})
+		frappe.db.commit()
+	except Exception as e:
+		frappe.log_error(f"Erreur MAJ métriques après paiement {doc.location_bloc_id}: {str(e)}", "Paiement Locataire Metrics Update Error")
+
+
 def auto_reconcile_payments():
 	"""Réconcilie automatiquement les paiements avec les mensualités"""
 	try:
-		# Recherche les paiements confirmés sans mensualité associée
+		# Recherche les paiements sans mensualité associée
 		unmatched_payments = frappe.get_all("Paiement Locataire", {
-			"statut": "Confirmé",
 			"type_paiement": "Loyer mensuel",
 			"mensualite_id": ["", "is", "not set"],
 			"location_longue_duree_id": ["", "is not", "not set"]
@@ -376,8 +360,7 @@ def auto_reconcile_payments():
 			
 			mensualite = frappe.db.get_value("Mensualite", {
 				"location_longue_duree_id": payment.location_longue_duree_id,
-				"mois_annee": mois_annee,
-				"statut_paiement_locataire": "En attente"
+				"mois_annee": mois_annee
 			}, "name")
 			
 			if mensualite:
@@ -386,7 +369,6 @@ def auto_reconcile_payments():
 				
 				# Met à jour la mensualité
 				frappe.db.set_value("Mensualite", mensualite, {
-					"statut_paiement_locataire": "Payé",
 					"date_paiement_locataire": payment.date_paiement
 				})
 				

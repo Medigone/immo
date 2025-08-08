@@ -549,7 +549,6 @@ def get_proprietaire_monthly_data(proprietaire_id, start_date, end_date):
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
 				AND m.date_echeance BETWEEN %s AND %s
-				AND m.docstatus != 2
 		""", (proprietaire_id, start_date, end_date), as_dict=True)
 		
 		# Revenus des locations courte durée
@@ -562,7 +561,6 @@ def get_proprietaire_monthly_data(proprietaire_id, start_date, end_date):
 			INNER JOIN `tabAppartement` a ON lcd.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
 				AND lcd.date_debut BETWEEN %s AND %s
-				AND lcd.docstatus != 2
 		""", (proprietaire_id, start_date, end_date), as_dict=True)
 		
 		# Charges
@@ -574,7 +572,6 @@ def get_proprietaire_monthly_data(proprietaire_id, start_date, end_date):
 			INNER JOIN `tabAppartement` a ON ch.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
 				AND ch.date_charge BETWEEN %s AND %s
-				AND ch.docstatus != 2
 		""", (proprietaire_id, start_date, end_date), as_dict=True)
 		
 		# Compilation des données

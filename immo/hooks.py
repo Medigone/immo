@@ -145,7 +145,7 @@ doc_events = {
 	},
 	"Location Courte Duree": {
 		"on_update": "immo.hooks_handlers.location_courte_duree.on_update",
-		"on_cancel": "immo.hooks_handlers.location_courte_duree.on_cancel",
+		"on_trash": "immo.hooks_handlers.location_courte_duree.on_trash",
 		"validate": "immo.hooks_handlers.location_courte_duree.validate"
 	},
 	"Mensualite": {
@@ -164,12 +164,21 @@ doc_events = {
 		"validate": "immo.hooks_handlers.commission.validate"
 	},
 	"Paiement Locataire": {
-		"on_update": "immo.hooks_handlers.paiement_locataire.on_update",
-		"on_cancel": "immo.hooks_handlers.paiement_locataire.on_cancel"
+		"on_update": "immo.hooks_handlers.paiement_locataire.on_update"
 	},
 	"Paiement Proprietaire": {
 		"on_update": "immo.hooks_handlers.paiement_proprietaire.on_update",
 		"on_cancel": "immo.hooks_handlers.paiement_proprietaire.on_cancel"
+	},
+	"Location Bloc": {
+		"on_update": "immo.hooks_handlers.location_bloc.on_update",
+		"on_trash": "immo.hooks_handlers.location_bloc.on_trash",
+		"validate": "immo.hooks_handlers.location_bloc.validate"
+	},
+	"Paiement Bloc": {
+		"on_update": "immo.hooks_handlers.paiement_bloc.on_update",
+		"on_trash": "immo.hooks_handlers.paiement_bloc.on_trash",
+		"validate": "immo.hooks_handlers.paiement_bloc.validate"
 	}
 }
 

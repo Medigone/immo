@@ -1,0 +1,282 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2024-01-01 00:00:00",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "rentabilite_progress_html",
+  "section_break_2",
+  "appartement_id",
+  "proprietaire_id",
+  "column_break_5",
+  "date_debut_bloc",
+  "date_fin_bloc",
+  "section_break_8",
+  "montant_total_proprietaire",
+  "type_paiement",
+  "column_break_11",
+  "reference_contrat",
+  "section_break_paiements",
+  "montant_total_paye",
+  "solde_restant",
+  "column_break_paiements",
+  "pourcentage_paye",
+  "section_break_14",
+  "nombre_nuits_total",
+  "prix_nuit_proprietaire",
+  "column_break_17",
+  "total_encaisse",
+  "paiements_prevus",
+  "paiements_totaux",
+  "marge_totale",
+  "section_break_20",
+  "taux_occupation",
+  "rentabilite_pourcentage",
+  "column_break_23",
+  "date_creation",
+  "date_modification",
+  "connections_tab"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "S\u00e9rie de nommage",
+   "options": "LB-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rentabilite_progress_html",
+   "fieldtype": "HTML",
+   "label": "Rentabilit\u00e9",
+   "options": "<div id=\"rentabilite-progress-container\"></div>"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Informations principales"
+  },
+  {
+   "fieldname": "appartement_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Appartement",
+   "options": "Appartement",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proprietaire_id",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Propri\u00e9taire",
+   "options": "Proprietaire",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_debut_bloc",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date d\u00e9but bloc",
+   "reqd": 1
+  },
+  {
+   "fieldname": "date_fin_bloc",
+   "fieldtype": "Date",
+   "label": "Date fin bloc",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_8",
+   "fieldtype": "Section Break",
+   "label": "Conditions financi\u00e8res"
+  },
+  {
+   "fieldname": "montant_total_proprietaire",
+   "fieldtype": "Currency",
+   "label": "Montant total propri\u00e9taire",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "default": "Unique",
+   "fieldname": "type_paiement",
+   "fieldtype": "Select",
+   "label": "Type de paiement",
+   "options": "Avance\n\u00c9chelonn\u00e9\nUnique"
+  },
+  {
+   "fieldname": "column_break_11",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_contrat",
+   "fieldtype": "Data",
+   "label": "R\u00e9f\u00e9rence contrat"
+  },
+  {
+   "fieldname": "section_break_paiements",
+   "fieldtype": "Section Break",
+   "label": "Suivi des paiements"
+  },
+  {
+   "default": "0",
+   "fieldname": "montant_total_paye",
+   "fieldtype": "Currency",
+   "label": "Montant total pay\u00e9",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "solde_restant",
+   "fieldtype": "Currency",
+   "label": "Solde restant",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_paiements",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "pourcentage_paye",
+   "fieldtype": "Percent",
+   "label": "Pourcentage pay\u00e9",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_14",
+   "fieldtype": "Section Break",
+   "label": "Calculs automatiques"
+  },
+  {
+   "fieldname": "nombre_nuits_total",
+   "fieldtype": "Int",
+   "label": "Nombre de nuits total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prix_nuit_proprietaire",
+   "fieldtype": "Currency",
+   "label": "Prix par nuit propri\u00e9taire",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_17",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_encaisse",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Total encaiss\u00e9",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Montant total des locations courte dur\u00e9e pr\u00e9vues",
+   "fieldname": "paiements_prevus",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Paiements pr\u00e9vus",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Somme des paiements locataires r\u00e9ellement re\u00e7us",
+   "fieldname": "paiements_totaux",
+   "fieldtype": "Currency",
+   "hidden": 1,
+   "label": "Paiements totaux",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "marge_totale",
+   "fieldtype": "Currency",
+   "label": "Marge totale",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_20",
+   "fieldtype": "Section Break",
+   "label": "M\u00e9triques de performance"
+  },
+  {
+   "fieldname": "taux_occupation",
+   "fieldtype": "Percent",
+   "label": "Taux d'occupation",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rentabilite_pourcentage",
+   "fieldtype": "Percent",
+   "label": "Rentabilit\u00e9 (%)",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_23",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "date_creation",
+   "fieldtype": "Datetime",
+   "label": "Date de cr\u00e9ation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_modification",
+   "fieldtype": "Datetime",
+   "label": "Date de modification",
+   "read_only": 1
+  },
+  {
+   "fieldname": "connections_tab",
+   "fieldtype": "Tab Break",
+   "label": "Connections",
+   "show_dashboard": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-08-08 02:21:17.066215",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Location Bloc",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

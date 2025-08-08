@@ -177,7 +177,7 @@ def recalculate_mensualite_charges(mensualite_name):
 		AND statut = 'Validée'
 		AND MONTH(date_charge) = %s
 		AND YEAR(date_charge) = %s
-		AND docstatus != 2
+
 	""", (mensualite.location_longue_duree_id, mois, annee), as_dict=True)
 	
 	if charges and charges[0]:
@@ -210,7 +210,7 @@ def update_apartment_charges_statistics(doc):
 			SUM(CASE WHEN statut IN ('En attente', 'Validée') THEN montant ELSE 0 END) as montant_en_attente
 		FROM `tabCharge`
 		WHERE appartement_id = %s
-			AND docstatus != 2
+
 			AND YEAR(date_charge) = YEAR(CURDATE())
 	""", (doc.appartement_id,), as_dict=True)
 	
@@ -355,7 +355,7 @@ def calculate_monthly_charges_summary(appartement_id, month, year):
 		WHERE appartement_id = %s
 			AND MONTH(date_charge) = %s
 			AND YEAR(date_charge) = %s
-			AND docstatus != 2
+
 		GROUP BY type_charge, categorie, statut
 		ORDER BY type_charge, categorie
 	""", (appartement_id, month, year), as_dict=True)

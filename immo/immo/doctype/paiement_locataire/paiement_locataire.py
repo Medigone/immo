@@ -18,8 +18,8 @@ class PaiementLocataire(Document):
 	
 	def validate_location_reference(self):
 		"""Valide qu'au moins une référence de location est fournie"""
-		if not self.mensualite_id and not self.location_longue_duree_id and not self.location_courte_duree_id:
-			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Durée ou Location Courte Duree) est obligatoire"))
+		if not self.mensualite_id and not self.location_longue_duree_id and not self.location_courte_duree_id and not self.location_bloc_id:
+			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Durée, Location Courte Duree ou Location Bloc) est obligatoire"))
 		
 		# Vérifie que les références existent et sont valides
 		if self.mensualite_id:
@@ -29,13 +29,16 @@ class PaiementLocataire(Document):
 		
 		if self.location_longue_duree_id:
 			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
-			if location.statut not in ["Actif", "Terminé"]:
-				frappe.throw(_("La location longue durée doit être active ou terminée"))
 		
 		if self.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
-			if location.statut not in ["Confirmé", "Terminé"]:
-				frappe.throw(_("La location courte duree doit être confirmée ou terminée"))
+				
+			# Auto-remplir location_bloc_id si location_courte_duree_id est fourni
+			if not self.location_bloc_id and location.location_bloc_id:
+				self.location_bloc_id = location.location_bloc_id
+		
+		if self.location_bloc_id:
+			location_bloc = frappe.get_doc("Location Bloc", self.location_bloc_id)
 	
 	def validate_amount(self):
 		"""Valide le montant du paiement"""
@@ -88,9 +91,10 @@ class PaiementLocataire(Document):
 			self.update_mensualite_status()
 	
 	def update_mensualite_status(self):
-		"""Met à jour le statut de paiement de la mensualité"""
-		mensualite = frappe.get_doc("Mensualite", self.mensualite_id)
-		if self.type_paiement == "Loyer mensuel":
+		"""Met à jour le statut de paiement de la mensualité (uniquement pour les locations longue durée)"""
+		# Ne met à jour la mensualité que si elle existe (locations longue durée)
+		if self.mensualite_id and self.type_paiement == "Loyer mensuel":
+			mensualite = frappe.get_doc("Mensualite", self.mensualite_id)
 			mensualite.statut_paiement_locataire = "Payé"
 			mensualite.date_paiement_locataire = self.date_paiement
 			mensualite.methode_paiement_locataire = self.methode_paiement

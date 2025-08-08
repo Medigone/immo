@@ -1,9 +1,8 @@
 # TODO:
 
-- [x] create_child_paiement_locataire: Create child table version of Paiement Locataire doctype with istable=1 and parent fields (priority: High)
-- [x] create_child_paiement_proprietaire: Create child table version of Paiement Proprietaire doctype with istable=1 and parent fields (priority: High)
-- [x] update_mensualite_table_fields: Update Mensualite doctype table field options to reference the new child table doctypes (priority: High)
-- [x] create_commission_item_child: Create Commission Item child table doctype with istable=1 and parent fields (priority: High)
-- [x] update_referent_table_field: Update Referent doctype commissions_tab field to reference Commission Item instead of Commission (priority: High)
-- [x] test_migration: Test the fix by running bench migrate and checking if the error is resolved (priority: Medium)
-- [ ] migrate_referent_fix: Run bench migrate to apply the Commission Item fix (**IN PROGRESS**) (priority: Medium)
+- [x] 1: Vérifier les logs d'erreur Frappe pour identifier les problèmes lors de la suppression (priority: High)
+- [x] 2: Tester manuellement la suppression d'un Paiement Bloc pour reproduire le problème (priority: High)
+- [x] 5: Corriger les problèmes identifiés dans le processus de mise à jour (priority: High)
+- [x] 6: Tester la correction en créant et supprimant un Paiement Bloc (priority: High)
+- [x] 3: Vérifier que le hook on_trash est bien appelé lors de la suppression (priority: Medium)
+- [x] 4: Analyser la méthode update_payment_tracking pour détecter d'éventuelles erreurs (priority: Medium)

@@ -19,11 +19,9 @@ class Mensualite(Document):
 		self.validate_month_year_format()
 	
 	def validate_location_status(self):
-		"""Valide que la location longue durée existe et est active"""
+		"""Valide que la location longue durée existe"""
 		if self.location_longue_duree_id:
 			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
-			if location.statut != "Actif":
-				frappe.throw(_("La location doit être active pour créer des mensualités"))
 	
 	def validate_amounts(self):
 		"""Valide les montants des loyers"""

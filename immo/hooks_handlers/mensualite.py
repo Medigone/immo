@@ -128,7 +128,6 @@ def update_location_statistics(doc):
 			SUM(montant_loyer_proprietaire) as total_verse
 		FROM `tabMensualite`
 		WHERE location_longue_duree_id = %s
-			AND docstatus != 2
 	""", (doc.location_longue_duree_id,), as_dict=True)
 	
 	if stats:
@@ -205,7 +204,6 @@ def update_location_real_margins(doc):
 		WHERE location_longue_duree_id = %s
 			AND statut_paiement_locataire = 'Payé'
 			AND statut_paiement_proprietaire = 'Payé'
-			AND docstatus != 2
 	""", (doc.location_longue_duree_id,), as_dict=True)
 	
 	if real_margin_stats and real_margin_stats[0].marge_reelle_moyenne:
@@ -219,24 +217,21 @@ def cancel_related_payments(doc):
 	"""Annule les paiements associés à cette mensualité"""
 	# Annule les paiements locataire
 	locataire_payments = frappe.get_all("Paiement Locataire", {
-		"mensualite_id": doc.name,
-		"docstatus": 1
+		"mensualite_id": doc.name
 	})
 	
 	for payment in locataire_payments:
 		pay_doc = frappe.get_doc("Paiement Locataire", payment.name)
-		if pay_doc.docstatus == 1:
-			pay_doc.cancel()
+		pay_doc.cancel()
 	
 	# Annule les paiements propriétaire
 	proprietaire_payments = frappe.get_all("Paiement Propriétaire", {
-		"mensualite_id": doc.name,
-		"docstatus": 1
+		"mensualite_id": doc.name
 	})
 	
 	for payment in proprietaire_payments:
 		pay_doc = frappe.get_doc("Paiement Propriétaire", payment.name)
-		if pay_doc.docstatus == 1:
+		if pay_doc.docstatus != 2:
 			pay_doc.cancel()
 
 
@@ -259,7 +254,7 @@ def calculate_charges_impact(doc):
 		AND statut = 'Validée'
 		AND MONTH(date_charge) = %s
 		AND YEAR(date_charge) = %s
-		AND docstatus != 2
+
 	""", (doc.location_longue_duree_id, 
 		  int(doc.mois_annee.split('/')[0]), 
 		  int(doc.mois_annee.split('/')[1])), as_dict=True)

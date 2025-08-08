@@ -17,6 +17,7 @@ class LocationCourteDuree(Document):
 		self.validate_prix()
 		self.validate_email()
 		self.validate_referent()
+		self.validate_location_bloc()
 	
 	def validate_appartement(self):
 		"""Valide que l'appartement existe et est disponible"""
@@ -56,14 +57,93 @@ class LocationCourteDuree(Document):
 				frappe.throw("Format d'email invalide pour le locataire")
 	
 	def validate_referent(self):
-		"""Valide que le référent existe et est actif"""
+		"""Valide que le référent existe si spécifié"""
 		if self.referent_id:
 			referent = frappe.get_doc("Referent", self.referent_id)
 			if not referent.actif:
 				frappe.throw(f"Le référent {referent.nom_complet} n'est pas actif")
 	
+	def validate_location_bloc(self):
+		"""Valide la cohérence avec la location bloc si une est sélectionnée"""
+		if self.location_bloc_id:
+			# Vérifier que la location bloc existe et est active
+			location_bloc = frappe.get_doc("Location Bloc", self.location_bloc_id)
+			if location_bloc.statut in ["Annulé", "Terminé"]:
+				frappe.throw("Impossible de créer une sous-location sur un bloc annulé ou terminé")
+			
+			# Vérifier que l'appartement correspond
+			if location_bloc.appartement_id != self.appartement_id:
+				frappe.throw("L'appartement doit correspondre à celui de la location bloc")
+			
+			# Vérifier que les dates sont dans la période du bloc
+			if self.date_debut and self.date_fin:
+				if (getdate(self.date_debut) < getdate(location_bloc.date_debut_bloc) or 
+					getdate(self.date_fin) > getdate(location_bloc.date_fin_bloc)):
+					frappe.throw("Les dates de sous-location doivent être comprises dans la période du bloc")
+			
+			# Calculer automatiquement le prix journalier propriétaire basé sur la quote-part du bloc
+			self.calculate_prix_proprietaire_from_bloc(location_bloc)
+			
+			# Vérifier les chevauchements avec d'autres sous-locations
+			self.check_bloc_overlaps()
+	
+	def calculate_prix_proprietaire_from_bloc(self, location_bloc):
+		"""Calcule automatiquement le prix journalier propriétaire basé sur la quote-part du bloc"""
+		try:
+			# Récupérer la quote-part par nuit du bloc
+			quote_part_nuit = location_bloc.get_quote_part_nuit()
+			
+			if quote_part_nuit > 0:
+				# Définir le prix journalier propriétaire égal à la quote-part
+				self.prix_journalier_proprietaire = quote_part_nuit
+				frappe.msgprint(f"Prix journalier propriétaire calculé automatiquement: {quote_part_nuit} (basé sur la quote-part du bloc)")
+			else:
+				frappe.msgprint("Impossible de calculer le prix propriétaire: quote-part du bloc non définie")
+				
+		except Exception as e:
+			frappe.log_error(f"Erreur calcul prix propriétaire depuis bloc {self.location_bloc_id}: {str(e)}")
+			frappe.msgprint("Erreur lors du calcul automatique du prix propriétaire")
+
+	def check_bloc_overlaps(self):
+		"""Vérifie les chevauchements avec d'autres sous-locations du même bloc"""
+		if not self.location_bloc_id or not self.date_debut or not self.date_fin:
+			return
+		
+		# Modifié pour permettre qu'une date de fin soit égale à une date de début
+		overlapping = frappe.db.sql("""
+			SELECT name, locataire_nom, date_debut, date_fin
+			FROM `tabLocation Courte Duree`
+			WHERE location_bloc_id = %s
+			AND name != %s
+			AND statut NOT IN ('Annulé')
+			AND (
+				(date_debut < %s AND date_fin > %s)
+				OR (date_debut < %s AND date_fin > %s)
+				OR (date_debut > %s AND date_fin < %s)
+			)
+		""", (
+			self.location_bloc_id, self.name or '',
+			self.date_fin, self.date_debut,
+			self.date_fin, self.date_debut,
+			self.date_debut, self.date_fin
+		))
+		
+		if overlapping:
+			conflict = overlapping[0]
+			frappe.throw(f"Conflit de dates avec la sous-location {conflict[0]} ({conflict[1]}) du {conflict[2]} au {conflict[3]}")
+	
+	def set_type_location(self):
+		"""Détermine automatiquement le type de location selon la présence d'une Location Bloc"""
+		if self.location_bloc_id:
+			self.type_location = "Sous-location"
+		else:
+			self.type_location = "Directe"
+	
 	def before_save(self):
 		"""Actions avant sauvegarde"""
+		# Détermine automatiquement le type de location
+		self.set_type_location()
+		
 		# Calcule le nombre de nuits
 		self.calculate_nights()
 		
@@ -85,11 +165,40 @@ class LocationCourteDuree(Document):
 			self.nombre_nuits = (end_date - start_date).days
 	
 	def calculate_amounts(self):
-		"""Calcule les montants totaux et la marge"""
-		if self.nombre_nuits and self.prix_journalier_locataire and self.prix_journalier_proprietaire:
+		"""Calcule les montants totaux"""
+		if self.nombre_nuits and self.prix_journalier_locataire:
 			self.montant_total_locataire = self.nombre_nuits * self.prix_journalier_locataire
-			self.montant_total_proprietaire = self.nombre_nuits * self.prix_journalier_proprietaire
-			self.marge_totale = self.montant_total_locataire - self.montant_total_proprietaire
+			
+			# Calculs spécifiques selon le type de location
+			if self.type_location == "Sous-location" and self.location_bloc_id:
+				self.calculate_bloc_amounts()
+			elif self.prix_journalier_proprietaire:
+				# Location directe classique
+				self.montant_total_proprietaire = self.nombre_nuits * self.prix_journalier_proprietaire
+				self.marge_totale = self.montant_total_locataire - self.montant_total_proprietaire
+	
+	def calculate_bloc_amounts(self):
+		"""Calcule les montants pour une sous-location en bloc"""
+		try:
+			location_bloc = frappe.get_doc("Location Bloc", self.location_bloc_id)
+			
+			# Calculer la quote-part par nuit du bloc
+			quote_part_nuit = location_bloc.get_quote_part_nuit()
+			self.quote_part_bloc = quote_part_nuit * self.nombre_nuits
+			
+			# La marge sur bloc = revenus locataire - quote-part bloc
+			self.marge_sur_bloc = self.montant_total_locataire - self.quote_part_bloc
+			
+			# Pour compatibilité avec le système existant
+			self.montant_total_proprietaire = self.quote_part_bloc
+			self.marge_totale = self.marge_sur_bloc
+			
+		except Exception as e:
+			frappe.log_error(f"Erreur calcul montants bloc pour {self.name}: {str(e)}")
+			# En cas d'erreur, utiliser le calcul classique
+			if self.prix_journalier_proprietaire:
+				self.montant_total_proprietaire = self.nombre_nuits * self.prix_journalier_proprietaire
+				self.marge_totale = self.montant_total_locataire - self.montant_total_proprietaire
 	
 	def calculate_referent_commission(self):
 		"""Calcule la commission du référent"""
@@ -100,37 +209,9 @@ class LocationCourteDuree(Document):
 		else:
 			self.commission_referent = 0
 	
-	def on_update(self):
-		"""Actions après mise à jour"""
-		# Crée la commission si le statut devient confirmé et qu'il y a un référent
-		if (self.statut == "Confirmé" and self.has_value_changed("statut") and 
-			self.referent_id and self.commission_referent > 0):
-			self.create_commission()
+
 	
-	def create_commission(self):
-		"""Crée la commission pour le référent"""
-		# Vérifie si la commission n'existe pas déjà
-		existing_commission = frappe.get_all("Commission",
-			filters={"location_courte_duree_id": self.name})
-		
-		if not existing_commission:
-			referent = frappe.get_doc("Referent", self.referent_id)
-			
-			# Vérification que le référent a un pourcentage de commission défini
-			if not referent.pourcentage_commission_defaut:
-				frappe.throw(f"Le référent {referent.nom_complet} n'a pas de pourcentage de commission défini")
-			
-			commission = frappe.get_doc({
-				"doctype": "Commission",
-				"location_courte_duree_id": self.name,
-				"referent_id": self.referent_id,
-				"montant_commission": self.commission_referent,
-				"pourcentage_commission": referent.pourcentage_commission_defaut,
-				"statut_paiement": "En attente",
-				"date_creation": self.date_fin
-			})
-			commission.insert()
-			frappe.msgprint(f"Commission créée pour le référent {referent.nom_complet}")
+
 	
 	@frappe.whitelist()
 	def get_commission(self):
@@ -165,17 +246,20 @@ class LocationCourteDuree(Document):
 			"marge_nette": net_margin
 		}
 	
-	def on_cancel(self):
-		"""Actions lors de l'annulation"""
-		# Supprime la commission associée
-		commissions = frappe.get_all("Commission", 
-			filters={"location_courte_duree_id": self.name})
-		
-		for commission in commissions:
-			commission_doc = frappe.get_doc("Commission", commission.name)
-			if commission_doc.statut != "Payé":
-				commission_doc.cancel()
-				commission_doc.delete()
+
+	
+
+	
+	def update_location_bloc_metrics(self):
+		"""Met à jour les métriques de la location bloc"""
+		try:
+			if self.location_bloc_id:
+				location_bloc = frappe.get_doc("Location Bloc", self.location_bloc_id)
+				location_bloc.reload()
+				location_bloc.update_metrics()
+				location_bloc.save()
+		except Exception as e:
+			frappe.log_error(f"Erreur MAJ métriques {self.location_bloc_id}: {str(e)[:50]}", "LCD Metrics Error")
 	
 	@frappe.whitelist()
 	def check_availability(self):
@@ -193,7 +277,8 @@ class LocationCourteDuree(Document):
 		
 		for location in conflicting_short:
 			loc_doc = frappe.get_doc("Location Courte Duree", location.name)
-			if (self.date_debut <= loc_doc.date_fin and self.date_fin >= loc_doc.date_debut):
+			# Modifié pour permettre qu'une date de fin soit égale à une date de début
+			if (self.date_debut < loc_doc.date_fin and self.date_fin > loc_doc.date_debut):
 				return {
 					"available": False, 
 					"message": f"Conflit avec la location {loc_doc.name}"
@@ -208,7 +293,8 @@ class LocationCourteDuree(Document):
 		
 		for location in conflicting_long:
 			loc_doc = frappe.get_doc("Location Longue Durée", location.name)
-			if (self.date_debut <= loc_doc.date_fin and self.date_fin >= loc_doc.date_debut):
+			# Modifié pour permettre qu'une date de fin soit égale à une date de début
+			if (self.date_debut < loc_doc.date_fin and self.date_fin > loc_doc.date_debut):
 				return {
 					"available": False, 
 					"message": f"Conflit avec la location longue durée {loc_doc.name}"

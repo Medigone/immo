@@ -212,7 +212,6 @@ def get_payment_status_summary(location_id=None, appartement_id=None, proprietai
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE {where_clause}
 				AND pl.date_paiement BETWEEN '{start_date}' AND '{end_date}'
-				AND pl.docstatus != 2
 		""", as_dict=True)
 		
 		# Statistiques des paiements propriétaire
@@ -233,7 +232,6 @@ def get_payment_status_summary(location_id=None, appartement_id=None, proprietai
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE {where_clause}
 				AND pp.date_paiement BETWEEN '{start_date}' AND '{end_date}'
-				AND pp.docstatus != 2
 		""", as_dict=True)
 		
 		tenant_data = tenant_payments[0] if tenant_payments else {}
@@ -382,7 +380,6 @@ def get_overdue_payments(days_overdue=30):
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE m.statut_paiement_locataire = 'En attente'
 				AND STR_TO_DATE(CONCAT(m.mois_annee, '-01'), '%m/%Y-%d') <= %s
-				AND m.docstatus != 2
 				AND lld.statut = 'Actif'
 			ORDER BY STR_TO_DATE(CONCAT(m.mois_annee, '-01'), '%m/%Y-%d') ASC
 		""", (cutoff_date,), as_dict=True)
@@ -407,7 +404,6 @@ def get_overdue_payments(days_overdue=30):
 			LEFT JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE pp.statut = 'En attente'
 				AND pp.date_paiement <= %s
-				AND pp.docstatus != 2
 			ORDER BY pp.date_paiement ASC
 		""", (cutoff_date,), as_dict=True)
 		

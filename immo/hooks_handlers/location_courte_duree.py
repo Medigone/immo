@@ -22,21 +22,35 @@ def validate(doc, method):
 
 def on_update(doc, method):
 	"""Actions après mise à jour"""
-	# Met à jour le statut de l'appartement
-	update_apartment_status(doc)
+	# Crée la commission s'il y a un référent
+	if doc.referent_id and doc.commission_referent > 0:
+		create_commission_for_location(doc)
 	
 	# Recalcule les commissions si nécessaire
-	if doc.statut == "Confirmé":
-		update_related_commissions(doc)
-
-
-def on_cancel(doc, method):
-	"""Actions lors de l'annulation"""
-	# Annule les commissions associées
-	cancel_related_commissions(doc)
+	update_related_commissions(doc)
 	
-	# Remet l'appartement en statut disponible
-	reset_apartment_status(doc)
+	# Crée automatiquement un paiement locataire pour toute location courte durée
+	create_paiement_locataire_for_confirmed_location(doc)
+	
+	# Mettre à jour les métriques de la location bloc si liée à un bloc
+	if doc.location_bloc_id:
+		update_location_bloc_metrics_after_update(doc)
+		
+		# Publier l'événement en temps réel pour mettre à jour le calendrier
+		frappe.publish_realtime(
+			'location_bloc_updated',
+			{
+				'location_bloc_id': doc.location_bloc_id,
+				'action': 'location_updated',
+				'location_courte_duree_id': doc.name,
+				'date_debut': str(doc.date_debut),
+				'date_fin': str(doc.date_fin),
+				'locataire_nom': doc.locataire_nom
+			}
+		)
+
+
+
 
 
 def check_date_overlap(doc):
@@ -45,19 +59,19 @@ def check_date_overlap(doc):
 		return
 	
 	# Recherche les réservations existantes qui se chevauchent
+	# Modifié pour permettre qu'une date de fin soit égale à une date de début
 	overlapping_bookings = frappe.db.sql("""
 		SELECT name, date_debut, date_fin, locataire_nom
 		FROM `tabLocation Courte Duree`
 		WHERE appartement_id = %s
 			AND name != %s
-			AND statut IN ('Confirmé', 'En cours')
 			AND (
-				(date_debut <= %s AND date_fin >= %s)
-				OR (date_debut <= %s AND date_fin >= %s)
-				OR (date_debut >= %s AND date_fin <= %s)
+				(date_debut < %s AND date_fin > %s)
+				OR (date_debut < %s AND date_fin > %s)
+				OR (date_debut > %s AND date_fin < %s)
 			)
-	""", (doc.appartement_id, doc.name or '', doc.date_debut, doc.date_debut,
-		  doc.date_fin, doc.date_fin, doc.date_debut, doc.date_fin), as_dict=True)
+	""", (doc.appartement_id, doc.name or '', doc.date_fin, doc.date_debut,
+		  doc.date_fin, doc.date_debut, doc.date_debut, doc.date_fin), as_dict=True)
 	
 	if overlapping_bookings:
 		overlap_details = []
@@ -70,18 +84,18 @@ def check_date_overlap(doc):
 		)
 	
 	# Vérifie aussi les conflits avec les locations longue durée
+	# Modifié pour permettre qu'une date de fin soit égale à une date de début
 	overlapping_long_term = frappe.db.sql("""
 		SELECT name, date_debut, date_fin, locataire_nom
 		FROM `tabLocation Longue Duree`
 		WHERE appartement_id = %s
-			AND statut = 'Actif'
 			AND (
-				(date_debut <= %s AND date_fin >= %s)
-				OR (date_debut <= %s AND date_fin >= %s)
-				OR (date_debut >= %s AND date_fin <= %s)
+				(date_debut < %s AND date_fin > %s)
+				OR (date_debut < %s AND date_fin > %s)
+				OR (date_debut > %s AND date_fin < %s)
 			)
-	""", (doc.appartement_id, doc.date_debut, doc.date_debut,
-		  doc.date_fin, doc.date_fin, doc.date_debut, doc.date_fin), as_dict=True)
+	""", (doc.appartement_id, doc.date_fin, doc.date_debut,
+		  doc.date_fin, doc.date_debut, doc.date_debut, doc.date_fin), as_dict=True)
 	
 	if overlapping_long_term:
 		frappe.throw(
@@ -143,43 +157,17 @@ def validate_dates(doc):
 		if getdate(doc.date_debut) >= getdate(doc.date_fin):
 			frappe.throw("La date de fin doit être postérieure à la date de début")
 	
-	# Vérifie que les dates ne sont pas trop dans le passé (sauf pour les statuts terminés)
-	if doc.statut not in ["Terminé", "Annulé"] and doc.date_debut:
+	# Vérifie que les dates ne sont pas trop dans le passé
+	if doc.date_debut:
 		if getdate(doc.date_debut) < getdate(nowdate()):
-			# Permet les réservations qui commencent aujourd'hui
-			if getdate(doc.date_debut) < getdate(nowdate()):
-				frappe.msgprint(
-					"Attention: La date de début est dans le passé",
-					title="Date dans le passé",
-					indicator="orange"
-				)
+			frappe.msgprint(
+				"Attention: La date de début est dans le passé",
+				title="Date dans le passé",
+				indicator="orange"
+			)
 
 
-def update_apartment_status(doc):
-	"""Met à jour le statut de l'appartement"""
-	if doc.statut == "Confirmé":
-		# Pour les locations courtes, on ne change pas le statut global de l'appartement
-		# mais on peut ajouter une logique de disponibilité par période
-		pass
-	elif doc.statut in ["Terminé", "Annulé"]:
-		# Vérifie s'il n'y a pas d'autres réservations actives pour aujourd'hui
-		today = nowdate()
-		active_bookings = frappe.db.exists("Location Courte Duree", {
-			"appartement_id": doc.appartement_id,
-			"statut": ["in", ["Confirmé", "En cours"]],
-			"date_debut": ["<=", today],
-			"date_fin": [">=", today],
-			"name": ["!=", doc.name]
-		})
-		
-		# Vérifie aussi les locations longue durée
-		long_term_active = frappe.db.exists("Location Longue Duree", {
-			"appartement_id": doc.appartement_id,
-			"statut": "Actif"
-		})
-		
-		if not active_bookings and not long_term_active:
-			frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
+
 
 
 def update_related_commissions(doc):
@@ -199,39 +187,58 @@ def update_related_commissions(doc):
 			frappe.db.commit()
 
 
-def cancel_related_commissions(doc):
-	"""Annule les commissions associées"""
+def on_trash(doc, method):
+	"""Actions lors de la suppression définitive"""
+	# Supprimer les commissions associées
 	commissions = frappe.get_all("Commission", {
-		"location_courte_duree_id": doc.name,
-		"docstatus": 1
+		"location_courte_duree_id": doc.name
 	})
 	
 	for commission in commissions:
-		comm_doc = frappe.get_doc("Commission", commission.name)
-		if comm_doc.docstatus == 1:
-			comm_doc.cancel()
-
-
-def reset_apartment_status(doc):
-	"""Remet l'appartement en statut disponible si nécessaire"""
-	# Vérifie s'il n'y a pas d'autres réservations actives
-	today = nowdate()
-	active_bookings = frappe.db.exists("Location Courte Duree", {
-		"appartement_id": doc.appartement_id,
-		"statut": ["in", ["Confirmé", "En cours"]],
-		"date_debut": ["<=", today],
-		"date_fin": [">=", today],
-		"name": ["!=", doc.name]
+		try:
+			frappe.delete_doc("Commission", commission.name, force=True)
+		except Exception as e:
+			frappe.log_error(f"Erreur suppression commission {commission.name}: {str(e)}")
+	
+	# Supprimer les paiements locataires associés
+	paiements = frappe.get_all("Paiement Locataire", {
+		"location_courte_duree_id": doc.name
 	})
 	
-	# Vérifie aussi les locations longue durée
-	long_term_active = frappe.db.exists("Location Longue Duree", {
-		"appartement_id": doc.appartement_id,
-		"statut": "Actif"
-	})
+	for paiement in paiements:
+		try:
+			frappe.delete_doc("Paiement Locataire", paiement.name, force=True)
+		except Exception as e:
+			frappe.log_error(f"Erreur suppression paiement {paiement.name}: {str(e)}")
 	
-	if not active_bookings and not long_term_active:
-		frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
+	# Mettre à jour les métriques de la location bloc si liée à un bloc
+	if doc.location_bloc_id:
+		update_location_bloc_metrics_after_deletion(doc)
+		
+		# Publier l'événement en temps réel pour mettre à jour le calendrier
+		frappe.publish_realtime(
+			'location_bloc_updated',
+			{
+				'location_bloc_id': doc.location_bloc_id,
+				'action': 'location_deleted',
+				'location_courte_duree_id': doc.name,
+				'date_debut': str(doc.date_debut),
+				'date_fin': str(doc.date_fin),
+				'locataire_nom': doc.locataire_nom
+			}
+		)
+	
+	# Log de la suppression pour audit
+	frappe.log_error(
+		f"LCD {doc.name} supprimée - {doc.locataire_nom} ({doc.date_debut} - {doc.date_fin})",
+		"LCD Suppression"
+	)
+
+
+
+
+
+
 
 
 def calculate_dynamic_pricing(doc):
@@ -258,3 +265,113 @@ def calculate_dynamic_pricing(doc):
 				base_price *= 1.1
 		
 		doc.prix_journalier_locataire = base_price
+
+
+def create_paiement_locataire_for_confirmed_location(doc):
+	"""Crée automatiquement un paiement locataire pour une location courte durée"""
+	# Vérifie si un paiement existe déjà pour cette location
+	existing_payment = frappe.db.exists("Paiement Locataire", {
+		"location_courte_duree_id": doc.name
+	})
+	
+	if existing_payment:
+		return
+	
+	# Vérifie que les montants sont définis
+	if not doc.montant_total_locataire or doc.montant_total_locataire <= 0:
+		return
+	
+	try:
+		# Crée le paiement locataire
+		paiement = frappe.new_doc("Paiement Locataire")
+		paiement.location_courte_duree_id = doc.name
+		
+		# Ajoute location_bloc_id seulement si elle existe
+		if doc.location_bloc_id:
+			paiement.location_bloc_id = doc.location_bloc_id
+		
+		paiement.montant = doc.montant_total_locataire
+		paiement.date_paiement = doc.date_debut
+		paiement.type_paiement = "Autre"
+		paiement.methode_paiement = "Virement"
+		paiement.statut = "En attente"
+		paiement.commentaires = f"Paiement automatique pour LCD {doc.name}"
+		paiement.insert()
+		
+		frappe.msgprint(
+			f"Paiement locataire créé automatiquement: {paiement.name} ({paiement.montant} EUR)",
+			title="Paiement créé",
+			indicator="green"
+		)
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur paiement auto LCD {doc.name}: {str(e)[:100]}")
+		frappe.msgprint(
+			f"Erreur lors de la création du paiement automatique: {str(e)}",
+			title="Erreur",
+			indicator="red"
+		)
+
+
+def create_commission_for_location(doc):
+	"""Crée la commission pour le référent"""
+	# Vérifie si la commission n'existe pas déjà
+	existing_commission = frappe.get_all("Commission",
+		filters={"location_courte_duree_id": doc.name})
+	
+	if not existing_commission:
+		referent = frappe.get_doc("Referent", doc.referent_id)
+		
+		# Vérification que le référent a un pourcentage de commission défini
+		if not referent.pourcentage_commission_defaut:
+			frappe.throw(f"Le référent {referent.nom_complet} n'a pas de pourcentage de commission défini")
+		
+		commission = frappe.get_doc({
+			"doctype": "Commission",
+			"location_courte_duree_id": doc.name,
+			"referent_id": doc.referent_id,
+			"montant_commission": doc.commission_referent,
+			"pourcentage_commission": referent.pourcentage_commission_defaut,
+			"statut_paiement": "En attente",
+			"date_creation": doc.date_fin
+		})
+		commission.insert()
+		frappe.msgprint(f"Commission créée pour le référent {referent.nom_complet}")
+
+
+def update_location_bloc_metrics_after_update(doc):
+	"""Met à jour les métriques de la location bloc après mise à jour d'une location courte durée"""
+	try:
+		location_bloc = frappe.get_doc("Location Bloc", doc.location_bloc_id)
+		location_bloc.update_metrics()
+		# Utilise frappe.db.set_value pour éviter les conflits de timestamp
+		frappe.db.set_value("Location Bloc", doc.location_bloc_id, {
+			"paiements_prevus": location_bloc.paiements_prevus,
+			"total_encaisse": location_bloc.total_encaisse,
+			"paiements_totaux": location_bloc.paiements_totaux,
+			"marge_totale": location_bloc.marge_totale,
+			"rentabilite_pourcentage": location_bloc.rentabilite_pourcentage,
+			"taux_occupation": location_bloc.taux_occupation
+		})
+		frappe.db.commit()
+	except Exception as e:
+		frappe.log_error(f"Erreur MAJ métriques après mise à jour {doc.location_bloc_id}: {str(e)}", "LCD Metrics Update Error")
+
+
+def update_location_bloc_metrics_after_deletion(doc):
+	"""Met à jour les métriques de la location bloc après suppression d'une location courte durée"""
+	try:
+		location_bloc = frappe.get_doc("Location Bloc", doc.location_bloc_id)
+		location_bloc.update_metrics()
+		# Utilise frappe.db.set_value pour éviter les conflits de timestamp
+		frappe.db.set_value("Location Bloc", doc.location_bloc_id, {
+			"paiements_prevus": location_bloc.paiements_prevus,
+			"total_encaisse": location_bloc.total_encaisse,
+			"paiements_totaux": location_bloc.paiements_totaux,
+			"marge_totale": location_bloc.marge_totale,
+			"rentabilite_pourcentage": location_bloc.rentabilite_pourcentage,
+			"taux_occupation": location_bloc.taux_occupation
+		})
+		frappe.db.commit()
+	except Exception as e:
+		frappe.log_error(f"Erreur MAJ métriques après suppression {doc.location_bloc_id}: {str(e)}", "LCD Metrics Delete Error")

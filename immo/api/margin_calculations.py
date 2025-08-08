@@ -154,7 +154,6 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
 			WHERE lld.appartement_id = %s
 				AND m.creation BETWEEN %s AND %s
-				AND m.docstatus != 2
 		""", (appartement_id, start_date, end_date), as_dict=True)
 		
 		# Marges des locations courte durée
@@ -167,7 +166,6 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 			FROM `tabLocation Courte Duree` lcd
 			WHERE lcd.appartement_id = %s
 				AND lcd.date_debut BETWEEN %s AND %s
-				AND lcd.docstatus != 2
 		""", (appartement_id, start_date, end_date), as_dict=True)
 		
 		# Commissions
@@ -180,7 +178,6 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 			INNER JOIN `tabLocation Courte Duree` lcd ON c.location_courte_duree_id = lcd.name
 			WHERE lcd.appartement_id = %s
 				AND c.creation BETWEEN %s AND %s
-				AND c.docstatus != 2
 		""", (appartement_id, start_date, end_date), as_dict=True)
 		
 		# Charges
@@ -193,7 +190,6 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 			FROM `tabCharge` ch
 			WHERE ch.appartement_id = %s
 				AND ch.date_charge BETWEEN %s AND %s
-				AND ch.docstatus != 2
 		""", (appartement_id, start_date, end_date), as_dict=True)
 		
 		# Compilation des résultats

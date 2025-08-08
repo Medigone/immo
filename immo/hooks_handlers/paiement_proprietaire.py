@@ -11,6 +11,10 @@ def on_update(doc, method):
 	if doc.statut == "Payé" and doc.type_paiement == "Loyer mensuel":
 		update_mensualite_status(doc)
 	
+	# Traite les paiements de référents pour les locations courte durée
+	if doc.statut == "Payé" and doc.location_courte_duree_id:
+		process_referent_payment(doc)
+	
 	# Met à jour les statistiques du propriétaire
 	update_proprietaire_statistics(doc)
 	
@@ -160,7 +164,6 @@ def update_proprietaire_statistics(doc):
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE a.proprietaire_id = %s
-				AND pp.docstatus != 2
 				AND YEAR(pp.date_paiement) = YEAR(CURDATE())
 		""", (proprietaire_id,), as_dict=True)
 		
@@ -220,7 +223,7 @@ def update_location_payout_statistics(doc):
 				OR location_longue_duree_id = %s
 				OR location_courte_duree_id = %s
 			)
-			AND docstatus != 2
+
 		""", (location_id, location_id, location_id), as_dict=True)
 		
 		if stats:
@@ -273,7 +276,6 @@ def update_apartment_payout_statistics(doc):
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
 				AND pp.statut = 'Payé'
-				AND pp.docstatus != 2
 				AND YEAR(pp.date_paiement) = YEAR(CURDATE())
 		""", (appartement_id, appartement_id), as_dict=True)
 		
@@ -487,11 +489,9 @@ def auto_schedule_payouts():
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE m.statut_paiement_locataire = 'Payé'
 				AND m.statut_paiement_proprietaire = 'En attente'
-				AND m.docstatus != 2
 				AND NOT EXISTS (
 					SELECT 1 FROM `tabPaiement Propriétaire` pp 
-					WHERE pp.mensualite_id = m.name 
-					AND pp.docstatus != 2
+					WHERE pp.mensualite_id = m.name
 				)
 		""", as_dict=True)
 		
@@ -544,7 +544,6 @@ def calculate_owner_performance_metrics(proprietaire_id, start_date=None, end_da
 			LEFT JOIN `tabPaiement Propriétaire` pp ON (m.name = pp.mensualite_id OR lld.name = pp.location_longue_duree_id OR lcd.name = pp.location_courte_duree_id)
 			WHERE p.name = %s
 				AND (pp.date_paiement IS NULL OR pp.date_paiement BETWEEN %s AND %s)
-				AND (pp.docstatus IS NULL OR pp.docstatus != 2)
 			GROUP BY p.name
 		""", (proprietaire_id, start_date, end_date), as_dict=True)
 		
@@ -555,7 +554,64 @@ def calculate_owner_performance_metrics(proprietaire_id, start_date=None, end_da
 			return metric
 		
 		return {}
-		
+	
 	except Exception as e:
 		frappe.log_error(f"Erreur lors du calcul des métriques propriétaire: {str(e)}")
 		return {}
+
+
+def process_referent_payment(doc):
+	"""Traite automatiquement le paiement du référent pour une location courte durée"""
+	if not doc.location_courte_duree_id:
+		return
+	
+	try:
+		# Récupère la location courte durée
+		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
+		
+		# Vérifie s'il y a un référent
+		if not location.referent_id:
+			return
+		
+		# Vérifie s'il existe déjà une commission pour cette location
+		existing_commission = frappe.db.exists("Commission", {
+			"location_courte_duree_id": doc.location_courte_duree_id,
+			"referent_id": location.referent_id
+		})
+		
+		if existing_commission:
+			# Met à jour le statut de paiement de la commission existante
+			frappe.db.set_value("Commission", existing_commission, {
+				"statut_paiement": "Payé",
+				"date_paiement": doc.date_paiement,
+				"methode_paiement": doc.methode_paiement,
+				"reference_paiement": doc.reference_financiere
+			})
+			frappe.msgprint(f"Commission mise à jour pour le référent {location.referent_id}")
+		else:
+			# Calcule la commission du référent
+			commission_amount = location.calculate_referent_commission()
+			
+			if commission_amount > 0:
+				# Crée un nouveau document Commission
+				commission = frappe.get_doc({
+					"doctype": "Commission",
+					"referent_id": location.referent_id,
+					"location_courte_duree_id": doc.location_courte_duree_id,
+					"montant_commission": commission_amount,
+					"pourcentage_commission": location.pourcentage_commission_referent or 0,
+					"date_creation": nowdate(),
+					"statut_paiement": "Payé",
+					"date_paiement": doc.date_paiement,
+					"methode_paiement": doc.methode_paiement,
+					"reference_paiement": doc.reference_financiere,
+					"commentaires": f"Paiement automatique suite au versement propriétaire {doc.name}"
+				})
+				commission.insert()
+				commission.submit()
+				
+				frappe.msgprint(f"Commission de {commission_amount} € créée et payée pour le référent {location.referent_id}")
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors du traitement du paiement référent: {str(e)}", "Process Referent Payment Error")
+		frappe.msgprint(f"Erreur lors du traitement du paiement référent: {str(e)}", indicator="red")

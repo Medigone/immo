@@ -24,11 +24,9 @@ class Commission(Document):
 				frappe.throw(_("Le référent {0} n'est pas actif").format(referent.nom_complet))
 	
 	def validate_location_status(self):
-		"""Valide que la location courte durée existe et n'est pas annulée"""
+		"""Valide que la location courte durée existe"""
 		if self.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
-			if location.statut == "Annulé":
-				frappe.throw(_("Impossible de créer une commission pour une location annulée"))
 	
 	def validate_commission_amount(self):
 		"""Valide le montant de la commission"""

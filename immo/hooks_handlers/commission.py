@@ -127,7 +127,7 @@ def update_referent_statistics(doc):
 			COUNT(DISTINCT location_courte_duree_id) as nombre_locations
 		FROM `tabCommission`
 		WHERE referent_id = %s
-			AND docstatus != 2
+
 	""", (doc.referent_id,), as_dict=True)
 	
 	# Les statistiques sont calculées dynamiquement via les méthodes du DocType Referent
@@ -288,7 +288,7 @@ def calculate_referent_performance_metrics(referent_id, period_start=None, perio
 		FROM `tabCommission` c
 		JOIN `tabLocation Courte Duree` l ON c.location_courte_duree_id = l.name
 		WHERE c.referent_id = %s
-			AND c.docstatus != 2
+
 			{date_filter}
 	""", params, as_dict=True)
 	
@@ -330,7 +330,7 @@ def generate_commission_report(referent_id=None, period_start=None, period_end=N
 		JOIN `tabLocation Courte Duree` l ON c.location_courte_duree_id = l.name
 		JOIN `tabAppartement` a ON l.appartement_id = a.name
 		{where_clause}
-		AND c.docstatus != 2
+
 		ORDER BY c.creation DESC
 	""", params, as_dict=True)
 	

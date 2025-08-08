@@ -44,7 +44,7 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
 			WHERE {where_clause}
 				AND (m.creation IS NULL OR m.creation BETWEEN '{start_date}' AND '{end_date}')
-				AND (m.docstatus IS NULL OR m.docstatus != 2)
+	
 			GROUP BY a.name, p.name
 			ORDER BY total_marge_mensuelle DESC
 		""", as_dict=True)
@@ -67,7 +67,7 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			WHERE {where_clause}
 				AND (lcd.date_debut IS NULL OR lcd.date_debut BETWEEN '{start_date}' AND '{end_date}')
-				AND (lcd.docstatus IS NULL OR lcd.docstatus != 2)
+	
 			GROUP BY a.name, p.name
 			ORDER BY total_marge DESC
 		""", as_dict=True)
@@ -87,7 +87,7 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id
 			WHERE {where_clause}
 				AND (ch.date_charge IS NULL OR ch.date_charge BETWEEN '{start_date}' AND '{end_date}')
-				AND (ch.docstatus IS NULL OR ch.docstatus != 2)
+	
 			GROUP BY a.name
 			ORDER BY total_charges DESC
 		""", as_dict=True)
@@ -100,14 +100,14 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 				SUM(c.montant_commission) as total_commissions,
 				COUNT(c.name) as nombre_commissions,
 				AVG(c.pourcentage_commission) as pourcentage_moyen,
-				SUM(CASE WHEN c.statut = 'Payé' THEN c.montant_commission ELSE 0 END) as commissions_payees
+				SUM(c.montant_commission) as commissions_payees
 			FROM `tabAppartement` a
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			LEFT JOIN `tabCommission` c ON lcd.name = c.location_courte_duree_id
 			WHERE {where_clause}
 				AND (c.creation IS NULL OR c.creation BETWEEN '{start_date}' AND '{end_date}')
-				AND (c.docstatus IS NULL OR c.docstatus != 2)
+	
 			GROUP BY a.name
 			ORDER BY total_commissions DESC
 		""", as_dict=True)
@@ -275,7 +275,7 @@ def generate_occupancy_report(start_date=None, end_date=None, appartement_id=Non
 			FROM `tabAppartement` a
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
-				AND lld.statut IN ('Actif', 'Terminé')
+
 				AND lld.date_debut <= '{end_date}'
 				AND (lld.date_fin IS NULL OR lld.date_fin >= '{start_date}')
 			WHERE {where_clause}
@@ -298,7 +298,7 @@ def generate_occupancy_report(start_date=None, end_date=None, appartement_id=Non
 				) as jours_occupation_courte
 			FROM `tabAppartement` a
 			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
-				AND lcd.statut IN ('Confirmé', 'Terminé')
+
 				AND lcd.date_debut <= '{end_date}'
 				AND lcd.date_fin >= '{start_date}'
 			WHERE {where_clause}
@@ -392,9 +392,9 @@ def generate_commission_report(start_date=None, end_date=None, referent_id=None)
 				r.telephone as referent_telephone,
 				COUNT(c.name) as nombre_commissions,
 				SUM(c.montant_commission) as total_commissions,
-				SUM(CASE WHEN c.statut = 'Payé' THEN c.montant_commission ELSE 0 END) as commissions_payees,
-				SUM(CASE WHEN c.statut = 'En attente' THEN c.montant_commission ELSE 0 END) as commissions_en_attente,
-				SUM(CASE WHEN c.statut = 'Rejeté' THEN c.montant_commission ELSE 0 END) as commissions_rejetees,
+				SUM(c.montant_commission) as commissions_payees,
+			SUM(c.montant_commission) as commissions_en_attente,
+			SUM(c.montant_commission) as commissions_rejetees,
 				AVG(c.pourcentage_commission) as pourcentage_moyen,
 				COUNT(DISTINCT lcd.name) as nombre_locations_referees,
 				COUNT(DISTINCT a.name) as nombre_appartements_referes,
@@ -406,7 +406,7 @@ def generate_commission_report(start_date=None, end_date=None, referent_id=None)
 			LEFT JOIN `tabAppartement` a ON lcd.appartement_id = a.name
 			WHERE {where_clause}
 				AND (c.creation IS NULL OR c.creation BETWEEN '{start_date}' AND '{end_date}')
-				AND (c.docstatus IS NULL OR c.docstatus != 2)
+	
 			GROUP BY r.name
 			ORDER BY total_commissions DESC
 		""", as_dict=True)
@@ -418,7 +418,7 @@ def generate_commission_report(start_date=None, end_date=None, referent_id=None)
 				c.referent_id,
 				c.montant_commission,
 				c.pourcentage_commission,
-				c.statut as commission_statut,
+				1 as commission_statut,
 				c.date_paiement as commission_date_paiement,
 				c.creation as commission_creation,
 				lcd.name as location_id,
@@ -435,7 +435,7 @@ def generate_commission_report(start_date=None, end_date=None, referent_id=None)
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE {where_clause}
 				AND c.creation BETWEEN '{start_date}' AND '{end_date}'
-				AND c.docstatus != 2
+	
 			ORDER BY r.name, c.creation DESC
 		""", as_dict=True)
 		
@@ -525,7 +525,7 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id
 			WHERE {where_clause}
 				AND (ch.date_charge IS NULL OR ch.date_charge BETWEEN '{start_date}' AND '{end_date}')
-				AND (ch.docstatus IS NULL OR ch.docstatus != 2)
+	
 			GROUP BY a.name, ch.type_charge
 			ORDER BY a.adresse, ch.type_charge
 		""", as_dict=True)
@@ -545,7 +545,7 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE {where_clause}
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
-				AND ch.docstatus != 2
+	
 			GROUP BY ch.type_charge
 			ORDER BY total_montant DESC
 		""", as_dict=True)
@@ -562,7 +562,6 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE {where_clause}
 				AND ch.date_charge BETWEEN '{start_date}' AND '{end_date}'
-				AND ch.docstatus != 2
 			GROUP BY DATE_FORMAT(ch.date_charge, '%Y-%m')
 			ORDER BY mois
 		""", as_dict=True)

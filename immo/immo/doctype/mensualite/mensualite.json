@@ -169,16 +169,7 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Paiement Locataire",
-   "link_fieldname": "mensualite_id"
-  },
-  {
-   "link_doctype": "Paiement Proprietaire",
-   "link_fieldname": "mensualite_id"
-  }
- ],
+ "links": [],
  "modified": "2024-01-01 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Immo",

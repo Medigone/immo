@@ -29,13 +29,9 @@ class PaiementProprietaire(Document):
 		
 		if self.location_longue_duree_id:
 			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
-			if location.statut not in ["Actif", "Terminé"]:
-				frappe.throw(_("La location longue durée doit être active ou terminée"))
 		
 		if self.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
-			if location.statut not in ["Confirmé", "Terminé"]:
-				frappe.throw(_("La location courte duree doit être confirmée ou terminée"))
 	
 	def validate_amount(self):
 		"""Valide le montant du paiement"""
@@ -90,9 +86,10 @@ class PaiementProprietaire(Document):
 			self.update_mensualite_status()
 	
 	def update_mensualite_status(self):
-		"""Met à jour le statut de paiement de la mensualité"""
-		mensualite = frappe.get_doc("Mensualite", self.mensualite_id)
-		if self.type_paiement == "Loyer mensuel":
+		"""Met à jour le statut de paiement de la mensualité (uniquement pour les locations longue durée)"""
+		# Ne met à jour la mensualité que si elle existe (locations longue durée)
+		if self.mensualite_id and self.type_paiement == "Loyer mensuel":
+			mensualite = frappe.get_doc("Mensualite", self.mensualite_id)
 			mensualite.statut_paiement_proprietaire = "Payé"
 			mensualite.date_paiement_proprietaire = self.date_paiement
 			mensualite.methode_paiement_proprietaire = self.methode_paiement
