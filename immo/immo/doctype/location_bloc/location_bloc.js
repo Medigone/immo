@@ -1,4 +1,4 @@
-// Location Bloc JavaScript - v6
+// Location Bloc JavaScript - v8
 frappe.ui.form.on('Location Bloc', {
 	onload: function (frm) {
 		frm.trigger('update_dashboard');
@@ -31,7 +31,8 @@ frappe.ui.form.on('Location Bloc', {
 
 	refresh: function (frm) {
 		if (frm.doc.name) {
-			frm.add_custom_button(__('Créer Location Courte Durée'), function () {
+			// Bouton pour créer une Location Courte Durée
+			frm.add_custom_button(__('Location Courte Durée'), function () {
 				let dialog = new frappe.ui.Dialog({
 					title: __('Créer une Location Courte Durée'),
 					fields: [
@@ -71,7 +72,8 @@ frappe.ui.form.on('Location Bloc', {
 				dialog.show();
 			}, __('Créer'));
 
-			frm.add_custom_button(__('Créer Paiement Bloc'), function () {
+			// Bouton pour créer un Paiement Bloc
+			frm.add_custom_button(__('Paiement Bloc'), function () {
 				let dialog = new frappe.ui.Dialog({
 					title: __('Créer un Paiement Bloc'),
 					fields: [
@@ -113,7 +115,7 @@ frappe.ui.form.on('Location Bloc', {
 					}
 				});
 				dialog.show();
-			});
+			}, __('Créer'));
 		}
 
 		frm.trigger('update_dashboard');
@@ -131,16 +133,28 @@ frappe.ui.form.on('Location Bloc', {
 		let dashboard_html = `
 			<div style="
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-				gap: 12px;
+				grid-template-rows: auto auto;
+				gap: 16px;
 				font-family: 'Inter', sans-serif;
-				align-items: stretch;
 			">
-				${createStatCard("Rentabilité", rentabilite.toFixed(1) + "%", "Marge : " + format_currency(frm.doc.marge_totale || 0, 'EUR'), rentabilite)}
-				${createStatCard("Paiements Propriétaire", payment_percentage.toFixed(1) + "%", format_currency(frm.doc.montant_total_paye || 0, 'EUR') + "/" + format_currency(frm.doc.montant_total_proprietaire || 0, 'EUR'), payment_percentage)}
-				${createStatCard("Taux d'occupation", occupation_percentage.toFixed(1) + "%", (frm.doc.nombre_nuits_total || 0) + " nuits", occupation_percentage)}
-				${createStatCard("Paiements Locataires", tenant_payment_percentage.toFixed(1) + "%", format_currency(frm.doc.total_encaisse || 0, 'EUR') + "/" + format_currency(frm.doc.paiements_prevus || 0, 'EUR'), tenant_payment_percentage)}
-				${calendar_card}
+				<!-- Ligne des 4 cartes statistiques -->
+				<div style="
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+					gap: 12px;
+					align-items: stretch;
+				">
+					${createStatCard("Rentabilité", rentabilite.toFixed(1) + "%", "Marge : " + format_currency(frm.doc.marge_totale || 0, 'EUR'), rentabilite)}
+					${createStatCard("Paiements Propriétaire", payment_percentage.toFixed(1) + "%", format_currency(frm.doc.montant_total_paye || 0, 'EUR') + "/" + format_currency(frm.doc.montant_total_proprietaire || 0, 'EUR'), payment_percentage)}
+					${createStatCard("Taux d'occupation", occupation_percentage.toFixed(1) + "%", (frm.doc.nombre_nuits_total || 0) + " nuits", occupation_percentage)}
+					${createStatCard("Paiements Locataires", tenant_payment_percentage.toFixed(1) + "%", format_currency(frm.doc.total_encaisse || 0, 'EUR') + "/" + format_currency(frm.doc.paiements_prevus || 0, 'EUR'), tenant_payment_percentage)}
+				</div>
+				<!-- Ligne du calendrier en pleine largeur -->
+				<div style="
+					width: 100%;
+				">
+					${calendar_card}
+				</div>
 			</div>
 		`;
 
