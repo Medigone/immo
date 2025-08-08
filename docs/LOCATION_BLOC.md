@@ -15,7 +15,6 @@ La fonctionnalité **Location Bloc** permet de gérer des paiements d'avance aux
   - `proprietaire_id`: Lien vers le propriétaire
   - `date_debut_bloc` / `date_fin_bloc`: Période de la location bloc
   - `montant_total_proprietaire`: Montant total à payer au propriétaire
-  - `type_paiement`: Unique ou Échelonné
   - `statut`: En attente, Confirmé, Actif, Terminé, Annulé
 
 #### 2. Paiement Bloc
@@ -107,7 +106,6 @@ La fonctionnalité **Location Bloc** permet de gérer des paiements d'avance aux
    location_bloc.date_debut_bloc = "2024-07-01"
    location_bloc.date_fin_bloc = "2024-08-31"
    location_bloc.montant_total_proprietaire = 3000
-   location_bloc.type_paiement = "Échelonné"
    location_bloc.insert()
    ```
 

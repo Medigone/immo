@@ -2,40 +2,40 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-01 00:00:00.000000",
+ "creation": "2024-01-01 00:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_break_xgfd",
   "naming_series",
   "nom_complet",
+  "actif",
   "contact_section",
   "email",
   "telephone",
-  "adresse",
   "paiement_section",
   "methode_paiement",
-  "iban",
-  "statut_section",
-  "actif"
+  "iban"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
+   "in_list_view": 1,
+   "label": "S\u00e9rie de nommage",
    "options": "PROP-.YYYY.-",
    "reqd": 1
   },
   {
    "fieldname": "nom_complet",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Nom complet",
    "reqd": 1
   },
   {
-   "collapsible": 0,
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
    "label": "Informations de contact"
@@ -49,15 +49,9 @@
   {
    "fieldname": "telephone",
    "fieldtype": "Data",
-   "label": "Téléphone"
+   "label": "T\u00e9l\u00e9phone"
   },
   {
-   "fieldname": "adresse",
-   "fieldtype": "Text",
-   "label": "Adresse"
-  },
-  {
-   "collapsible": 0,
    "fieldname": "paiement_section",
    "fieldtype": "Section Break",
    "label": "Informations de paiement"
@@ -66,8 +60,8 @@
    "default": "Virement",
    "fieldname": "methode_paiement",
    "fieldtype": "Select",
-   "label": "Méthode de paiement",
-   "options": "Virement\nChèque\nEspèces\nPayPal"
+   "label": "M\u00e9thode de paiement",
+   "options": "Virement\nCh\u00e8que\nEsp\u00e8ces\nPayPal"
   },
   {
    "fieldname": "iban",
@@ -75,21 +69,19 @@
    "label": "IBAN"
   },
   {
-   "collapsible": 0,
-   "fieldname": "statut_section",
-   "fieldtype": "Section Break",
-   "label": "Statut"
-  },
-  {
-   "default": 1,
+   "default": "1",
    "fieldname": "actif",
    "fieldtype": "Check",
    "label": "Actif"
+  },
+  {
+   "fieldname": "section_break_xgfd",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-01 00:00:00.000000",
+ "modified": "2025-08-08 19:18:40.449040",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Proprietaire",
@@ -109,6 +101,8 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

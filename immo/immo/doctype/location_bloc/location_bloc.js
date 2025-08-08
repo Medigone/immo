@@ -1,4 +1,4 @@
-// Location Bloc JavaScript - v8
+// Location Bloc JavaScript - v11
 frappe.ui.form.on('Location Bloc', {
 	onload: function (frm) {
 		frm.trigger('update_dashboard');
@@ -79,7 +79,7 @@ frappe.ui.form.on('Location Bloc', {
 					fields: [
 						{ fieldname: 'montant_paiement', label: __('Montant du Paiement'), fieldtype: 'Currency', default: frm.doc.solde_restant && frm.doc.solde_restant < frm.doc.montant_total_proprietaire ? frm.doc.solde_restant : frm.doc.montant_total_proprietaire, reqd: 1 },
 						{ fieldname: 'date_paiement', label: __('Date de Paiement'), fieldtype: 'Date', default: frappe.datetime.get_today(), reqd: 1 },
-						{ fieldname: 'type_paiement', label: __('Type de Paiement'), fieldtype: 'Select', options: 'Avance\nAcompte\nSolde\nUnique', default: 'Unique', reqd: 1 },
+
 						{ fieldname: 'methode_paiement', label: __('Méthode de Paiement'), fieldtype: 'Select', options: 'Virement\nChèque\nEspèces\nCarte' },
 						{ fieldname: 'reference_paiement', label: __('Référence de Paiement'), fieldtype: 'Data' },
 						{ fieldname: 'notes', label: __('Notes'), fieldtype: 'Text Editor' }
@@ -96,7 +96,7 @@ frappe.ui.form.on('Location Bloc', {
 									appartement_id: frm.doc.appartement_id,
 									montant_paiement: values.montant_paiement,
 									date_paiement: values.date_paiement,
-									type_paiement: values.type_paiement,
+									type_paiement: 'Unique',
 									methode_paiement: values.methode_paiement,
 									reference_paiement: values.reference_paiement,
 									notes: values.notes
@@ -125,7 +125,11 @@ frappe.ui.form.on('Location Bloc', {
 		let rentabilite = frm.doc.rentabilite_pourcentage || 0;
 		let payment_percentage = frm.doc.montant_total_proprietaire > 0 ? (frm.doc.montant_total_paye / frm.doc.montant_total_proprietaire) * 100 : 0;
 		let occupation_percentage = frm.doc.taux_occupation || 0;
-		let tenant_payment_percentage = frm.doc.paiements_prevus > 0 ? (frm.doc.total_encaisse / frm.doc.paiements_prevus) * 100 : 0;
+		let tenant_payment_total = frm.doc.total_encaisse || 0;
+		
+		// Calculer les nuits occupées basées sur le taux d'occupation
+		let total_nights = frm.doc.nombre_nuits_total || 0;
+		let occupied_nights = Math.round((occupation_percentage / 100) * total_nights);
 
 		// Préparer le calendrier d'occupation
 		let calendar_card = '<div id="occupation-calendar-placeholder" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #6b7280;">Chargement du calendrier...</div>';
@@ -146,8 +150,8 @@ frappe.ui.form.on('Location Bloc', {
 				">
 					${createStatCard("Rentabilité", rentabilite.toFixed(1) + "%", "Marge : " + format_currency(frm.doc.marge_totale || 0, 'EUR'), rentabilite)}
 					${createStatCard("Paiements Propriétaire", payment_percentage.toFixed(1) + "%", format_currency(frm.doc.montant_total_paye || 0, 'EUR') + "/" + format_currency(frm.doc.montant_total_proprietaire || 0, 'EUR'), payment_percentage)}
-					${createStatCard("Taux d'occupation", occupation_percentage.toFixed(1) + "%", (frm.doc.nombre_nuits_total || 0) + " nuits", occupation_percentage)}
-					${createStatCard("Paiements Locataires", tenant_payment_percentage.toFixed(1) + "%", format_currency(frm.doc.total_encaisse || 0, 'EUR') + "/" + format_currency(frm.doc.paiements_prevus || 0, 'EUR'), tenant_payment_percentage)}
+					${createStatCard("Taux d'occupation", occupation_percentage.toFixed(1) + "%", occupied_nights + "/" + total_nights + " nuits", occupation_percentage)}
+					${createStatCard("Paiements Locataires", format_currency(tenant_payment_total, 'EUR'), "Total encaissé", null)}
 				</div>
 				<!-- Ligne du calendrier en pleine largeur -->
 				<div style="
@@ -189,6 +193,7 @@ frappe.ui.form.on('Location Bloc', {
 });
 
 function createStatCard(title, mainValue, footerValue, percentage) {
+	let showBadge = percentage !== null;
 	let isPositive = percentage >= 0;
 	let badgeColor = isPositive ? '#16a34a' : '#dc2626';
 	let arrow = isPositive ? '↑' : '↓';
@@ -210,7 +215,7 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 			
 			<div style="display: flex; align-items: center; justify-content: space-between; margin: 6px 0;">
 				<div style="font-size: 1.2rem; font-weight: 700; color: #111827;">${mainValue}</div>
-				<div style="
+				${showBadge ? `<div style="
 					font-size: 0.7rem;
 					padding: 2px 6px;
 					border-radius: 9999px;
@@ -220,7 +225,7 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 					white-space: nowrap;
 				">
 					${arrow} ${percentage.toFixed(0)}%
-				</div>
+				</div>` : ''}
 			</div>
 
 			<div style="

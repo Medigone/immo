@@ -2,21 +2,30 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-01 00:00:00.000000",
+ "creation": "2024-01-01 00:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "dashboard",
+  "section_break_fjbb",
   "naming_series",
   "proprietaire_id",
   "adresse_complete",
-  "description",
+  "section_break_hzvm",
+  "ville",
+  "rue",
+  "column_break_isul",
+  "gps",
+  "complement_ad",
   "caracteristiques_section",
   "nombre_pieces",
+  "column_break_cphi",
   "surface",
   "prix_section",
   "prix_journalier_defaut",
+  "column_break_isvs",
   "prix_mensuel_defaut",
   "statut_section",
   "disponible"
@@ -25,75 +34,116 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
+   "in_list_view": 1,
+   "label": "S\u00e9rie de nommage",
    "options": "APT-.YYYY.-",
    "reqd": 1
   },
   {
    "fieldname": "proprietaire_id",
    "fieldtype": "Link",
-   "label": "Propriétaire",
+   "in_list_view": 1,
+   "label": "Propri\u00e9taire",
    "options": "Proprietaire",
    "reqd": 1
   },
   {
    "fieldname": "adresse_complete",
-   "fieldtype": "Text",
-   "label": "Adresse complète",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description compl\u00e8te",
    "reqd": 1
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Text Editor",
-   "label": "Description"
-  },
-  {
-   "collapsible": 0,
    "fieldname": "caracteristiques_section",
    "fieldtype": "Section Break",
-   "label": "Caractéristiques"
+   "label": "Caract\u00e9ristiques"
   },
   {
    "fieldname": "nombre_pieces",
    "fieldtype": "Int",
-   "label": "Nombre de pièces",
+   "label": "Nombre de pi\u00e8ces",
    "non_negative": 1
   },
   {
    "fieldname": "surface",
    "fieldtype": "Float",
-   "label": "Surface (m²)",
-   "precision": 2
+   "label": "Surface (m\u00b2)",
+   "precision": "2"
   },
   {
-   "collapsible": 0,
    "fieldname": "prix_section",
    "fieldtype": "Section Break",
-   "label": "Prix par défaut"
+   "label": "Prix par d\u00e9faut"
   },
   {
    "fieldname": "prix_journalier_defaut",
    "fieldtype": "Currency",
-   "label": "Prix journalier par défaut",
-   "precision": 2
+   "label": "Prix journalier par d\u00e9faut",
+   "precision": "2"
   },
   {
    "fieldname": "prix_mensuel_defaut",
    "fieldtype": "Currency",
-   "label": "Prix mensuel par défaut",
-   "precision": 2
+   "label": "Prix mensuel par d\u00e9faut",
+   "precision": "2"
   },
   {
-   "collapsible": 0,
    "fieldname": "statut_section",
    "fieldtype": "Section Break",
    "label": "Statut"
   },
   {
-   "default": 1,
+   "default": "1",
    "fieldname": "disponible",
    "fieldtype": "Check",
    "label": "Disponible"
+  },
+  {
+   "fieldname": "gps",
+   "fieldtype": "Data",
+   "label": "Coordonn\u00e9es GPS"
+  },
+  {
+   "fieldname": "ville",
+   "fieldtype": "Data",
+   "label": "Ville"
+  },
+  {
+   "fieldname": "rue",
+   "fieldtype": "Data",
+   "label": "Rue"
+  },
+  {
+   "description": "\u00c9tage / Appartement / Maison",
+   "fieldname": "complement_ad",
+   "fieldtype": "Data",
+   "label": "Complement adresse"
+  },
+  {
+   "fieldname": "section_break_hzvm",
+   "fieldtype": "Section Break",
+   "label": "Adresse"
+  },
+  {
+   "fieldname": "column_break_isul",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_cphi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_isvs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dashboard",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "section_break_fjbb",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -111,7 +161,7 @@
    "link_fieldname": "appartement_id"
   }
  ],
- "modified": "2024-01-01 00:00:00.000000",
+ "modified": "2025-08-08 19:44:52.268096",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Appartement",
@@ -131,6 +181,8 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

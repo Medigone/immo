@@ -18,17 +18,16 @@
   "date_fin_bloc",
   "section_break_8",
   "montant_total_proprietaire",
-  "type_paiement",
   "column_break_11",
-  "reference_contrat",
+  "nombre_nuits_total",
+  "prix_nuit_proprietaire",
   "section_break_paiements",
   "montant_total_paye",
   "solde_restant",
   "column_break_paiements",
   "pourcentage_paye",
   "section_break_14",
-  "nombre_nuits_total",
-  "prix_nuit_proprietaire",
+  "column_break_pclv",
   "column_break_17",
   "total_encaisse",
   "paiements_prevus",
@@ -108,24 +107,13 @@
    "reqd": 1
   },
   {
-   "default": "Unique",
-   "fieldname": "type_paiement",
-   "fieldtype": "Select",
-   "label": "Type de paiement",
-   "options": "Avance\n\u00c9chelonn\u00e9\nUnique"
-  },
-  {
    "fieldname": "column_break_11",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "reference_contrat",
-   "fieldtype": "Data",
-   "label": "R\u00e9f\u00e9rence contrat"
-  },
-  {
    "fieldname": "section_break_paiements",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Suivi des paiements"
   },
   {
@@ -158,6 +146,7 @@
   {
    "fieldname": "section_break_14",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Calculs automatiques"
   },
   {
@@ -250,11 +239,15 @@
    "fieldtype": "Tab Break",
    "label": "Connections",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "column_break_pclv",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-08 02:21:17.066215",
+ "modified": "2025-08-08 19:04:30.732748",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Bloc",

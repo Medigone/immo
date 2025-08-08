@@ -194,7 +194,7 @@ class LocationBloc(Document):
 		# Utiliser les paramètres fournis ou les valeurs par défaut
 		paiement_bloc.montant_paiement = flt(montant_paiement) if montant_paiement else flt(self.montant_total_proprietaire)
 		paiement_bloc.date_paiement = date_paiement if date_paiement else frappe.utils.today()
-		paiement_bloc.type_paiement = type_paiement if type_paiement else (self.type_paiement or "Unique")
+		paiement_bloc.type_paiement = type_paiement if type_paiement else "Unique"
 		
 		# Champs optionnels
 		if methode_paiement:

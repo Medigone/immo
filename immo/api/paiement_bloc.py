@@ -63,7 +63,7 @@ def get_paiement_schedule(location_bloc_id):
 		# Récupérer tous les paiements
 		paiements = frappe.get_all("Paiement Bloc",
 			filters={"location_bloc_id": location_bloc_id},
-			fields=["name", "montant_paiement", "date_paiement", "type_paiement", "methode_paiement"],
+			fields=["name", "montant_paiement", "date_paiement", "methode_paiement"],
 			order_by="date_paiement")
 		
 		# Calculer les totaux
@@ -74,14 +74,13 @@ def get_paiement_schedule(location_bloc_id):
 		
 		# Générer des suggestions d'échéancier si nécessaire
 		suggestions = []
-		if location_bloc.type_paiement == "Échelonné" and solde_restant > 0:
-			suggestions = generate_payment_suggestions(location_bloc, solde_restant)
+		# Pas de suggestions d'échéancier automatiques
+		suggestions = []
 		
 		return {
 			"location_bloc": {
 				"name": location_bloc.name,
 				"montant_total": total_prevu,
-				"type_paiement": location_bloc.type_paiement,
 				"date_debut": location_bloc.date_debut_bloc,
 				"date_fin": location_bloc.date_fin_bloc
 			},
@@ -219,7 +218,7 @@ def get_paiement_statistics(proprietaire_id=None, date_debut=None, date_fin=None
 		paiements = frappe.get_all("Paiement Bloc",
 			filters=filters,
 			fields=["name", "location_bloc_id", "proprietaire_id", "montant_paiement", 
-					"date_paiement", "type_paiement", "methode_paiement"])
+					"date_paiement", "methode_paiement"])
 		
 		# Calculer les statistiques
 		total_paiements = len(paiements)
@@ -233,9 +232,8 @@ def get_paiement_statistics(proprietaire_id=None, date_debut=None, date_fin=None
 		paiements_en_attente = 0
 		paiements_annules = 0
 		
-		# Statistiques par type de paiement
-		paiements_uniques = len([p for p in paiements if p.type_paiement == "Unique"])
-		paiements_echelonnes = len([p for p in paiements if p.type_paiement == "Échelonné"])
+		# Statistiques simplifiées
+		total_paiements = len(paiements)
 		
 		# Statistiques par méthode de paiement
 		methodes = {}

@@ -36,9 +36,31 @@ class Appartement(Document):
 	
 	def before_save(self):
 		"""Actions avant sauvegarde"""
+		# Génère automatiquement l'adresse complète à partir des champs individuels
+		self.generate_adresse_complete()
+		
 		# Normalise l'adresse
 		if self.adresse_complete:
 			self.adresse_complete = self.adresse_complete.strip()
+	
+	def generate_adresse_complete(self):
+		"""Génère l'adresse complète en concaténant ville, rue et complément d'adresse"""
+		adresse_parts = []
+		
+		# Ajoute la rue si elle existe
+		if self.rue:
+			adresse_parts.append(self.rue.strip())
+		
+		# Ajoute le complément d'adresse si il existe
+		if self.complement_ad:
+			adresse_parts.append(self.complement_ad.strip())
+		
+		# Ajoute la ville si elle existe
+		if self.ville:
+			adresse_parts.append(self.ville.strip())
+		
+		# Concatène avec des virgules et espaces
+		self.adresse_complete = ", ".join(adresse_parts) if adresse_parts else ""
 	
 	def on_update(self):
 		"""Actions après mise à jour"""
