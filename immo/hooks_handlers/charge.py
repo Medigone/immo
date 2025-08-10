@@ -77,7 +77,7 @@ def validate_apartment_location_consistency(doc):
 	
 	# Vérifie la cohérence avec la location longue durée si spécifiée
 	if doc.location_longue_duree_id:
-		location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 		if location.appartement_id != doc.appartement_id:
 			frappe.throw("La location longue durée ne correspond pas à l'appartement sélectionné")
 	
@@ -171,7 +171,7 @@ def recalculate_mensualite_charges(mensualite_name):
 		FROM `tabCharge`
 		WHERE appartement_id = (
 			SELECT appartement_id 
-			FROM `tabLocation Longue Durée` 
+			FROM `tabLocation Longue Duree` 
 			WHERE name = %s
 		)
 		AND statut = 'Validée'
@@ -289,7 +289,7 @@ def notify_tenant_charge_validated(doc):
 		locataire_nom = None
 		
 		if doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 		

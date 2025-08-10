@@ -285,14 +285,14 @@ class LocationCourteDuree(Document):
 				}
 		
 		# Vérifie les conflits avec les locations longue durée
-		conflicting_long = frappe.get_all("Location Longue Durée",
+		conflicting_long = frappe.get_all("Location Longue Duree",
 			filters={
 				"appartement_id": self.appartement_id,
 				"statut": "Actif"
 			})
 		
 		for location in conflicting_long:
-			loc_doc = frappe.get_doc("Location Longue Durée", location.name)
+			loc_doc = frappe.get_doc("Location Longue Duree", location.name)
 			# Modifié pour permettre qu'une date de fin soit égale à une date de début
 			if (self.date_debut < loc_doc.date_fin and self.date_fin > loc_doc.date_debut):
 				return {

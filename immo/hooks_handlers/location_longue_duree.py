@@ -48,7 +48,7 @@ def check_date_overlap(doc):
 	# Recherche les locations existantes qui se chevauchent
 	overlapping_locations = frappe.db.sql("""
 		SELECT name, date_debut, date_fin, locataire_nom
-		FROM `tabLocation Longue Durée`
+		FROM `tabLocation Longue Duree`
 		WHERE appartement_id = %s
 			AND name != %s
 			AND statut IN ('Actif', 'Confirmé')
@@ -153,7 +153,7 @@ def update_apartment_status(doc):
 		frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 0)
 	elif doc.statut in ["Terminé", "Annulé"]:
 		# Vérifie s'il n'y a pas d'autres locations actives
-		other_active = frappe.db.exists("Location Longue Durée", {
+		other_active = frappe.db.exists("Location Longue Duree", {
 			"appartement_id": doc.appartement_id,
 			"statut": "Actif",
 			"name": ["!=", doc.name]
@@ -192,7 +192,7 @@ def cancel_related_mensualites(doc):
 def reset_apartment_status(doc):
 	"""Remet l'appartement en statut disponible"""
 	# Vérifie s'il n'y a pas d'autres locations actives
-	other_active = frappe.db.exists("Location Longue Durée", {
+	other_active = frappe.db.exists("Location Longue Duree", {
 		"appartement_id": doc.appartement_id,
 		"statut": "Actif",
 		"name": ["!=", doc.name]

@@ -40,7 +40,7 @@ def generate_financial_report(start_date=None, end_date=None, proprietaire_id=No
 				AVG(m.marge_mensuelle) as marge_moyenne
 			FROM `tabAppartement` a
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
+			LEFT JOIN `tabLocation Longue Duree` lld ON a.name = lld.appartement_id
 			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
 			WHERE {where_clause}
 				AND (m.creation IS NULL OR m.creation BETWEEN '{start_date}' AND '{end_date}')
@@ -274,7 +274,7 @@ def generate_occupancy_report(start_date=None, end_date=None, appartement_id=Non
 				) as jours_occupation_longue
 			FROM `tabAppartement` a
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
+			LEFT JOIN `tabLocation Longue Duree` lld ON a.name = lld.appartement_id
 
 				AND lld.date_debut <= '{end_date}'
 				AND (lld.date_fin IS NULL OR lld.date_fin >= '{start_date}')

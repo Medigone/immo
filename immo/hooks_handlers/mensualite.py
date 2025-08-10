@@ -113,33 +113,10 @@ def validate_uniqueness(doc):
 
 def update_location_statistics(doc):
 	"""Met à jour les statistiques de la location"""
-	if not doc.location_longue_duree_id:
-		return
-	
-	# Calcule les statistiques globales de la location
-	stats = frappe.db.sql("""
-		SELECT 
-			COUNT(*) as total_mensualites,
-			SUM(CASE WHEN statut_paiement_locataire = 'Payé' THEN 1 ELSE 0 END) as paiements_locataire,
-			SUM(CASE WHEN statut_paiement_proprietaire = 'Payé' THEN 1 ELSE 0 END) as paiements_proprietaire,
-			SUM(marge_mensuelle) as marge_totale_realisee,
-			AVG(marge_mensuelle) as marge_moyenne,
-			SUM(montant_loyer_locataire) as total_encaisse,
-			SUM(montant_loyer_proprietaire) as total_verse
-		FROM `tabMensualite`
-		WHERE location_longue_duree_id = %s
-	""", (doc.location_longue_duree_id,), as_dict=True)
-	
-	if stats:
-		stat = stats[0]
-		# Met à jour la location avec les nouvelles statistiques
-		frappe.db.set_value("Location Longue Durée", doc.location_longue_duree_id, {
-			"marge_totale_realisee": stat.marge_totale_realisee or 0,
-			"total_encaisse": stat.total_encaisse or 0,
-			"total_verse_proprietaire": stat.total_verse or 0,
-			"taux_paiement_locataire": (stat.paiements_locataire / stat.total_mensualites * 100) if stat.total_mensualites > 0 else 0,
-			"taux_paiement_proprietaire": (stat.paiements_proprietaire / stat.total_mensualites * 100) if stat.total_mensualites > 0 else 0
-		})
+	# Cette fonction est désactivée car les champs de statistiques
+	# n'existent pas encore dans le DocType Location Longue Duree
+	# TODO: Ajouter les champs de statistiques au DocType si nécessaire
+	pass
 
 
 def generate_next_mensualite(doc):
@@ -148,7 +125,7 @@ def generate_next_mensualite(doc):
 		return
 	
 	# Récupère les informations de la location
-	location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+	location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 	
 	# Vérifie si la location est encore active
 	if location.statut != "Actif":
@@ -207,7 +184,7 @@ def update_location_real_margins(doc):
 	""", (doc.location_longue_duree_id,), as_dict=True)
 	
 	if real_margin_stats and real_margin_stats[0].marge_reelle_moyenne:
-		frappe.db.set_value("Location Longue Durée", doc.location_longue_duree_id, {
+		frappe.db.set_value("Location Longue Duree", doc.location_longue_duree_id, {
 			"marge_reelle_moyenne": real_margin_stats[0].marge_reelle_moyenne,
 			"marge_reelle_totale": real_margin_stats[0].marge_reelle_totale or 0
 		})
@@ -248,7 +225,7 @@ def calculate_charges_impact(doc):
 		FROM `tabCharge`
 		WHERE appartement_id = (
 			SELECT appartement_id 
-			FROM `tabLocation Longue Durée` 
+			FROM `tabLocation Longue Duree` 
 			WHERE name = %s
 		)
 		AND statut = 'Validée'

@@ -151,7 +151,7 @@ def get_apartment_margin_summary(appartement_id, start_date=None, end_date=None)
 				COUNT(m.name) as nombre_mensualites,
 				AVG(m.marge_mensuelle) as marge_moyenne_mensuelle
 			FROM `tabMensualite` m
-			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
+			INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
 			WHERE lld.appartement_id = %s
 				AND m.creation BETWEEN %s AND %s
 		""", (appartement_id, start_date, end_date), as_dict=True)

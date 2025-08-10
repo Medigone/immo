@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.utils import getdate, nowdate
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
@@ -27,10 +28,10 @@ class LocationLongueDuree(Document):
 	def validate_dates(self):
 		"""Valide les dates de location"""
 		if self.date_debut and self.date_fin:
-			if self.date_fin <= self.date_debut:
+			if getdate(self.date_fin) <= getdate(self.date_debut):
 				frappe.throw("La date de fin doit être postérieure à la date de début")
 		
-		if self.date_debut and self.date_debut < datetime.now().date():
+		if self.date_debut and getdate(self.date_debut) < getdate(nowdate()):
 			if self.is_new():
 				frappe.throw("La date de début ne peut pas être dans le passé")
 	
@@ -85,14 +86,21 @@ class LocationLongueDuree(Document):
 		# Supprime les anciennes mensualités si elles existent
 		frappe.db.delete("Mensualite", {"location_longue_duree_id": self.name})
 		
-		current_date = self.date_debut
-		while current_date <= self.date_fin:
+		# Convertir les dates en objets date
+		current_date = getdate(self.date_debut)
+		end_date = getdate(self.date_fin)
+		
+		while current_date <= end_date:
+			# Formater le mois/année (ex: "01/2025")
+			mois_annee = current_date.strftime("%m/%Y")
+			
 			mensualite = frappe.get_doc({
 				"doctype": "Mensualite",
 				"location_longue_duree_id": self.name,
+				"mois_annee": mois_annee,
 				"date_echeance": current_date,
-				"montant_locataire": self.loyer_mensuel_locataire,
-				"montant_proprietaire": self.loyer_mensuel_proprietaire,
+				"montant_loyer_locataire": self.loyer_mensuel_locataire,
+				"montant_loyer_proprietaire": self.loyer_mensuel_proprietaire,
 				"statut_paiement_locataire": "En attente",
 				"statut_paiement_proprietaire": "En attente"
 			})

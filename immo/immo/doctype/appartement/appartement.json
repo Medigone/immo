@@ -28,7 +28,8 @@
   "column_break_isvs",
   "prix_mensuel_defaut",
   "statut_section",
-  "disponible"
+  "disponible",
+  "liens_tab"
  ],
  "fields": [
   {
@@ -144,6 +145,12 @@
   {
    "fieldname": "section_break_fjbb",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "liens_tab",
+   "fieldtype": "Tab Break",
+   "label": "Liens",
+   "show_dashboard": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -161,7 +168,7 @@
    "link_fieldname": "appartement_id"
   }
  ],
- "modified": "2025-08-08 19:44:52.268096",
+ "modified": "2025-08-10 22:52:00.111577",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Appartement",

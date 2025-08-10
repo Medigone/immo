@@ -21,7 +21,7 @@ class Mensualite(Document):
 	def validate_location_status(self):
 		"""Valide que la location longue durée existe"""
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 	
 	def validate_amounts(self):
 		"""Valide les montants des loyers"""
@@ -178,7 +178,7 @@ class Mensualite(Document):
 	@frappe.whitelist()
 	def get_payment_summary(self):
 		"""Récupère un résumé des paiements"""
-		location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 		appartement = frappe.get_doc("Appartement", location.appartement_id)
 		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
@@ -239,7 +239,7 @@ class Mensualite(Document):
 	@frappe.whitelist()
 	def send_payment_reminders(self):
 		"""Envoie des rappels de paiement"""
-		location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 		appartement = frappe.get_doc("Appartement", location.appartement_id)
 		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		

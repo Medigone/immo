@@ -19,7 +19,7 @@ class PaiementProprietaire(Document):
 	def validate_location_reference(self):
 		"""Valide qu'au moins une référence de location est fournie"""
 		if not self.mensualite_id and not self.location_longue_duree_id and not self.location_courte_duree_id:
-			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Durée ou Location Courte Duree) est obligatoire"))
+			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Duree ou Location Courte Duree) est obligatoire"))
 		
 		# Vérifie que les références existent et sont valides
 		if self.mensualite_id:
@@ -28,7 +28,7 @@ class PaiementProprietaire(Document):
 				self.location_longue_duree_id = mensualite.location_longue_duree_id
 		
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 		
 		if self.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
@@ -189,7 +189,7 @@ class PaiementProprietaire(Document):
 		
 		# Ajoute les détails de la location et du propriétaire
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			details["location_longue_duree"] = {
@@ -241,7 +241,7 @@ class PaiementProprietaire(Document):
 		proprietaire_nom = None
 		
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -375,7 +375,7 @@ class PaiementProprietaire(Document):
 			
 			# Filtre par les locations de ces appartements
 			locations_longues = frappe.get_all(
-				"Location Longue Durée",
+				"Location Longue Duree",
 				filters={"appartement_id": ["in", appartement_ids]},
 				fields=["name"]
 			)

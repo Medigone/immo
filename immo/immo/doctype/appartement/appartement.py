@@ -71,7 +71,7 @@ class Appartement(Document):
 	def check_active_locations(self):
 		"""Vérifie s'il y a des locations actives"""
 		# Vérifie les locations longue durée actives
-		active_long_term = frappe.get_all("Location Longue Durée",
+		active_long_term = frappe.get_all("Location Longue Duree",
 			filters={
 				"appartement_id": self.name,
 				"statut": ["in", ["Actif", "En cours"]]
@@ -90,7 +90,7 @@ class Appartement(Document):
 	@frappe.whitelist()
 	def get_locations_longue_duree(self):
 		"""Retourne les locations longue durée de l'appartement"""
-		return frappe.get_all("Location Longue Durée",
+		return frappe.get_all("Location Longue Duree",
 			filters={"appartement_id": self.name},
 			fields=["name", "locataire_nom", "date_debut", "date_fin", "loyer_mensuel_locataire", "statut"],
 			order_by="date_debut desc")

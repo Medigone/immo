@@ -545,7 +545,7 @@ def get_proprietaire_monthly_data(proprietaire_id, start_date, end_date):
 				SUM(m.marge_mensuelle) as marge_longue_duree,
 				COUNT(m.name) as nombre_mensualites
 			FROM `tabMensualite` m
-			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
+			INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
 				AND m.date_echeance BETWEEN %s AND %s

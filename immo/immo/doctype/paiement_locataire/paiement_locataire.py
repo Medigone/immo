@@ -19,7 +19,7 @@ class PaiementLocataire(Document):
 	def validate_location_reference(self):
 		"""Valide qu'au moins une référence de location est fournie"""
 		if not self.mensualite_id and not self.location_longue_duree_id and not self.location_courte_duree_id and not self.location_bloc_id:
-			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Durée, Location Courte Duree ou Location Bloc) est obligatoire"))
+			frappe.throw(_("Au moins une référence (Mensualité, Location Longue Duree, Location Courte Duree ou Location Bloc) est obligatoire"))
 		
 		# Vérifie que les références existent et sont valides
 		if self.mensualite_id:
@@ -28,7 +28,7 @@ class PaiementLocataire(Document):
 				self.location_longue_duree_id = mensualite.location_longue_duree_id
 		
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 		
 		if self.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
@@ -162,7 +162,7 @@ class PaiementLocataire(Document):
 		
 		# Ajoute les détails de la location
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			details["location_longue_duree"] = {
 				"locataire_nom": location.locataire_nom,
@@ -204,7 +204,7 @@ class PaiementLocataire(Document):
 		locataire_nom = None
 		
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 		elif self.location_courte_duree_id:

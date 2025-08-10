@@ -57,9 +57,9 @@ frappe.ui.form.on("Appartement", {
 			}, __('Créer'));
 
 			// Bouton pour créer une Location Longue Durée
-			frm.add_custom_button(__('Location Longue Durée'), function () {
+			frm.add_custom_button(__('Location Longue Duree'), function () {
 				let dialog = new frappe.ui.Dialog({
-					title: __('Créer une Location Longue Durée'),
+					title: __('Créer une Location Longue Duree'),
 					fields: [
 						{ fieldname: 'locataire_nom', label: __('Nom du locataire'), fieldtype: 'Data', reqd: 1 },
 						{ fieldname: 'locataire_email', label: __('Email du locataire'), fieldtype: 'Data', options: 'Email' },
@@ -73,7 +73,7 @@ frappe.ui.form.on("Appartement", {
 							method: 'frappe.client.insert',
 							args: {
 								doc: {
-									doctype: 'Location Longue Durée',
+									doctype: 'Location Longue Duree',
 									appartement_id: frm.doc.name,
 									locataire_nom: values.locataire_nom,
 									locataire_email: values.locataire_email,
@@ -86,7 +86,7 @@ frappe.ui.form.on("Appartement", {
 								if (!r.exc) {
 									dialog.hide();
 									frm.reload_doc();
-									frappe.show_alert({ message: __('Location Longue Durée créée avec succès'), indicator: 'green' });
+									frappe.show_alert({ message: __('Location Longue Duree créée avec succès'), indicator: 'green' });
 								}
 							}
 						});
@@ -294,7 +294,10 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 
 // Fonction pour formater les devises
 function format_currency(value, currency) {
-	return frappe.format(value, { fieldtype: 'Currency', currency: currency });
+	// Formatage manuel pour éviter le HTML généré par frappe.format
+	if (!value) value = 0;
+	const formatted = parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	return `€ ${formatted}`;
 }
 
 // Fonction pour créer le calendrier d'occupation de l'appartement
@@ -418,9 +421,8 @@ function createAppartementOccupationCalendar(calendrier) {
 						transition: all 0.2s ease;
 					" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#f9fafb'">Reset</button>
 					<div style="text-align: right;">
-						<div id="${calendarId}_taux" style="font-size: 1.5rem; font-weight: 700; color: #111827;">${tauxOccupation.toFixed(1)}%</div>
-						<div id="${calendarId}_stats" style="font-size: 0.75rem; color: #6b7280;">${joursOccupes}/${totalJours} jours occupés</div>
-					</div>
+					
+				</div>
 				</div>
 			</div>
 
@@ -450,9 +452,9 @@ function createAppartementOccupationCalendar(calendrier) {
 			<!-- Grille des mois -->
 			<div id="${calendarId}_grid" style="
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-				gap: 16px;
-				max-height: 500px;
+				grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+				gap: 10px;
+				max-height: 400px;
 				overflow-y: auto;
 			">
 	`;
@@ -464,15 +466,15 @@ function createAppartementOccupationCalendar(calendrier) {
 		calendar_html += `
 			<div class="calendar-month" data-month-index="${index}" data-month-key="${moisKey}" style="
 				border: 1px solid #e5e7eb;
-				border-radius: 6px;
-				padding: 8px;
+				border-radius: 4px;
+				padding: 6px;
 				background: #fafbfc;
 				transition: opacity 0.3s ease;
 			">
 				<div style="
-					margin-bottom: 8px;
+					margin-bottom: 6px;
 					color: #374151;
-					font-size: 0.8rem;
+					font-size: 0.7rem;
 					font-weight: 600;
 					text-align: center;
 					text-transform: capitalize;
@@ -489,9 +491,9 @@ function createAppartementOccupationCalendar(calendrier) {
 		joursNoms.forEach(jour => {
 			calendar_html += `
 				<div style="
-					padding: 4px 1px;
+					padding: 2px 1px;
 					text-align: center;
-					font-size: 0.65rem;
+					font-size: 0.6rem;
 					font-weight: 600;
 					color: #6b7280;
 				">${jour}</div>
@@ -504,9 +506,9 @@ function createAppartementOccupationCalendar(calendrier) {
 		const premierJourSemaine = premierJour.getDay();
 		
 		// Ajouter des cellules vides pour les jours avant le début du mois
-		for (let i = 0; i < premierJourSemaine; i++) {
-				calendar_html += '<div style="height: 22px;"></div>';
-			}
+			for (let i = 0; i < premierJourSemaine; i++) {
+					calendar_html += '<div style="height: 18px;"></div>';
+				}
 
 		// Créer un tableau de tous les jours du mois
 		const dernierJour = new Date(premierJour.getFullYear(), premierJour.getMonth() + 1, 0).getDate();
@@ -543,19 +545,19 @@ function createAppartementOccupationCalendar(calendrier) {
 			
 			calendar_html += `
 				<div style="
-					height: 22px;
+					height: 18px;
 					display: flex;
 					align-items: center;
 					justify-content: center;
 					background: ${bgColor};
 					color: ${textColor};
 					border: 1px solid ${borderColor};
-					border-radius: 3px;
-					font-size: 0.65rem;
+					border-radius: 2px;
+					font-size: 0.6rem;
 					font-weight: ${isOccupe ? '600' : '400'};
 					cursor: ${jour && jour.occupe ? 'pointer' : 'default'};
 					transition: all 0.2s ease;
-					box-shadow: ${isOccupe ? '0 1px 2px rgba(0, 0, 0, 0.08)' : 'none'};
+					box-shadow: ${isOccupe ? '0 1px 1px rgba(0, 0, 0, 0.06)' : 'none'};
 				" title="${tooltip}" ${clickHandler} onmouseover="this.style.transform='scale(1.05)'; this.style.zIndex='10';" onmouseout="this.style.transform='scale(1)'; this.style.zIndex='1';">
 					${jourNum}
 				</div>
@@ -585,6 +587,12 @@ function createAppartementOccupationCalendar(calendrier) {
 			window.filterCalendarByDates = function(calendarId) {
 				const dateDebutInput = document.getElementById(calendarId + '_dateDebut');
 				const dateFinInput = document.getElementById(calendarId + '_dateFin');
+				
+				// Vérifier que les éléments existent avant d'accéder à leurs propriétés
+				if (!dateDebutInput || !dateFinInput) {
+					return;
+				}
+				
 				const dateDebut = new Date(dateDebutInput.value);
 				const dateFin = new Date(dateFinInput.value);
 				
@@ -635,16 +643,29 @@ function createAppartementOccupationCalendar(calendrier) {
 				
 				// Mettre à jour les statistiques
 				const tauxFiltre = filteredJours > 0 ? (filteredOccupes / filteredJours) * 100 : 0;
-				document.getElementById(calendarId + '_info').textContent = visibleMonths + ' mois affichés';
-				document.getElementById(calendarId + '_taux').textContent = tauxFiltre.toFixed(1) + '%';
-				document.getElementById(calendarId + '_stats').textContent = filteredOccupes + '/' + filteredJours + ' jours occupés';
+				const infoElement = document.getElementById(calendarId + '_info');
+				const tauxElement = document.getElementById(calendarId + '_taux');
+				
+				if (infoElement) {
+					infoElement.textContent = visibleMonths + ' mois affichés';
+				}
+				if (tauxElement) {
+					tauxElement.textContent = tauxFiltre.toFixed(1) + '%';
+				}
 			};
 			
 			// Fonction de reset des dates
 			window.resetCalendarDates = function(calendarId) {
 				const data = window.calendarData[calendarId];
-				document.getElementById(calendarId + '_dateDebut').value = data.dateDebutDefaut;
-				document.getElementById(calendarId + '_dateFin').value = data.dateFinDefaut;
+				const dateDebutInput = document.getElementById(calendarId + '_dateDebut');
+				const dateFinInput = document.getElementById(calendarId + '_dateFin');
+				
+				if (!dateDebutInput || !dateFinInput || !data) {
+					return;
+				}
+				
+				dateDebutInput.value = data.dateDebutDefaut;
+				dateFinInput.value = data.dateFinDefaut;
 				filterCalendarByDates(calendarId);
 			};
 			
@@ -658,7 +679,7 @@ function createAppartementOccupationCalendar(calendrier) {
 
 // Fonction globale pour afficher les détails d'une location dans un modal
 window.showAppartementLocationDetails = function(location_id, type_location) {
-	const doctype = type_location === 'Longue Durée' ? 'Location Longue Durée' : 'Location Courte Duree';
+	const doctype = type_location === 'Longue Durée' ? 'Location Longue Duree' : 'Location Courte Duree';
 	
 	frappe.call({
 		method: 'frappe.client.get',
@@ -680,7 +701,13 @@ window.showAppartementLocationDetails = function(location_id, type_location) {
 							fieldname: 'location_details',
 							options: createLocationDetailsHTML(location, type_location)
 						}
-					]
+					],
+					primary_action_label: __('Voir'),
+					primary_action: function() {
+						// Naviguer vers la location
+						frappe.set_route('Form', doctype, location_id);
+						dialog.hide();
+					}
 				});
 				dialog.show();
 			}

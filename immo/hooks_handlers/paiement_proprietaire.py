@@ -86,7 +86,7 @@ def generate_next_mensualite_if_needed(mensualite):
 	"""Génère la mensualité suivante si nécessaire"""
 	try:
 		# Récupère la location pour vérifier si elle est toujours active
-		location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 		
 		if location.statut != "Actif":
 			return
@@ -133,11 +133,11 @@ def update_proprietaire_statistics(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire_id = appartement.proprietaire_id
 		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire_id = appartement.proprietaire_id
 		elif doc.location_courte_duree_id:
@@ -160,7 +160,7 @@ def update_proprietaire_statistics(doc):
 				COUNT(CASE WHEN pp.statut = 'En attente' THEN 1 END) as paiements_en_attente
 			FROM `tabPaiement Propriétaire` pp
 			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
+			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			WHERE a.proprietaire_id = %s
@@ -192,10 +192,10 @@ def update_location_payout_statistics(doc):
 		# Récupère la location via la mensualité
 		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		location_id = mensualite.location_longue_duree_id
-		location_type = "Location Longue Durée"
+		location_type = "Location Longue Duree"
 	elif doc.location_longue_duree_id:
 		location_id = doc.location_longue_duree_id
-		location_type = "Location Longue Durée"
+		location_type = "Location Longue Duree"
 	elif doc.location_courte_duree_id:
 		location_id = doc.location_courte_duree_id
 		location_type = "Location Courte Duree"
@@ -249,10 +249,10 @@ def update_apartment_payout_statistics(doc):
 	# Récupère l'ID de l'appartement
 	if doc.mensualite_id:
 		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_longue_duree_id:
-		location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_courte_duree_id:
 		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
@@ -272,7 +272,7 @@ def update_apartment_payout_statistics(doc):
 				AVG(pp.montant) as montant_moyen_versement
 			FROM `tabPaiement Propriétaire` pp
 			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
+			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
 				AND pp.statut = 'Payé'
@@ -314,7 +314,7 @@ def notify_payout_completed(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -322,7 +322,7 @@ def notify_payout_completed(doc):
 			appartement_adresse = appartement.adresse
 		
 		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -378,14 +378,14 @@ def notify_payout_rejected(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
 			proprietaire_nom = proprietaire.nom_complet
 		
 		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -438,7 +438,7 @@ def notify_payout_pending(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 			proprietaire_email = proprietaire.email
@@ -485,7 +485,7 @@ def auto_schedule_payouts():
 				lld.appartement_id,
 				a.proprietaire_id
 			FROM `tabMensualite` m
-			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
+			INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE m.statut_paiement_locataire = 'Payé'
 				AND m.statut_paiement_proprietaire = 'En attente'
@@ -538,7 +538,7 @@ def calculate_owner_performance_metrics(proprietaire_id, start_date=None, end_da
 				COUNT(CASE WHEN pp.statut = 'Rejeté' THEN 1 END) as versements_rejetes
 			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
-			LEFT JOIN `tabLocation Longue Durée` lld ON a.name = lld.appartement_id
+			LEFT JOIN `tabLocation Longue Duree` lld ON a.name = lld.appartement_id
 			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
 			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
 			LEFT JOIN `tabPaiement Propriétaire` pp ON (m.name = pp.mensualite_id OR lld.name = pp.location_longue_duree_id OR lcd.name = pp.location_courte_duree_id)

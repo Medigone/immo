@@ -12,10 +12,10 @@ def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month
 	"""Crée des paiements locataire en lot pour plusieurs mois"""
 	try:
 		# Vérification de la location
-		if not frappe.db.exists("Location Longue Durée", location_longue_duree_id):
+		if not frappe.db.exists("Location Longue Duree", location_longue_duree_id):
 			frappe.throw(_("Location longue durée non trouvée"))
 		
-		location = frappe.get_doc("Location Longue Durée", location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", location_longue_duree_id)
 		
 		# Validation des dates
 		start_date = getdate(start_month + "-01")
@@ -99,10 +99,10 @@ def schedule_owner_payouts(location_longue_duree_id, start_month, end_month, pay
 	"""Programme des versements propriétaire pour plusieurs mois"""
 	try:
 		# Vérification de la location
-		if not frappe.db.exists("Location Longue Durée", location_longue_duree_id):
+		if not frappe.db.exists("Location Longue Duree", location_longue_duree_id):
 			frappe.throw(_("Location longue durée non trouvée"))
 		
-		location = frappe.get_doc("Location Longue Durée", location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", location_longue_duree_id)
 		
 		# Validation des dates
 		start_date = getdate(start_month + "-01")
@@ -284,7 +284,7 @@ def reconcile_payments_with_mensualites(location_longue_duree_id):
 	"""Réconcilie les paiements avec les mensualités pour une location"""
 	try:
 		# Vérification de la location
-		if not frappe.db.exists("Location Longue Durée", location_longue_duree_id):
+		if not frappe.db.exists("Location Longue Duree", location_longue_duree_id):
 			frappe.throw(_("Location longue durée non trouvée"))
 		
 		reconciled = []
@@ -375,7 +375,7 @@ def get_overdue_payments(days_overdue=30):
 				p.nom_complet as proprietaire_nom,
 				DATEDIFF(CURDATE(), STR_TO_DATE(CONCAT(m.mois_annee, '-01'), '%m/%Y-%d')) as jours_retard
 			FROM `tabMensualite` m
-			INNER JOIN `tabLocation Longue Durée` lld ON m.location_longue_duree_id = lld.name
+			INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			WHERE m.statut_paiement_locataire = 'En attente'
@@ -398,7 +398,7 @@ def get_overdue_payments(days_overdue=30):
 				DATEDIFF(CURDATE(), pp.date_paiement) as jours_retard
 			FROM `tabPaiement Proprietaire` pp
 			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
+			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			LEFT JOIN `tabProprietaire` p ON a.proprietaire_id = p.name

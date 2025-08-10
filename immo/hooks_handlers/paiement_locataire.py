@@ -54,10 +54,10 @@ def update_location_payment_statistics(doc):
 		# Récupère la location via la mensualité
 		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
 		location_id = mensualite.location_longue_duree_id
-		location_type = "Location Longue Durée"
+		location_type = "Location Longue Duree"
 	elif doc.location_longue_duree_id:
 		location_id = doc.location_longue_duree_id
-		location_type = "Location Longue Durée"
+		location_type = "Location Longue Duree"
 	elif doc.location_courte_duree_id:
 		location_id = doc.location_courte_duree_id
 		location_type = "Location Courte Duree"
@@ -111,10 +111,10 @@ def update_apartment_payment_statistics(doc):
 	# Récupère l'ID de l'appartement
 	if doc.mensualite_id:
 		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_longue_duree_id:
-		location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+		location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 		appartement_id = location.appartement_id
 	elif doc.location_courte_duree_id:
 		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
@@ -134,7 +134,7 @@ def update_apartment_payment_statistics(doc):
 				AVG(pl.montant) as montant_moyen_paiement
 			FROM `tabPaiement Locataire` pl
 			LEFT JOIN `tabMensualite` m ON pl.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Durée` lld ON (m.location_longue_duree_id = lld.name OR pl.location_longue_duree_id = lld.name)
+			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pl.location_longue_duree_id = lld.name)
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pl.location_courte_duree_id = lcd.name
 			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
 				AND pl.statut = 'Confirmé'
@@ -168,14 +168,14 @@ def notify_payment_confirmed(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
 			appartement_adresse = appartement.adresse
 		
 		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 			appartement = frappe.get_doc("Appartement", location.appartement_id)
@@ -228,10 +228,10 @@ def send_payment_confirmation_to_owner(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			appartement_id = location.appartement_id
 		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			appartement_id = location.appartement_id
 		elif doc.location_courte_duree_id:
 			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
@@ -279,12 +279,12 @@ def notify_payment_rejected(doc):
 		
 		if doc.mensualite_id:
 			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Durée", mensualite.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 		
 		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", doc.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
 			locataire_email = location.locataire_email
 			locataire_nom = location.locataire_nom
 		

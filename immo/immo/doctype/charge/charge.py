@@ -28,7 +28,7 @@ class Charge(Document):
 		
 		# Vérifie la cohérence avec les locations
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 			if location.appartement_id != self.appartement_id:
 				frappe.throw(_("La location longue durée ne correspond pas à l'appartement sélectionné"))
 		
@@ -225,7 +225,7 @@ class Charge(Document):
 		
 		# Ajoute les détails de la location si applicable
 		if self.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 			details["location_longue_duree"] = {
 				"locataire_nom": location.locataire_nom,
 				"locataire_email": location.locataire_email,
@@ -342,7 +342,7 @@ class Charge(Document):
 			montant_concerne = self.montant_proprietaire
 		elif recipient_type == "locataire" and self.montant_locataire > 0:
 			if self.location_longue_duree_id:
-				location = frappe.get_doc("Location Longue Durée", self.location_longue_duree_id)
+				location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
 				recipient_email = location.locataire_email
 				recipient_name = location.locataire_nom
 			elif self.location_courte_duree_id:

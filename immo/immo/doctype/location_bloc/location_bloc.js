@@ -12,7 +12,6 @@ frappe.ui.form.on('Location Bloc', {
 					data.action === 'location_updated' ||
 					data.action === 'location_deleted')
 			) {
-				console.log('Mise à jour détectée, rechargement du dashboard et calendrier');
 				// Recharger le document pour obtenir les nouvelles valeurs
 				frm.reload_doc().then(() => {
 					frm.trigger('update_dashboard');
@@ -246,7 +245,10 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 }
 
 function format_currency(value, currency) {
-	return frappe.format(value, { fieldtype: 'Currency', currency: currency });
+	// Formatage manuel pour éviter le HTML généré par frappe.format
+	if (!value) value = 0;
+	const formatted = parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	return `€ ${formatted}`;
 }
 
 function createOccupationCalendar(calendrier, date_debut, date_fin) {
@@ -606,7 +608,7 @@ window.showLocationDetailsModal = function(location_id) {
 							`
 							}
 					],
-					primary_action_label: 'Modifier',
+					primary_action_label: __('Voir'),
 					primary_action: function() {
 						// Ouvrir le formulaire de modification
 						frappe.set_route('Form', 'Location Courte Duree', location.name);
