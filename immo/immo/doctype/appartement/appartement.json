@@ -8,28 +8,16 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "dashboard",
-  "section_break_fjbb",
   "naming_series",
   "proprietaire_id",
   "adresse_complete",
-  "section_break_hzvm",
-  "ville",
-  "rue",
-  "column_break_isul",
-  "gps",
-  "complement_ad",
   "caracteristiques_section",
   "nombre_pieces",
-  "column_break_cphi",
   "surface",
   "prix_section",
   "prix_journalier_defaut",
-  "column_break_isvs",
   "prix_mensuel_defaut",
-  "statut_section",
-  "disponible",
-  "liens_tab"
+  "disponible"
  ],
  "fields": [
   {
@@ -89,17 +77,7 @@
    "label": "Prix mensuel par d\u00e9faut",
    "precision": "2"
   },
-  {
-   "fieldname": "statut_section",
-   "fieldtype": "Section Break",
-   "label": "Statut"
-  },
-  {
-   "default": "1",
-   "fieldname": "disponible",
-   "fieldtype": "Check",
-   "label": "Disponible"
-  },
+
   {
    "fieldname": "gps",
    "fieldtype": "Data",
@@ -141,10 +119,6 @@
   {
    "fieldname": "dashboard",
    "fieldtype": "HTML"
-  },
-  {
-   "fieldname": "section_break_fjbb",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "liens_tab",

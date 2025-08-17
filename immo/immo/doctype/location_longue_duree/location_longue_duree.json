@@ -10,21 +10,24 @@
  "field_order": [
   "naming_series",
   "appartement_id",
-  "locataire_section",
   "locataire_nom",
   "locataire_email",
   "locataire_telephone",
-  "periode_section",
   "date_debut",
   "date_fin",
-  "loyers_section",
   "loyer_mensuel_locataire",
   "loyer_mensuel_proprietaire",
-  "marges_section",
-  "marge_initiale",
   "marge_mensuelle",
-  "statut_section",
-  "statut"
+  "statut",
+  "section_break_stats",
+  "total_paiements_recus",
+  "total_frais_transaction",
+  "nombre_paiements_locataire",
+  "taux_paiement_locataire",
+  "column_break_stats1",
+  "total_paiements_verses",
+  "total_frais_versement",
+  "nombre_paiements_proprietaire"
  ],
  "fields": [
   {
@@ -132,7 +135,36 @@
    "fieldname": "statut",
    "fieldtype": "Select",
    "label": "Statut",
-   "options": "Brouillon\nActif\nTerminé\nAnnulé"
+   "options": "Brouillon\nActif\nTermin\u00e9\nAnnul\u00e9"
+  },
+  {
+   "fieldname": "statistiques_section",
+   "fieldtype": "Section Break",
+   "label": "Statistiques de paiement propri\u00e9taire"
+  },
+  {
+   "fieldname": "total_paiements_verses",
+   "fieldtype": "Currency",
+   "label": "Total paiements vers\u00e9s",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_frais_versement",
+   "fieldtype": "Currency",
+   "label": "Total frais versement",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_stats1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nombre_paiements_proprietaire",
+   "fieldtype": "Int",
+   "label": "Nombre paiements propri\u00e9taire",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

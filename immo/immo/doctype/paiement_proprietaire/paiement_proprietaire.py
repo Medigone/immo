@@ -37,15 +37,12 @@ class PaiementProprietaire(Document):
 		"""Valide le montant du paiement"""
 		if self.montant is not None and self.montant <= 0:
 			frappe.throw(_("Le montant du paiement doit être positif"))
-		
-		if self.frais_transaction is not None and self.frais_transaction < 0:
-			frappe.throw(_("Les frais de transaction ne peuvent pas être négatifs"))
 	
 	def validate_payment_date(self):
 		"""Valide la date de paiement"""
 		if self.date_paiement:
 			# Pour les paiements programmés, la date peut être dans le futur
-			if self.statut in ["Envoyé", "Reçu"] and self.date_paiement > frappe.utils.nowdate():
+			if self.status in ["Envoyé", "Reçu"] and self.date_paiement > frappe.utils.nowdate():
 				frappe.throw(_("La date de paiement ne peut pas être dans le futur pour un paiement envoyé ou reçu"))
 	
 	def validate_status_change(self):
@@ -54,11 +51,13 @@ class PaiementProprietaire(Document):
 			return
 		
 		old_doc = self.get_doc_before_save()
-		if old_doc and old_doc.statut == "Reçu" and self.statut != "Reçu":
+		if old_doc and old_doc.status == "Reçu" and self.status != "Reçu":
 			frappe.throw(_("Un paiement reçu ne peut pas être modifié"))
 	
 	def before_save(self):
 		"""Actions avant sauvegarde"""
+		# Remplit automatiquement les champs appartement et proprietaire
+		self.set_appartement_and_proprietaire()
 		# Calcule le montant net
 		self.calculate_net_amount()
 		# Met à jour les informations de validation
@@ -67,22 +66,43 @@ class PaiementProprietaire(Document):
 		if self.is_new():
 			self.date_creation = frappe.utils.now()
 	
+	def set_appartement_and_proprietaire(self):
+		"""Remplit automatiquement les champs appartement et proprietaire"""
+		appartement_id = None
+		
+		# Récupère l'appartement selon la référence disponible
+		if self.mensualite_id:
+			mensualite = frappe.get_doc("Mensualite", self.mensualite_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
+			appartement_id = location.appartement_id
+		elif self.location_longue_duree_id:
+			location = frappe.get_doc("Location Longue Duree", self.location_longue_duree_id)
+			appartement_id = location.appartement_id
+		elif self.location_courte_duree_id:
+			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
+			appartement_id = location.appartement_id
+		
+		if appartement_id:
+			self.appartement = appartement_id
+			# Récupère le propriétaire de l'appartement
+			appartement = frappe.get_doc("Appartement", appartement_id)
+			self.proprietaire = appartement.proprietaire_id
+	
 	def calculate_net_amount(self):
 		"""Calcule le montant net après déduction des frais"""
 		if self.montant is not None:
-			frais = self.frais_transaction or 0
-			self.montant_net = self.montant - frais
+			self.montant_net = self.montant
 	
 	def update_validation_info(self):
 		"""Met à jour les informations de validation"""
-		if self.statut == "Reçu" and not self.date_validation:
+		if self.status == "Reçu" and not self.date_validation:
 			self.date_validation = frappe.utils.now()
 			self.valide_par = frappe.session.user
 	
 	def on_update(self):
 		"""Actions après mise à jour"""
 		# Met à jour le statut de la mensualité si applicable
-		if self.mensualite_id and self.statut == "Reçu":
+		if self.mensualite_id and self.status == "Reçu":
 			self.update_mensualite_status()
 	
 	def update_mensualite_status(self):
@@ -111,12 +131,12 @@ class PaiementProprietaire(Document):
 	@frappe.whitelist()
 	def schedule_payment(self, scheduled_date=None):
 		"""Programme le paiement pour une date donnée"""
-		if self.statut in ["Envoyé", "Reçu"]:
+		if self.status in ["Envoyé", "Reçu"]:
 			frappe.throw(_("Un paiement envoyé ou reçu ne peut pas être reprogrammé"))
 		
 		if scheduled_date:
 			self.date_paiement = scheduled_date
-		self.statut = "Programmé"
+		self.status = "Programmé"
 		self.save()
 		
 		return {
@@ -127,10 +147,10 @@ class PaiementProprietaire(Document):
 	@frappe.whitelist()
 	def mark_as_sent(self):
 		"""Marque le paiement comme envoyé"""
-		if self.statut == "Reçu":
+		if self.status == "Reçu":
 			frappe.throw(_("Un paiement déjà reçu ne peut pas être marqué comme envoyé"))
 		
-		self.statut = "Envoyé"
+		self.status = "Envoyé"
 		if not self.date_paiement or self.date_paiement > frappe.utils.nowdate():
 			self.date_paiement = frappe.utils.nowdate()
 		self.save()
@@ -143,10 +163,10 @@ class PaiementProprietaire(Document):
 	@frappe.whitelist()
 	def confirm_receipt(self):
 		"""Confirme la réception du paiement par le propriétaire"""
-		if self.statut == "Reçu":
+		if self.status == "Reçu":
 			frappe.throw(_("Le paiement est déjà marqué comme reçu"))
 		
-		self.statut = "Reçu"
+		self.status = "Reçu"
 		self.save()
 		
 		return {
@@ -157,10 +177,10 @@ class PaiementProprietaire(Document):
 	@frappe.whitelist()
 	def reject_payment(self, reason=None):
 		"""Rejette le paiement"""
-		if self.statut == "Reçu":
+		if self.status == "Reçu":
 			frappe.throw(_("Un paiement reçu ne peut pas être rejeté"))
 		
-		self.statut = "Rejeté"
+		self.status = "Rejeté"
 		if reason:
 			self.commentaires = (self.commentaires or "") + f"\nRejeté: {reason}"
 		self.save()
@@ -179,10 +199,9 @@ class PaiementProprietaire(Document):
 				"type_paiement": self.type_paiement,
 				"montant": self.montant,
 				"montant_net": self.montant_net,
-				"frais_transaction": self.frais_transaction,
 				"date_paiement": self.date_paiement,
 				"methode_paiement": self.methode_paiement,
-				"statut": self.statut,
+				"status": self.status,
 				"reference_paiement": self.reference_paiement
 			}
 		}
@@ -233,7 +252,7 @@ class PaiementProprietaire(Document):
 	@frappe.whitelist()
 	def send_payment_notification(self):
 		"""Envoie une notification de paiement au propriétaire"""
-		if self.statut not in ["Programmé", "Envoyé"]:
+		if self.status not in ["Programmé", "Envoyé"]:
 			frappe.throw(_("Le paiement doit être programmé ou envoyé pour envoyer une notification"))
 		
 		# Récupère l'email du propriétaire
@@ -255,7 +274,7 @@ class PaiementProprietaire(Document):
 		
 		if proprietaire_email:
 			subject = f"Notification de paiement - {self.name}"
-			if self.statut == "Programmé":
+			if self.status == "Programmé":
 				message = f"""
 				Bonjour {proprietaire_nom},
 				
@@ -304,7 +323,7 @@ class PaiementProprietaire(Document):
 	@frappe.whitelist()
 	def calculate_payment_statistics(self, start_date=None, end_date=None):
 		"""Calcule les statistiques de paiement pour une période"""
-		filters = {"statut": ["in", ["Envoyé", "Reçu"]]}
+		filters = {"status": ["in", ["Envoyé", "Reçu"]]}
 		
 		if start_date:
 			filters["date_paiement"] = [">=", start_date]
@@ -317,12 +336,11 @@ class PaiementProprietaire(Document):
 		paiements = frappe.get_all(
 			"Paiement Propriétaire",
 			filters=filters,
-			fields=["montant", "montant_net", "frais_transaction", "type_paiement", "methode_paiement", "statut"]
+			fields=["montant", "montant_net", "type_paiement", "methode_paiement", "status"]
 		)
 		
 		total_montant = sum(p.montant for p in paiements)
 		total_net = sum(p.montant_net for p in paiements)
-		total_frais = sum(p.frais_transaction or 0 for p in paiements)
 		
 		# Répartition par type de paiement
 		par_type = {}
@@ -340,29 +358,28 @@ class PaiementProprietaire(Document):
 			par_methode[p.methode_paiement]["count"] += 1
 			par_methode[p.methode_paiement]["montant"] += p.montant
 		
-		# Répartition par statut
-		par_statut = {}
+		# Répartition par status
+		par_status = {}
 		for p in paiements:
-			if p.statut not in par_statut:
-				par_statut[p.statut] = {"count": 0, "montant": 0}
-			par_statut[p.statut]["count"] += 1
-			par_statut[p.statut]["montant"] += p.montant
+			if p.status not in par_status:
+				par_status[p.status] = {"count": 0, "montant": 0}
+			par_status[p.status]["count"] += 1
+			par_status[p.status]["montant"] += p.montant
 		
 		return {
 			"periode": {"debut": start_date, "fin": end_date},
 			"total_paiements": len(paiements),
 			"montant_total": total_montant,
 			"montant_net_total": total_net,
-			"frais_total": total_frais,
 			"repartition_par_type": par_type,
 			"repartition_par_methode": par_methode,
-			"repartition_par_statut": par_statut
+			"repartition_par_status": par_status
 		}
 	
 	@frappe.whitelist()
 	def get_pending_payments(self, proprietaire_id=None):
 		"""Récupère les paiements en attente pour un propriétaire"""
-		filters = {"statut": ["in", ["En attente", "Programmé"]]}
+		filters = {"status": ["in", ["En attente", "Programmé"]]}
 		
 		if proprietaire_id:
 			# Récupère les appartements du propriétaire
@@ -394,7 +411,7 @@ class PaiementProprietaire(Document):
 		paiements = frappe.get_all(
 			"Paiement Propriétaire",
 			filters=filters,
-			fields=["name", "type_paiement", "montant", "date_paiement", "statut", "location_longue_duree_id", "location_courte_duree_id"],
+			fields=["name", "type_paiement", "montant", "date_paiement", "status", "location_longue_duree_id", "location_courte_duree_id"],
 			order_by="date_paiement asc"
 		)
 		

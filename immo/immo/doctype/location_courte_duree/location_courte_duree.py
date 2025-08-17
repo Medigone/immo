@@ -20,11 +20,11 @@ class LocationCourteDuree(Document):
 		self.validate_location_bloc()
 	
 	def validate_appartement(self):
-		"""Valide que l'appartement existe et est disponible"""
+		"""Valide que l'appartement existe"""
 		if self.appartement_id:
+			# Vérifier que l'appartement existe
 			appartement = frappe.get_doc("Appartement", self.appartement_id)
-			if not appartement.disponible and self.is_new():
-				frappe.throw(f"L'appartement {appartement.adresse_complete} n'est pas disponible")
+			# La disponibilité sera vérifiée par les validations de chevauchement de dates
 	
 	def validate_dates(self):
 		"""Valide les dates de location"""
@@ -141,7 +141,7 @@ class LocationCourteDuree(Document):
 	
 	def before_save(self):
 		"""Actions avant sauvegarde"""
-		# Détermine automatiquement le type de location
+		# Détermination automatique du type de location
 		self.set_type_location()
 		
 		# Calcule le nombre de nuits
@@ -225,15 +225,15 @@ class LocationCourteDuree(Document):
 		"""Retourne les paiements du locataire"""
 		return frappe.get_all("Paiement Locataire",
 			filters={"location_courte_duree_id": self.name},
-			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
+			fields=["name", "montant", "date_paiement", "status", "methode_paiement"],
 			order_by="date_paiement desc")
 	
 	@frappe.whitelist()
 	def get_paiements_proprietaire(self):
 		"""Retourne les paiements au propriétaire"""
 		return frappe.get_all("Paiement Propriétaire",
-			filters={"location_courte_duree_id": self.name},
-			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
+            filters={"location_courte_duree_id": self.name},
+            fields=["name", "montant", "date_paiement", "status", "methode_paiement"],
 			order_by="date_paiement desc")
 	
 	@frappe.whitelist()
@@ -301,3 +301,91 @@ class LocationCourteDuree(Document):
 				}
 		
 		return {"available": True, "message": "Appartement disponible"}
+	
+	def calculate_payment_status(self):
+		"""Calcule le statut des paiements et met à jour les champs de suivi"""
+		try:
+			# Calculer les paiements locataire
+			self.calculate_locataire_payments()
+			
+			# Calculer les paiements propriétaire
+			self.calculate_proprietaire_payments()
+			
+		except Exception as e:
+			frappe.log_error(f"Erreur calcul statut paiements {self.name}: {str(e)}", "LCD Payment Status Error")
+	
+	def calculate_locataire_payments(self):
+		"""Calcule les montants payés et restants pour le locataire"""
+		try:
+			# Récupérer tous les paiements validés (status = 'Payé')
+			paiements = frappe.get_all("Paiement Locataire",
+				filters={
+					"location_courte_duree_id": self.name,
+					"status": "Payé"
+				},
+				fields=["montant"]
+			)
+			
+			# Calculer le total payé
+			total_paye = sum(paiement.montant for paiement in paiements)
+			self.montant_paye_locataire = total_paye
+			
+			# Calculer le montant restant
+			montant_total = self.montant_total_locataire or 0
+			self.montant_restant_locataire = max(0, montant_total - total_paye)
+			
+			# Déterminer le statut
+			if total_paye == 0:
+				self.statut_paiement_locataire = "En attente"
+			elif total_paye >= montant_total:
+				self.statut_paiement_locataire = "Entièrement payé"
+			else:
+				self.statut_paiement_locataire = "Partiellement payé"
+				
+		except Exception as e:
+			frappe.log_error(f"Erreur calcul paiements locataire {self.name}: {str(e)}", "LCD Locataire Payment Error")
+	
+	def calculate_proprietaire_payments(self):
+		"""Calcule les montants versés et restants pour le propriétaire"""
+		try:
+			# Récupérer tous les paiements validés (status = 'Payé')
+			paiements = frappe.get_all("Paiement Proprietaire",
+				filters={
+					"location_courte_duree_id": self.name,
+					"status": "Payé"
+				},
+				fields=["montant"]
+			)
+			
+			# Calculer le total versé
+			total_verse = sum(paiement.montant for paiement in paiements)
+			self.montant_paye_proprietaire = total_verse
+			
+			# Calculer le montant restant
+			montant_total = self.montant_total_proprietaire or 0
+			self.montant_restant_proprietaire = max(0, montant_total - total_verse)
+			
+			# Déterminer le statut
+			if total_verse == 0:
+				self.statut_paiement_proprietaire = "En attente"
+			elif total_verse >= montant_total:
+				self.statut_paiement_proprietaire = "Entièrement versé"
+			else:
+				self.statut_paiement_proprietaire = "Partiellement versé"
+				
+		except Exception as e:
+			frappe.log_error(f"Erreur calcul paiements propriétaire {self.name}: {str(e)}", "LCD Proprietaire Payment Error")
+	
+	@frappe.whitelist()
+	def refresh_payment_status(self):
+		"""Méthode publique pour rafraîchir le statut des paiements"""
+		self.calculate_payment_status()
+		self.save()
+		return {
+			"montant_paye_locataire": self.montant_paye_locataire,
+			"montant_restant_locataire": self.montant_restant_locataire,
+			"statut_paiement_locataire": self.statut_paiement_locataire,
+			"montant_paye_proprietaire": self.montant_paye_proprietaire,
+			"montant_restant_proprietaire": self.montant_restant_proprietaire,
+			"statut_paiement_proprietaire": self.statut_paiement_proprietaire
+		}

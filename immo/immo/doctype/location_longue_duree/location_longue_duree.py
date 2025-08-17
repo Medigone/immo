@@ -19,11 +19,11 @@ class LocationLongueDuree(Document):
 		self.validate_email()
 	
 	def validate_appartement(self):
-		"""Valide que l'appartement existe et est disponible"""
+		"""Valide que l'appartement existe"""
 		if self.appartement_id:
+			# Vérifier que l'appartement existe
 			appartement = frappe.get_doc("Appartement", self.appartement_id)
-			if not appartement.disponible and self.is_new():
-				frappe.throw(f"L'appartement {appartement.adresse_complete} n'est pas disponible")
+			# La disponibilité sera vérifiée par les validations de chevauchement de dates
 	
 	def validate_dates(self):
 		"""Valide les dates de location"""
@@ -125,15 +125,15 @@ class LocationLongueDuree(Document):
 		"""Retourne les paiements du locataire"""
 		return frappe.get_all("Paiement Locataire",
 			filters={"location_longue_duree_id": self.name},
-			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
+			fields=["name", "montant", "date_paiement", "status", "methode_paiement"],
 			order_by="date_paiement desc")
 	
 	@frappe.whitelist()
 	def get_paiements_proprietaire(self):
 		"""Retourne les paiements au propriétaire"""
 		return frappe.get_all("Paiement Propriétaire",
-			filters={"location_longue_duree_id": self.name},
-			fields=["name", "montant", "date_paiement", "statut", "methode_paiement"],
+            filters={"location_longue_duree_id": self.name},
+            fields=["name", "montant", "date_paiement", "status", "methode_paiement"],
 			order_by="date_paiement desc")
 	
 	@frappe.whitelist()

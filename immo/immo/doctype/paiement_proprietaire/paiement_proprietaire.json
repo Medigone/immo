@@ -2,66 +2,69 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-15 10:00:00.000000",
+ "creation": "2024-01-15 10:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "date_paiement",
   "naming_series",
+  "status",
+  "column_break_ldkd",
+  "type_paiement",
+  "section_break_udmy",
+  "montant",
+  "column_break_qahy",
+  "methode_paiement",
+  "section_break_fcmm",
+  "appartement",
+  "column_break_rrdh",
+  "proprietaire",
   "section_break_2",
   "mensualite_id",
   "location_longue_duree_id",
-  "location_courte_duree_id",
   "column_break_6",
-  "type_paiement",
-  "montant",
-  "date_paiement",
-  "methode_paiement",
+  "location_courte_duree_id",
   "section_break_11",
-  "statut",
-  "column_break_13",
   "reference_paiement",
-  "section_break_15",
-  "frais_transaction",
-  "montant_net",
-  "column_break_18",
-  "date_creation",
-  "date_validation",
-  "valide_par",
+  "column_break_13",
   "section_break_22",
   "commentaires"
  ],
  "fields": [
   {
+   "default": "PP-.YYYY.-.MM.-.#####",
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
-   "options": "PP-.YYYY.-.MM.-.#####",
-   "reqd": 1
+   "hidden": 1,
+   "label": "S\u00e9rie de nommage",
+   "options": "PP-.YYYY.-.MM.-.#####"
   },
   {
    "fieldname": "section_break_2",
-   "fieldtype": "Section Break",
-   "label": "Informations de paiement"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "mensualite_id",
    "fieldtype": "Link",
    "label": "Mensualite",
-   "options": "Mensualite"
+   "options": "Mensualite",
+   "search_index": 1
   },
   {
    "fieldname": "location_longue_duree_id",
    "fieldtype": "Link",
    "label": "Location Longue Duree",
-   "options": "Location Longue Duree"
+   "options": "Location Longue Duree",
+   "search_index": 1
   },
   {
    "fieldname": "location_courte_duree_id",
    "fieldtype": "Link",
    "label": "Location Courte Duree",
-   "options": "Location Courte Duree"
+   "options": "Location Courte Duree",
+   "search_index": 1
   },
   {
    "fieldname": "column_break_6",
@@ -70,13 +73,15 @@
   {
    "fieldname": "type_paiement",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type de paiement",
-   "options": "Loyer mensuel\nSéjour court\nDépôt de garantie\nCharges\nAutre",
+   "options": "Loyer mensuel\nS\u00e9jour court\nD\u00e9p\u00f4t de garantie\nCharges\nAutre",
    "reqd": 1
   },
   {
    "fieldname": "montant",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Montant",
    "precision": "2",
    "reqd": 1
@@ -90,22 +95,13 @@
   {
    "fieldname": "methode_paiement",
    "fieldtype": "Select",
-   "label": "Méthode de paiement",
-   "options": "Virement bancaire\nChèque\nEspèces\nPayPal\nAutre",
+   "label": "M\u00e9thode de paiement",
+   "options": "Virement bancaire\nEsp\u00e8ces\nCh\u00e8que\nAutre",
    "reqd": 1
   },
   {
    "fieldname": "section_break_11",
-   "fieldtype": "Section Break",
-   "label": "Statut et référence"
-  },
-  {
-   "fieldname": "statut",
-   "fieldtype": "Select",
-   "label": "Statut",
-   "options": "En attente\nProgrammé\nEnvoyé\nReçu\nRejeté",
-   "reqd": 1,
-   "default": "En attente"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_13",
@@ -114,48 +110,7 @@
   {
    "fieldname": "reference_paiement",
    "fieldtype": "Data",
-   "label": "Référence de paiement"
-  },
-  {
-   "fieldname": "section_break_15",
-   "fieldtype": "Section Break",
-   "label": "Détails financiers"
-  },
-  {
-   "fieldname": "frais_transaction",
-   "fieldtype": "Currency",
-   "label": "Frais de transaction",
-   "precision": "2"
-  },
-  {
-   "fieldname": "montant_net",
-   "fieldtype": "Currency",
-   "label": "Montant net",
-   "precision": "2",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_18",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "date_creation",
-   "fieldtype": "Datetime",
-   "label": "Date de création",
-   "read_only": 1
-  },
-  {
-   "fieldname": "date_validation",
-   "fieldtype": "Datetime",
-   "label": "Date de validation",
-   "read_only": 1
-  },
-  {
-   "fieldname": "valide_par",
-   "fieldtype": "Link",
-   "label": "Validé par",
-   "options": "User",
-   "read_only": 1
+   "label": "R\u00e9f\u00e9rence de paiement"
   },
   {
    "fieldname": "section_break_22",
@@ -166,24 +121,54 @@
    "fieldname": "commentaires",
    "fieldtype": "Text",
    "label": "Commentaires"
+  },
+  {
+   "fieldname": "section_break_udmy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_qahy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ldkd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Nouveau",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Statut",
+   "options": "Nouveau\nPay\u00e9\nAnnul\u00e9",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_fcmm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "appartement",
+   "fieldtype": "Link",
+   "label": "Appartement",
+   "options": "Appartement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rrdh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "appartement.proprietaire_id",
+   "fieldname": "proprietaire",
+   "fieldtype": "Link",
+   "label": "Proprietaire",
+   "options": "Proprietaire"
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Mensualite",
-   "link_fieldname": "mensualite_id"
-  },
-  {
-   "link_doctype": "Location Longue Duree",
-   "link_fieldname": "location_longue_duree_id"
-  },
-  {
-   "link_doctype": "Location Courte Duree",
-   "link_fieldname": "location_courte_duree_id"
-  }
- ],
- "modified": "2024-01-15 10:00:00.000000",
+ "links": [],
+ "modified": "2025-08-17 16:49:06.993310",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Paiement Proprietaire",
@@ -223,8 +208,22 @@
    "share": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Nouveau"
+  },
+  {
+   "color": "Green",
+   "title": "Pay\u00e9"
+  },
+  {
+   "color": "Red",
+   "title": "Annul\u00e9"
+  }
+ ],
  "track_changes": 1
 }

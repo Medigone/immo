@@ -26,8 +26,8 @@ def on_update(doc, method):
 	update_location_statistics(doc)
 	
 	# Génère automatiquement la mensualité suivante si nécessaire
-	if doc.statut_paiement_locataire == "Payé" and doc.statut_paiement_proprietaire == "Payé":
-		generate_next_mensualite(doc)
+	# DÉSACTIVÉ: if doc.statut_paiement_locataire == "Payé" and doc.statut_paiement_proprietaire == "Payé":
+	#	generate_next_mensualite(doc)
 	
 	# Met à jour les marges réelles de la location
 	update_location_real_margins(doc)

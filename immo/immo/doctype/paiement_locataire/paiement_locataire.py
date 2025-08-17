@@ -44,9 +44,6 @@ class PaiementLocataire(Document):
 		"""Valide le montant du paiement"""
 		if self.montant is not None and self.montant <= 0:
 			frappe.throw(_("Le montant du paiement doit être positif"))
-		
-		if self.frais_transaction is not None and self.frais_transaction < 0:
-			frappe.throw(_("Les frais de transaction ne peuvent pas être négatifs"))
 	
 	def validate_payment_date(self):
 		"""Valide la date de paiement"""
@@ -62,32 +59,18 @@ class PaiementLocataire(Document):
 			return
 		
 		old_doc = self.get_doc_before_save()
-		if old_doc and old_doc.statut == "Confirmé" and self.statut != "Confirmé":
-			frappe.throw(_("Un paiement confirmé ne peut pas être modifié"))
+		if old_doc and old_doc.status == "Payé" and self.status != "Payé":
+			frappe.throw(_("Un paiement payé ne peut pas être modifié"))
 	
 	def before_save(self):
 		"""Actions avant sauvegarde"""
-		# Calcule le montant net
-		self.calculate_net_amount()
-		# Met à jour les informations de validation
-		self.update_validation_info()
-	
-	def calculate_net_amount(self):
-		"""Calcule le montant net après déduction des frais"""
-		if self.montant is not None:
-			frais = self.frais_transaction or 0
-			self.montant_net = self.montant - frais
-	
-	def update_validation_info(self):
-		"""Met à jour les informations de validation"""
-		if self.statut == "Confirmé" and not self.date_validation:
-			self.date_validation = frappe.utils.now()
-			self.valide_par = frappe.session.user
+		# Pas de champs de validation dans ce modèle
+		pass
 	
 	def on_update(self):
 		"""Actions après mise à jour"""
 		# Met à jour le statut de la mensualité si applicable
-		if self.mensualite_id and self.statut == "Confirmé":
+		if self.mensualite_id and self.status == "Payé":
 			self.update_mensualite_status()
 	
 	def update_mensualite_status(self):
@@ -116,10 +99,10 @@ class PaiementLocataire(Document):
 	@frappe.whitelist()
 	def confirm_payment(self):
 		"""Confirme le paiement"""
-		if self.statut == "Confirmé":
-			frappe.throw(_("Le paiement est déjà confirmé"))
+		if self.status == "Payé":
+			frappe.throw(_("Le paiement est déjà payé"))
 		
-		self.statut = "Confirmé"
+		self.status = "Payé"
 		self.save()
 		
 		return {
@@ -130,12 +113,11 @@ class PaiementLocataire(Document):
 	@frappe.whitelist()
 	def reject_payment(self, reason=None):
 		"""Rejette le paiement"""
-		if self.statut == "Confirmé":
-			frappe.throw(_("Un paiement confirmé ne peut pas être rejeté"))
+		if self.status == "Payé":
+			frappe.throw(_("Un paiement payé ne peut pas être rejeté"))
 		
-		self.statut = "Rejeté"
-		if reason:
-			self.commentaires = (self.commentaires or "") + f"\nRejeté: {reason}"
+		self.status = "Annulé"
+		# Note: le champ commentaires n'existe pas dans ce modèle
 		self.save()
 		
 		return {
@@ -151,11 +133,9 @@ class PaiementLocataire(Document):
 				"name": self.name,
 				"type_paiement": self.type_paiement,
 				"montant": self.montant,
-				"montant_net": self.montant_net,
-				"frais_transaction": self.frais_transaction,
 				"date_paiement": self.date_paiement,
 				"methode_paiement": self.methode_paiement,
-				"statut": self.statut,
+				"statut": self.status,
 				"reference_paiement": self.reference_paiement
 			}
 		}
@@ -196,8 +176,8 @@ class PaiementLocataire(Document):
 	@frappe.whitelist()
 	def send_payment_confirmation(self):
 		"""Envoie une confirmation de paiement au locataire"""
-		if self.statut != "Confirmé":
-			frappe.throw(_("Le paiement doit être confirmé pour envoyer une confirmation"))
+		if self.status != "Payé":
+			frappe.throw(_("Le paiement doit être payé pour envoyer une confirmation"))
 		
 		# Récupère l'email du locataire
 		locataire_email = None
@@ -241,7 +221,7 @@ class PaiementLocataire(Document):
 	@frappe.whitelist()
 	def calculate_payment_statistics(self, start_date=None, end_date=None):
 		"""Calcule les statistiques de paiement pour une période"""
-		filters = {"statut": "Confirmé"}
+		filters = {"status": "Payé"}
 		
 		if start_date:
 			filters["date_paiement"] = [">=", start_date]
@@ -254,12 +234,11 @@ class PaiementLocataire(Document):
 		paiements = frappe.get_all(
 			"Paiement Locataire",
 			filters=filters,
-			fields=["montant", "montant_net", "frais_transaction", "type_paiement", "methode_paiement"]
+			fields=["montant", "type_paiement", "methode_paiement"]
 		)
 		
 		total_montant = sum(p.montant for p in paiements)
-		total_net = sum(p.montant_net for p in paiements)
-		total_frais = sum(p.frais_transaction or 0 for p in paiements)
+		# Pas de montant net dans ce modèle
 		
 		# Répartition par type de paiement
 		par_type = {}
@@ -281,8 +260,6 @@ class PaiementLocataire(Document):
 			"periode": {"debut": start_date, "fin": end_date},
 			"total_paiements": len(paiements),
 			"montant_total": total_montant,
-			"montant_net_total": total_net,
-			"frais_total": total_frais,
 			"repartition_par_type": par_type,
 			"repartition_par_methode": par_methode
 		}

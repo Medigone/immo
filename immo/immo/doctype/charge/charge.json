@@ -11,6 +11,7 @@
   "naming_series",
   "section_break_2",
   "appartement_id",
+  "proprietaire_id",
   "location_longue_duree_id",
   "location_courte_duree_id",
   "column_break_6",
@@ -62,6 +63,14 @@
    "label": "Appartement",
    "options": "Appartement",
    "reqd": 1
+  },
+  {
+   "fieldname": "proprietaire_id",
+   "fieldtype": "Link",
+   "label": "Propriétaire",
+   "options": "Proprietaire",
+   "read_only": 1,
+   "fetch_from": "appartement_id.proprietaire_id"
   },
   {
    "fieldname": "location_longue_duree_id",

@@ -64,28 +64,10 @@ class Appartement(Document):
 	
 	def on_update(self):
 		"""Actions après mise à jour"""
-		# Met à jour les locations actives si l'appartement devient indisponible
-		if not self.disponible:
-			self.check_active_locations()
+		# Fonction conservée pour compatibilité
+		pass
 	
-	def check_active_locations(self):
-		"""Vérifie s'il y a des locations actives"""
-		# Vérifie les locations longue durée actives
-		active_long_term = frappe.get_all("Location Longue Duree",
-			filters={
-				"appartement_id": self.name,
-				"statut": ["in", ["Actif", "En cours"]]
-			})
-		
-		# Vérifie les locations courte durée actives
-		active_short_term = frappe.get_all("Location Courte Duree",
-			filters={
-				"appartement_id": self.name,
-				"statut": ["in", ["Confirmé", "En cours"]]
-			})
-		
-		if active_long_term or active_short_term:
-			frappe.msgprint("Attention: Cet appartement a des locations actives")
+
 	
 	@frappe.whitelist()
 	def get_locations_longue_duree(self):

@@ -147,20 +147,10 @@ def generate_monthly_payments(doc):
 
 
 def update_apartment_status(doc):
-	"""Met à jour le statut de l'appartement"""
-	if doc.statut == "Actif":
-		# Marque l'appartement comme non disponible
-		frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 0)
-	elif doc.statut in ["Terminé", "Annulé"]:
-		# Vérifie s'il n'y a pas d'autres locations actives
-		other_active = frappe.db.exists("Location Longue Duree", {
-			"appartement_id": doc.appartement_id,
-			"statut": "Actif",
-			"name": ["!=", doc.name]
-		})
-		
-		if not other_active:
-			frappe.db.set_value("Appartement", doc.appartement_id, "disponible", 1)
+	"""Fonction conservée pour compatibilité mais ne fait plus rien"""
+	# Le champ 'disponible' a été supprimé du DocType Appartement
+	# La disponibilité est maintenant gérée par les validations de chevauchement de dates
+	pass
 
 
 def update_existing_mensualites_margins(doc):

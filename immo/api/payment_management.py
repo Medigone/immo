@@ -7,9 +7,11 @@ from frappe.utils import nowdate, getdate, add_months, flt
 from datetime import datetime, timedelta
 
 
+# FONCTION DÉSACTIVÉE - Génération automatique de paiements désactivée
+"""
 @frappe.whitelist()
 def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month, payment_data):
-	"""Crée des paiements locataire en lot pour plusieurs mois"""
+	Crée des paiements locataire en lot pour plusieurs mois
 	try:
 		# Vérification de la location
 		if not frappe.db.exists("Location Longue Duree", location_longue_duree_id):
@@ -92,6 +94,7 @@ def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month
 			"success": False,
 			"error": str(e)
 		}
+"""
 
 
 @frappe.whitelist()

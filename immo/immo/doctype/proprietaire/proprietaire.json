@@ -8,6 +8,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "dashboard_section",
+  "dashboard",
   "section_break_xgfd",
   "naming_series",
   "nom_complet",
@@ -77,11 +79,21 @@
   {
    "fieldname": "section_break_xgfd",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "dashboard_section",
+   "fieldtype": "Section Break",
+   "label": "Tableau de bord"
+  },
+  {
+   "fieldname": "dashboard",
+   "fieldtype": "HTML",
+   "label": "M\u00e9triques de performance"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-08 19:18:40.449040",
+ "modified": "2025-08-17 18:01:43.211596",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Proprietaire",

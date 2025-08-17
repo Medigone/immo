@@ -20,6 +20,10 @@ def on_update(doc, method):
 	# Met à jour les métriques de la location bloc si liée à un bloc
 	if doc.location_bloc_id:
 		update_location_bloc_metrics_after_payment(doc)
+	
+	# Mettre à jour le statut des paiements de la location courte durée
+	if doc.location_courte_duree_id:
+		update_location_courte_duree_payment_status(doc)
 
 
 
@@ -47,110 +51,57 @@ def update_mensualite_status(doc):
 
 def update_location_payment_statistics(doc):
 	"""Met à jour les statistiques de paiement de la location"""
-	location_id = None
-	
-	# Détermine l'ID de la location selon le type
-	if doc.mensualite_id:
-		# Récupère la location via la mensualité
-		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		location_id = mensualite.location_longue_duree_id
-		location_type = "Location Longue Duree"
-	elif doc.location_longue_duree_id:
-		location_id = doc.location_longue_duree_id
-		location_type = "Location Longue Duree"
-	elif doc.location_courte_duree_id:
-		location_id = doc.location_courte_duree_id
-		location_type = "Location Courte Duree"
-	
-	if not location_id:
-		return
-	
 	try:
-		# Calcule les statistiques de paiement pour cette location
-		stats = frappe.db.sql("""
-			SELECT 
-				COUNT(*) as total_paiements,
-				SUM(montant) as montant_total_recu,
-				SUM(montant_net) as montant_net_total,
-				SUM(frais_transaction) as frais_totaux,
-				COUNT(CASE WHEN statut = 'Confirmé' THEN 1 END) as paiements_confirmes,
-				COUNT(CASE WHEN statut = 'En attente' THEN 1 END) as paiements_en_attente,
-				AVG(montant) as montant_moyen
-			FROM `tabPaiement Locataire`
-			WHERE (
-				(mensualite_id IN (
-					SELECT name FROM `tabMensualite` 
-					WHERE location_longue_duree_id = %s
-				))
-				OR location_longue_duree_id = %s
-				OR location_courte_duree_id = %s
-			)
-
-		""", (location_id, location_id, location_id), as_dict=True)
+		location_id = None
 		
-		if stats:
-			stat = stats[0]
-			# Met à jour la location avec les nouvelles statistiques
-			update_data = {
-				"total_paiements_recus": stat.montant_total_recu or 0,
-				"total_frais_transaction": stat.frais_totaux or 0,
-				"nombre_paiements_locataire": stat.total_paiements or 0,
-				"taux_paiement_locataire": (stat.paiements_confirmes / stat.total_paiements * 100) if stat.total_paiements > 0 else 0
-			}
-			
-			frappe.db.set_value(location_type, location_id, update_data)
-			
+		# Détermine l'ID de la location selon le type
+		if doc.mensualite_id:
+			# Récupère la location via la mensualité
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
+			location_id = mensualite.location_longue_duree_id
+			location_type = "Location Longue Duree"
+		elif doc.location_longue_duree_id:
+			location_id = doc.location_longue_duree_id
+			location_type = "Location Longue Duree"
+		elif doc.location_courte_duree_id:
+			location_id = doc.location_courte_duree_id
+			location_type = "Location Courte Duree"
+		
+		if not location_id:
+			return
+		
+		# NOTE: Les champs de statistiques de la location ne sont plus mis à jour
+		# car le dashboard HTML affiche ces informations en temps réel
+		# via l'API get_proprietaire_dashboard_data
+		
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour des statistiques de location: {str(e)}")
 
 
 def update_apartment_payment_statistics(doc):
 	"""Met à jour les statistiques de paiement de l'appartement"""
-	appartement_id = None
-	
-	# Récupère l'ID de l'appartement
-	if doc.mensualite_id:
-		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
-		appartement_id = location.appartement_id
-	elif doc.location_longue_duree_id:
-		location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
-		appartement_id = location.appartement_id
-	elif doc.location_courte_duree_id:
-		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
-		appartement_id = location.appartement_id
-	
-	if not appartement_id:
-		return
-	
 	try:
-		# Calcule les statistiques globales de paiement pour cet appartement
-		stats = frappe.db.sql("""
-			SELECT 
-				SUM(pl.montant) as total_encaisse_annee,
-				SUM(pl.montant_net) as total_net_annee,
-				SUM(pl.frais_transaction) as total_frais_annee,
-				COUNT(pl.name) as nombre_paiements_annee,
-				AVG(pl.montant) as montant_moyen_paiement
-			FROM `tabPaiement Locataire` pl
-			LEFT JOIN `tabMensualite` m ON pl.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pl.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Duree` lcd ON pl.location_courte_duree_id = lcd.name
-			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
-				AND pl.statut = 'Confirmé'
-				AND YEAR(pl.date_paiement) = YEAR(CURDATE())
-		""", (appartement_id, appartement_id), as_dict=True)
+		appartement_id = None
 		
-		if stats:
-			stat = stats[0]
-			# Met à jour l'appartement avec les nouvelles statistiques
-			frappe.db.set_value("Appartement", appartement_id, {
-				"total_encaisse_annee": stat.total_encaisse_annee or 0,
-				"total_net_encaisse_annee": stat.total_net_annee or 0,
-				"total_frais_transaction_annee": stat.total_frais_annee or 0,
-				"nombre_paiements_locataire_annee": stat.nombre_paiements_annee or 0
-			})
-			
+		# Récupère l'ID de l'appartement
+		if doc.mensualite_id:
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
+			appartement_id = location.appartement_id
+		elif doc.location_longue_duree_id:
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
+			appartement_id = location.appartement_id
+		elif doc.location_courte_duree_id:
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
+			appartement_id = location.appartement_id
+		
+		if not appartement_id:
+			return
+		
+		# NOTE: Les champs de statistiques de l'appartement ne sont plus mis à jour
+		# car le dashboard HTML affiche ces informations en temps réel
+		# via l'API get_proprietaire_dashboard_data
+		
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour des statistiques d'appartement: {str(e)}")
 
@@ -198,10 +149,9 @@ def notify_payment_confirmed(doc):
 			- Appartement: {appartement_adresse}
 			- Type: {doc.type_paiement}
 			- Montant: {doc.montant} €
-			- Montant net: {doc.montant_net} €
 			- Date de paiement: {doc.date_paiement}
 			- Méthode: {doc.methode_paiement}
-			- Référence: {doc.reference_financiere or 'N/A'}
+			- Référence: {doc.reference_paiement or 'N/A'}
 			
 			Merci pour votre ponctualité!
 			
@@ -303,9 +253,9 @@ def notify_payment_rejected(doc):
 			- Type: {doc.type_paiement}
 			- Montant: {doc.montant} €
 			- Date: {doc.date_paiement}
-			- Référence: {doc.reference_financiere or 'N/A'}
+			- Référence: {doc.reference_paiement or 'N/A'}
 			
-			Raison: {doc.commentaires or 'Non spécifiée'}
+			Raison: {reason or 'Non spécifiée'}
 			
 			Veuillez nous contacter pour régulariser la situation.
 			
@@ -374,3 +324,15 @@ def auto_reconcile_payments():
 				
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la réconciliation automatique: {str(e)}")
+
+
+def update_location_courte_duree_payment_status(doc):
+	"""Met à jour le statut des paiements de la location courte durée"""
+	try:
+		if doc.location_courte_duree_id:
+			# Déclencher la mise à jour de la location courte durée
+			# Cela va automatiquement appeler on_update qui calculera le statut des paiements
+			frappe.db.set_value("Location Courte Duree", doc.location_courte_duree_id, "modified", frappe.utils.now())
+			
+	except Exception as e:
+		frappe.log_error(f"Erreur lors de la mise à jour du statut des paiements de la location courte durée: {str(e)}")

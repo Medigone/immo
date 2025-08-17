@@ -8,31 +8,42 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_pznv",
   "naming_series",
-  "appartement_id",
-  "bloc_section",
-  "location_bloc_id",
   "type_location",
-  "locataire_section",
+  "section_break_vair",
+  "appartement_id",
+  "column_break_teni",
+  "location_bloc_id",
+  "section_break_mkhf",
+  "date_debut",
+  "nombre_nuits",
+  "column_break_zmpx",
+  "date_fin",
+  "section_break_buuj",
   "locataire_nom",
   "locataire_email",
   "locataire_telephone",
-  "periode_section",
-  "date_debut",
-  "date_fin",
-  "nombre_nuits",
   "prix_section",
   "prix_journalier_locataire",
   "prix_journalier_proprietaire",
+  "column_break_lhfd",
   "montant_total_locataire",
   "montant_total_proprietaire",
   "marge_totale",
   "marge_sur_bloc",
   "quote_part_bloc",
+  "suivi_paiements_section",
+  "statut_paiement_locataire",
+  "montant_paye_locataire",
+  "montant_restant_locataire",
+  "column_break_ozal",
+  "statut_paiement_proprietaire",
+  "montant_paye_proprietaire",
+  "montant_restant_proprietaire",
   "referent_section",
   "referent_id",
-  "commission_referent"
+  "commission_referent",
+  "liens_tab"
  ],
  "fields": [
   {
@@ -49,12 +60,8 @@
    "in_list_view": 1,
    "label": "Appartement",
    "options": "Appartement",
-   "reqd": 1
-  },
-  {
-   "fieldname": "bloc_section",
-   "fieldtype": "Section Break",
-   "label": "Gestion Location Bloc"
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "location_bloc_id",
@@ -66,13 +73,7 @@
    "fieldname": "type_location",
    "fieldtype": "Data",
    "label": "Type de location",
-   "read_only": 1,
-   "hidden": 1
-  },
-  {
-   "fieldname": "locataire_section",
-   "fieldtype": "Section Break",
-   "label": "Informations locataire"
+   "read_only": 1
   },
   {
    "fieldname": "locataire_nom",
@@ -90,13 +91,8 @@
   {
    "fieldname": "locataire_telephone",
    "fieldtype": "Data",
-   "label": "Téléphone du locataire",
+   "label": "T\u00e9l\u00e9phone du locataire",
    "options": "Phone"
-  },
-  {
-   "fieldname": "periode_section",
-   "fieldtype": "Section Break",
-   "label": "P\u00e9riode de location"
   },
   {
    "fieldname": "date_debut",
@@ -176,16 +172,16 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "referent_section",
    "fieldtype": "Section Break",
-   "label": "Commission r\u00e9f\u00e9rent"
+   "label": "R\u00e9f\u00e9rent"
   },
   {
    "fieldname": "referent_id",
    "fieldtype": "Link",
    "label": "R\u00e9f\u00e9rent",
-   "options": "Referent"
+   "options": "Referent",
+   "search_index": 1
   },
   {
    "fieldname": "commission_referent",
@@ -194,10 +190,92 @@
    "precision": "2",
    "read_only": 1
   },
-  
   {
-   "fieldname": "section_break_pznv",
+   "fieldname": "suivi_paiements_section",
+   "fieldtype": "Section Break",
+   "label": "Suivi des Paiements"
+  },
+  {
+   "description": "Calcul\u00e9 automatiquement \u00e0 partir des paiements valid\u00e9s",
+   "fieldname": "montant_paye_locataire",
+   "fieldtype": "Currency",
+   "label": "Montant pay\u00e9 par le locataire",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Montant total - montant pay\u00e9",
+   "fieldname": "montant_restant_locataire",
+   "fieldtype": "Currency",
+   "label": "Montant restant \u00e0 payer (locataire)",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Calcul\u00e9 automatiquement",
+   "fieldname": "statut_paiement_locataire",
+   "fieldtype": "Select",
+   "label": "Statut du paiement locataire",
+   "options": "En attente\nPartiellement pay\u00e9\nEnti\u00e8rement pay\u00e9",
+   "read_only": 1
+  },
+  {
+   "description": "Calcul\u00e9 automatiquement \u00e0 partir des paiements valid\u00e9s",
+   "fieldname": "montant_paye_proprietaire",
+   "fieldtype": "Currency",
+   "label": "Montant vers\u00e9 au propri\u00e9taire",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Montant total - montant vers\u00e9",
+   "fieldname": "montant_restant_proprietaire",
+   "fieldtype": "Currency",
+   "label": "Montant restant \u00e0 verser (propri\u00e9taire)",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Calcul\u00e9 automatiquement",
+   "fieldname": "statut_paiement_proprietaire",
+   "fieldtype": "Select",
+   "label": "Statut du paiement propri\u00e9taire",
+   "options": "En attente\nPartiellement vers\u00e9\nEnti\u00e8rement vers\u00e9",
+   "read_only": 1
+  },
+  {
+   "fieldname": "liens_tab",
+   "fieldtype": "Tab Break",
+   "label": "Liens",
+   "show_dashboard": 1
+  },
+  {
+   "fieldname": "section_break_vair",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_teni",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_buuj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_lhfd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_mkhf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_zmpx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ozal",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -215,7 +293,7 @@
    "link_fieldname": "location_courte_duree_id"
   }
  ],
- "modified": "2025-08-07 20:39:15.766532",
+ "modified": "2025-08-17 19:55:57.116193",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Courte Duree",

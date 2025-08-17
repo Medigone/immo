@@ -38,22 +38,10 @@ class Proprietaire(Document):
 	
 	def on_update(self):
 		"""Actions après mise à jour"""
-		# Met à jour les appartements liés si le propriétaire devient inactif
-		if not self.actif:
-			self.update_appartements_status()
+		# Fonction conservée pour compatibilité
+		pass
 	
-	def update_appartements_status(self):
-		"""Met à jour le statut des appartements quand le propriétaire devient inactif"""
-		appartements = frappe.get_all("Appartement", 
-			filters={"proprietaire_id": self.name},
-			fields=["name"])
-		
-		for apt in appartements:
-			apt_doc = frappe.get_doc("Appartement", apt.name)
-			apt_doc.disponible = 0
-			apt_doc.save()
-			
-		frappe.msgprint(f"Statut mis à jour pour {len(appartements)} appartement(s)")
+
 	
 	@frappe.whitelist()
 	def get_appartements(self):

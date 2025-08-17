@@ -146,7 +146,8 @@ doc_events = {
 	"Location Courte Duree": {
 		"on_update": "immo.hooks_handlers.location_courte_duree.on_update",
 		"on_trash": "immo.hooks_handlers.location_courte_duree.on_trash",
-		"validate": "immo.hooks_handlers.location_courte_duree.validate"
+		"validate": "immo.hooks_handlers.location_courte_duree.validate",
+		"after_insert": "immo.hooks_handlers.location_courte_duree.after_insert"
 	},
 	"Mensualite": {
 		"on_update": "immo.hooks_handlers.mensualite.on_update",

@@ -2,36 +2,34 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-01 00:00:00.000000",
+ "creation": "2024-01-01 00:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "status",
+  "type_paiement",
+  "section_break_rgqp",
+  "methode_paiement",
+  "date_paiement",
+  "column_break_vfxm",
+  "montant",
+  "reference_paiement",
+  "section_break_iuwn",
   "mensualite_id",
   "location_longue_duree_id",
+  "column_break_xkgy",
   "location_courte_duree_id",
   "location_bloc_id",
-  "type_paiement",
-  "montant",
-  "date_paiement",
-  "methode_paiement",
-  "section_break_1",
-  "reference_paiement",
-  "frais_transaction",
-  "montant_net",
-  "section_break_2",
-  "date_creation",
-  "date_validation",
-  "valide_par",
-  "commentaires"
+  "proprietaire_id"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
+   "label": "S\u00e9rie de nommage",
    "options": "PAIL-.YYYY.-.#####",
    "reqd": 1
   },
@@ -39,39 +37,51 @@
    "fieldname": "mensualite_id",
    "fieldtype": "Link",
    "label": "Mensualite",
-   "options": "Mensualite"
+   "options": "Mensualite",
+   "search_index": 1
   },
   {
    "fieldname": "location_longue_duree_id",
    "fieldtype": "Link",
    "label": "Location Longue Duree",
-   "options": "Location Longue Duree"
+   "options": "Location Longue Duree",
+   "search_index": 1
   },
   {
    "fieldname": "location_courte_duree_id",
    "fieldtype": "Link",
    "label": "Location Courte Duree",
-   "options": "Location Courte Duree"
+   "options": "Location Courte Duree",
+   "search_index": 1
   },
   {
    "fieldname": "location_bloc_id",
    "fieldtype": "Link",
    "label": "Location Bloc",
-   "options": "Location Bloc"
+   "options": "Location Bloc",
+   "search_index": 1
+  },
+  {
+   "fieldname": "proprietaire_id",
+   "fieldtype": "Link",
+   "label": "Propri\u00e9taire",
+   "options": "Proprietaire",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "type_paiement",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Type de Paiement",
-   "options": "Loyer mensuel\nAcompte\nCaution\nFrais de dossier\nPénalité\nAutre",
+   "options": "Loyer mensuel\nCourt S\u00e9jour\nAcompte\nCaution\nFrais de dossier\nP\u00e9nalit\u00e9\nAutre",
    "reqd": 1
   },
   {
    "fieldname": "montant",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Montant (€)",
+   "label": "Montant (\u20ac)",
    "precision": "2",
    "reqd": 1
   },
@@ -86,69 +96,42 @@
    "fieldname": "methode_paiement",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Méthode de Paiement",
-   "options": "Virement\nChèque\nEspèces\nCarte bancaire\nPrélèvement\nPayPal\nAutre",
+   "label": "M\u00e9thode de Paiement",
+   "options": "Virement\nCh\u00e8que\nEsp\u00e8ces\nCarte bancaire\nPr\u00e9l\u00e8vement\nPayPal\nAutre",
    "reqd": 1
-  },
-
-  {
-   "fieldname": "section_break_1",
-   "fieldtype": "Section Break",
-   "label": "Détails Financiers"
   },
   {
    "fieldname": "reference_paiement",
    "fieldtype": "Data",
-   "label": "Référence de Paiement"
+   "label": "R\u00e9f\u00e9rence de Paiement"
   },
   {
-   "default": "0",
-   "fieldname": "frais_transaction",
-   "fieldtype": "Currency",
-   "label": "Frais de Transaction (€)",
-   "precision": "2"
+   "default": "Nouveau",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Statut",
+   "options": "Nouveau\nPay\u00e9\nAnnul\u00e9"
   },
   {
-   "fieldname": "montant_net",
-   "fieldtype": "Currency",
-   "label": "Montant Net (€)",
-   "precision": "2",
-   "read_only": 1
+   "fieldname": "section_break_iuwn",
+   "fieldtype": "Section Break"
   },
   {
-   "fieldname": "section_break_2",
-   "fieldtype": "Section Break",
-   "label": "Suivi"
+   "fieldname": "column_break_xkgy",
+   "fieldtype": "Column Break"
   },
   {
-   "default": "Today",
-   "fieldname": "date_creation",
-   "fieldtype": "Date",
-   "label": "Date de Création",
-   "read_only": 1
+   "fieldname": "section_break_rgqp",
+   "fieldtype": "Section Break"
   },
   {
-   "fieldname": "date_validation",
-   "fieldtype": "Datetime",
-   "label": "Date de Validation",
-   "read_only": 1
-  },
-  {
-   "fieldname": "valide_par",
-   "fieldtype": "Link",
-   "label": "Validé par",
-   "options": "User",
-   "read_only": 1
-  },
-  {
-   "fieldname": "commentaires",
-   "fieldtype": "Text",
-   "label": "Commentaires"
+   "fieldname": "column_break_vfxm",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-01 00:00:00.000000",
+ "modified": "2025-08-17 18:58:10.744672",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Paiement Locataire",
@@ -189,8 +172,22 @@
    "share": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Nouveau"
+  },
+  {
+   "color": "Green",
+   "title": "Pay\u00e9"
+  },
+  {
+   "color": "Red",
+   "title": "Annul\u00e9"
+  }
+ ],
  "track_changes": 1
 }

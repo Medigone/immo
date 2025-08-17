@@ -5,49 +5,53 @@ import frappe
 from frappe.utils import nowdate, getdate, date_diff
 
 
-def validate(doc, method):
-	"""Validation des données avant sauvegarde"""
-	# Vérification des chevauchements de dates
-	check_date_overlap(doc)
-	
-	# Calcul automatique des marges et montants
-	calculate_amounts_and_margins(doc)
-	
-	# Validation des montants
-	validate_amounts(doc)
-	
-	# Validation des dates
-	validate_dates(doc)
-
-
 def on_update(doc, method):
-	"""Actions après mise à jour"""
-	# Crée la commission s'il y a un référent
-	if doc.referent_id and doc.commission_referent > 0:
-		create_commission_for_location(doc)
-	
-	# Recalcule les commissions si nécessaire
-	update_related_commissions(doc)
-	
-	# Crée automatiquement un paiement locataire pour toute location courte durée
-	create_paiement_locataire_for_confirmed_location(doc)
-	
-	# Mettre à jour les métriques de la location bloc si liée à un bloc
-	if doc.location_bloc_id:
-		update_location_bloc_metrics_after_update(doc)
+	"""Actions après mise à jour de la location courte durée"""
+	try:
+		# Mettre à jour le statut des paiements
+		doc.calculate_payment_status()
 		
-		# Publier l'événement en temps réel pour mettre à jour le calendrier
-		frappe.publish_realtime(
-			'location_bloc_updated',
-			{
-				'location_bloc_id': doc.location_bloc_id,
-				'action': 'location_updated',
-				'location_courte_duree_id': doc.name,
-				'date_debut': str(doc.date_debut),
-				'date_fin': str(doc.date_fin),
-				'locataire_nom': doc.locataire_nom
-			}
-		)
+		# Mettre à jour les métriques de la location bloc si applicable
+		if doc.location_bloc_id:
+			doc.update_location_bloc_metrics()
+			
+	except Exception as e:
+		frappe.log_error(f"Erreur dans on_update Location Courte Duree {doc.name}: {str(e)}")
+
+
+def on_trash(doc, method):
+	"""Actions lors de la suppression de la location courte durée"""
+	try:
+		# Mettre à jour les métriques de la location bloc si applicable
+		if doc.location_bloc_id:
+			doc.update_location_bloc_metrics()
+			
+	except Exception as e:
+		frappe.log_error(f"Erreur dans on_trash Location Courte Duree {doc.name}: {str(e)}")
+
+
+def validate(doc, method):
+	"""Validation de la location courte durée"""
+	try:
+		# Les validations sont déjà gérées dans la classe Document
+		pass
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur dans validate Location Courte Duree {doc.name}: {str(e)}")
+
+
+def after_insert(doc, method):
+	"""Actions après création de la location courte durée"""
+	try:
+		# Initialiser le statut des paiements
+		doc.calculate_payment_status()
+		
+		# Mettre à jour les métriques de la location bloc si applicable
+		if doc.location_bloc_id:
+			doc.update_location_bloc_metrics()
+			
+	except Exception as e:
+		frappe.log_error(f"Erreur dans after_insert Location Courte Duree {doc.name}: {str(e)}")
 
 
 
@@ -121,12 +125,11 @@ def calculate_amounts_and_margins(doc):
 	
 	# Récupère le prix propriétaire par défaut si pas défini
 	if not doc.prix_journalier_proprietaire:
-		# Récupère le prix par défaut du propriétaire
+		# Récupère le prix par défaut de l'appartement
 		appartement = frappe.get_doc("Appartement", doc.appartement_id)
-		proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
 		
-		if proprietaire.prix_journalier_defaut:
-			doc.prix_journalier_proprietaire = proprietaire.prix_journalier_defaut
+		if appartement.prix_journalier_defaut:
+			doc.prix_journalier_proprietaire = appartement.prix_journalier_defaut
 		else:
 			# Par défaut, 80% du prix locataire
 			doc.prix_journalier_proprietaire = doc.prix_journalier_locataire * 0.8

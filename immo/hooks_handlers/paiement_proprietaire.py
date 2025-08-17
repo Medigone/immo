@@ -7,37 +7,61 @@ from frappe.utils import nowdate, getdate, add_months
 
 def on_update(doc, method):
 	"""Actions après mise à jour du paiement propriétaire"""
-	# Met à jour le statut de la mensualité si confirmé
-	if doc.statut == "Payé" and doc.type_paiement == "Loyer mensuel":
-		update_mensualite_status(doc)
-	
-	# Traite les paiements de référents pour les locations courte durée
-	if doc.statut == "Payé" and doc.location_courte_duree_id:
-		process_referent_payment(doc)
-	
-	# Met à jour les statistiques du propriétaire
-	update_proprietaire_statistics(doc)
-	
-	# Met à jour les statistiques de la location
-	update_location_payout_statistics(doc)
-	
-	# Met à jour les statistiques de l'appartement
-	update_apartment_payout_statistics(doc)
-	
-	# Génère les notifications selon le statut
-	notify_payout_status_change(doc)
+	try:
+		# Vérifier que le document existe en base et a un nom
+		if not doc.name or doc.docstatus == 0:
+			return
+		
+		# Met à jour le statut de la mensualité si confirmé
+		if doc.status == "Payé" and doc.type_paiement == "Loyer mensuel":
+			update_mensualite_status(doc)
+		
+		# Traite les paiements de référents pour les locations courte durée
+		# DÉSACTIVÉ: if doc.status == "Payé" and doc.location_courte_duree_id:
+		#	process_referent_payment(doc)
+		
+		# NOTE: Les statistiques du propriétaire ne sont plus mises à jour
+		# car le dashboard HTML affiche ces informations en temps réel
+		# via l'API get_proprietaire_dashboard_data
+		
+		# Met à jour les statistiques de la location
+		update_location_payout_statistics(doc)
+		
+		# Met à jour les statistiques de l'appartement
+		update_apartment_payout_statistics(doc)
+		
+		# Mettre à jour le statut des paiements de la location courte durée
+		if doc.location_courte_duree_id:
+			update_location_courte_duree_payment_status(doc)
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur dans on_update Paiement Proprietaire {doc.name}: {str(e)}")
+		# Ne pas faire échouer la sauvegarde pour des erreurs de statistiques
 
 
 def on_cancel(doc, method):
 	"""Actions lors de l'annulation du paiement"""
-	# Remet à jour le statut de la mensualité
-	if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
-		revert_mensualite_status(doc)
-	
-	# Met à jour les statistiques
-	update_proprietaire_statistics(doc)
-	update_location_payout_statistics(doc)
-	update_apartment_payout_statistics(doc)
+	try:
+		# Remet à jour le statut de la mensualité
+		if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
+			revert_mensualite_status(doc)
+		
+		# NOTE: Les statistiques du propriétaire ne sont plus mises à jour
+		# car le dashboard HTML affiche ces informations en temps réel
+		
+		# Met à jour les statistiques de la location
+		update_location_payout_statistics(doc)
+		
+		# Met à jour les statistiques de l'appartement
+		update_apartment_payout_statistics(doc)
+		
+		# Mettre à jour le statut des paiements de la location courte durée
+		if doc.location_courte_duree_id:
+			update_location_courte_duree_payment_status(doc)
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur dans on_cancel Paiement Proprietaire {doc.name}: {str(e)}")
+		# Ne pas faire échouer l'annulation pour des erreurs de statistiques
 
 
 def update_mensualite_status(doc):
@@ -56,7 +80,7 @@ def update_mensualite_status(doc):
 		
 		# Vérifie si la mensualité est complètement payée (locataire + propriétaire)
 		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		if (mensualite.statut_paiement_locataire == "Payé" and 
+		if (mensualite.statut_paiement_locataire == "Payé" and
 			mensualite.statut_paiement_proprietaire == "Payé"):
 			frappe.db.set_value("Mensualite", doc.mensualite_id, "statut_global", "Complète")
 			
@@ -125,106 +149,62 @@ def generate_next_mensualite_if_needed(mensualite):
 		frappe.log_error(f"Erreur lors de la génération de la mensualité suivante: {str(e)}")
 
 
-def update_proprietaire_statistics(doc):
-	"""Met à jour les statistiques du propriétaire"""
-	try:
-		# Récupère l'ID du propriétaire
-		proprietaire_id = None
-		
-		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire_id = appartement.proprietaire_id
-		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire_id = appartement.proprietaire_id
-		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire_id = appartement.proprietaire_id
-		
-		if not proprietaire_id:
-			return
-		
-		# Calcule les statistiques de paiement pour ce propriétaire
-		stats = frappe.db.sql("""
-			SELECT 
-				SUM(pp.montant) as total_verse_annee,
-				SUM(pp.montant_net) as total_net_verse_annee,
-				SUM(pp.frais_transaction) as total_frais_annee,
-				COUNT(pp.name) as nombre_paiements_annee,
-				AVG(pp.montant) as montant_moyen_versement,
-				COUNT(CASE WHEN pp.statut = 'Payé' THEN 1 END) as paiements_effectues,
-				COUNT(CASE WHEN pp.statut = 'En attente' THEN 1 END) as paiements_en_attente
-			FROM `tabPaiement Propriétaire` pp
-			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
-			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
-			WHERE a.proprietaire_id = %s
-				AND YEAR(pp.date_paiement) = YEAR(CURDATE())
-		""", (proprietaire_id,), as_dict=True)
-		
-		if stats:
-			stat = stats[0]
-			# Met à jour le propriétaire avec les nouvelles statistiques
-			frappe.db.set_value("Proprietaire", proprietaire_id, {
-				"total_verse_annee": stat.total_verse_annee or 0,
-				"total_net_verse_annee": stat.total_net_verse_annee or 0,
-				"total_frais_versement_annee": stat.total_frais_annee or 0,
-				"nombre_paiements_annee": stat.nombre_paiements_annee or 0,
-				"taux_paiement_proprietaire": (stat.paiements_effectues / (stat.paiements_effectues + stat.paiements_en_attente) * 100) if (stat.paiements_effectues + stat.paiements_en_attente) > 0 else 0
-			})
-			
-	except Exception as e:
-		frappe.log_error(f"Erreur lors de la mise à jour des statistiques propriétaire: {str(e)}")
-
-
 def update_location_payout_statistics(doc):
 	"""Met à jour les statistiques de versement de la location"""
-	location_id = None
-	location_type = None
-	
-	# Détermine l'ID de la location selon le type
-	if doc.mensualite_id:
-		# Récupère la location via la mensualité
-		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		location_id = mensualite.location_longue_duree_id
-		location_type = "Location Longue Duree"
-	elif doc.location_longue_duree_id:
-		location_id = doc.location_longue_duree_id
-		location_type = "Location Longue Duree"
-	elif doc.location_courte_duree_id:
-		location_id = doc.location_courte_duree_id
-		location_type = "Location Courte Duree"
-	
-	if not location_id:
-		return
-	
 	try:
+		location_id = None
+		location_type = None
+		
+		# Détermine l'ID de la location selon le type
+		if doc.mensualite_id:
+			# Récupère la location via la mensualité
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
+			location_id = mensualite.location_longue_duree_id
+			location_type = "Location Longue Duree"
+		elif doc.location_longue_duree_id:
+			location_id = doc.location_longue_duree_id
+			location_type = "Location Longue Duree"
+		elif doc.location_courte_duree_id:
+			location_id = doc.location_courte_duree_id
+			location_type = "Location Courte Duree"
+		
+		if not location_id:
+			return
+		
 		# Calcule les statistiques de versement pour cette location
-		stats = frappe.db.sql("""
-			SELECT 
-				COUNT(*) as total_versements,
-				SUM(montant) as montant_total_verse,
-				SUM(montant_net) as montant_net_total_verse,
-				SUM(frais_transaction) as frais_totaux_versement,
-				COUNT(CASE WHEN statut = 'Payé' THEN 1 END) as versements_effectues,
-				COUNT(CASE WHEN statut = 'En attente' THEN 1 END) as versements_en_attente,
-				AVG(montant) as montant_moyen_versement
-			FROM `tabPaiement Propriétaire`
-			WHERE (
-				(mensualite_id IN (
-					SELECT name FROM `tabMensualite` 
-					WHERE location_longue_duree_id = %s
-				))
-				OR location_longue_duree_id = %s
-				OR location_courte_duree_id = %s
-			)
-
-		""", (location_id, location_id, location_id), as_dict=True)
+		if location_type == "Location Courte Duree":
+			stats = frappe.db.sql("""
+				SELECT 
+					COUNT(*) as total_versements,
+					SUM(montant) as montant_total_verse,
+					SUM(montant) as montant_net_total_verse,
+					0 as frais_totaux_versement,
+					SUM(CASE WHEN status = 'Payé' THEN 1 ELSE 0 END) as versements_effectues,
+					SUM(CASE WHEN status = 'Nouveau' THEN 1 ELSE 0 END) as versements_en_attente,
+					AVG(montant) as montant_moyen_versement
+				FROM `tabPaiement Propriétaire`
+				WHERE location_courte_duree_id = %s
+			""", (location_id,), as_dict=True)
+		else:
+			# Location Longue Duree
+			stats = frappe.db.sql("""
+				SELECT 
+					COUNT(*) as total_versements,
+					SUM(montant) as montant_total_verse,
+					SUM(montant) as montant_net_total_verse,
+					0 as frais_totaux_versement,
+					SUM(CASE WHEN status = 'Payé' THEN 1 ELSE 0 END) as versements_effectues,
+					SUM(CASE WHEN status = 'Nouveau' THEN 1 ELSE 0 END) as versements_en_attente,
+					AVG(montant) as montant_moyen_versement
+				FROM `tabPaiement Propriétaire`
+				WHERE (
+					(mensualite_id IN (
+						SELECT name FROM `tabMensualite` 
+						WHERE location_longue_duree_id = %s
+					))
+					OR location_longue_duree_id = %s
+				)
+			""", (location_id, location_id), as_dict=True)
 		
 		if stats:
 			stat = stats[0]
@@ -240,44 +220,46 @@ def update_location_payout_statistics(doc):
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour des statistiques de location: {str(e)}")
+		# Ne pas faire échouer la sauvegarde pour des erreurs de statistiques
 
 
 def update_apartment_payout_statistics(doc):
 	"""Met à jour les statistiques de versement de l'appartement"""
-	appartement_id = None
-	
-	# Récupère l'ID de l'appartement
-	if doc.mensualite_id:
-		mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-		location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
-		appartement_id = location.appartement_id
-	elif doc.location_longue_duree_id:
-		location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
-		appartement_id = location.appartement_id
-	elif doc.location_courte_duree_id:
-		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
-		appartement_id = location.appartement_id
-	
-	if not appartement_id:
-		return
-	
 	try:
-		# Calcule les statistiques globales de versement pour cet appartement
+		appartement_id = None
+		
+		# Récupère l'ID de l'appartement
+		if doc.mensualite_id:
+			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
+			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
+			appartement_id = location.appartement_id
+		elif doc.location_longue_duree_id:
+			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
+			appartement_id = location.appartement_id
+		elif doc.location_courte_duree_id:
+			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
+			appartement_id = location.appartement_id
+		
+		if not appartement_id:
+			return
+		
+		# Récupère le propriétaire de l'appartement
+		appartement = frappe.get_doc("Appartement", appartement_id)
+		proprietaire_id = appartement.proprietaire_id
+		
+		# Calcule les statistiques globales de versement pour cet appartement (via le propriétaire)
 		stats = frappe.db.sql("""
 			SELECT 
-				SUM(pp.montant) as total_verse_annee,
-				SUM(pp.montant_net) as total_net_verse_annee,
-				SUM(pp.frais_transaction) as total_frais_versement_annee,
-				COUNT(pp.name) as nombre_versements_annee,
-				AVG(pp.montant) as montant_moyen_versement
-			FROM `tabPaiement Propriétaire` pp
-			LEFT JOIN `tabMensualite` m ON pp.mensualite_id = m.name
-			LEFT JOIN `tabLocation Longue Duree` lld ON (m.location_longue_duree_id = lld.name OR pp.location_longue_duree_id = lld.name)
-			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
-			WHERE (lld.appartement_id = %s OR lcd.appartement_id = %s)
-				AND pp.statut = 'Payé'
-				AND YEAR(pp.date_paiement) = YEAR(CURDATE())
-		""", (appartement_id, appartement_id), as_dict=True)
+				SUM(montant) as total_verse_annee,
+				SUM(montant) as total_net_verse_annee,
+				0 as total_frais_versement_annee,
+				COUNT(name) as nombre_versements_annee,
+				AVG(montant) as montant_moyen_versement
+			FROM `tabPaiement Propriétaire`
+			WHERE proprietaire = %s
+				AND status = 'Payé'
+				AND (date_paiement IS NULL OR YEAR(date_paiement) = YEAR(CURDATE()))
+		""", (proprietaire_id,), as_dict=True)
 		
 		if stats:
 			stat = stats[0]
@@ -291,185 +273,7 @@ def update_apartment_payout_statistics(doc):
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour des statistiques d'appartement: {str(e)}")
-
-
-def notify_payout_status_change(doc):
-	"""Notifie les changements de statut de versement"""
-	if doc.has_value_changed("statut"):
-		if doc.statut == "Payé":
-			notify_payout_completed(doc)
-		elif doc.statut == "Rejeté":
-			notify_payout_rejected(doc)
-		elif doc.statut == "En attente":
-			notify_payout_pending(doc)
-
-
-def notify_payout_completed(doc):
-	"""Notifie la completion du versement au propriétaire"""
-	try:
-		# Récupère les informations du propriétaire
-		proprietaire_email = None
-		proprietaire_nom = None
-		appartement_adresse = None
-		
-		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-			appartement_adresse = appartement.adresse
-		
-		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-			appartement_adresse = appartement.adresse
-		
-		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-			appartement_adresse = appartement.adresse
-		
-		if proprietaire_email:
-			subject = f"Versement effectué - {appartement_adresse}"
-			message = f"""
-			Bonjour {proprietaire_nom},
-			
-			Nous vous confirmons que votre versement a été effectué:
-			
-			- Appartement: {appartement_adresse}
-			- Type: {doc.type_paiement}
-			- Montant: {doc.montant} €
-			- Montant net: {doc.montant_net} €
-			- Date de versement: {doc.date_paiement}
-			- Méthode: {doc.methode_paiement}
-			- Référence: {doc.reference_financiere or 'N/A'}
-			
-			Le montant devrait apparaître sur votre compte sous 1-3 jours ouvrés.
-			
-			Cordialement,
-			L'équipe de gestion
-			"""
-			
-			# Envoie l'email (à implémenter selon la configuration email)
-			# frappe.sendmail(
-			#     recipients=[proprietaire_email],
-			#     subject=subject,
-			#     message=message
-			# )
-			
-	except Exception as e:
-		frappe.log_error(f"Erreur lors de l'envoi de confirmation de versement: {str(e)}")
-
-
-def notify_payout_rejected(doc):
-	"""Notifie le rejet du versement"""
-	try:
-		# Récupère les informations du propriétaire pour notification
-		proprietaire_email = None
-		proprietaire_nom = None
-		
-		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-		
-		elif doc.location_longue_duree_id:
-			location = frappe.get_doc("Location Longue Duree", doc.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-		
-		elif doc.location_courte_duree_id:
-			location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-		
-		if proprietaire_email:
-			subject = f"Versement rejeté - Information importante"
-			message = f"""
-			Bonjour {proprietaire_nom},
-			
-			Nous vous informons que votre versement a été rejeté:
-			
-			- Type: {doc.type_paiement}
-			- Montant: {doc.montant} €
-			- Date prévue: {doc.date_paiement}
-			- Référence: {doc.reference_financiere or 'N/A'}
-			
-			Raison: {doc.commentaires or 'Non spécifiée'}
-			
-			Nous vous contacterons pour résoudre ce problème dans les plus brefs délais.
-			
-			Cordialement,
-			L'équipe de gestion
-			"""
-			
-			# Envoie l'email (à implémenter selon la configuration email)
-			# frappe.sendmail(
-			#     recipients=[proprietaire_email],
-			#     subject=subject,
-			#     message=message
-			# )
-			
-	except Exception as e:
-		frappe.log_error(f"Erreur lors de l'envoi de notification de rejet: {str(e)}")
-
-
-def notify_payout_pending(doc):
-	"""Notifie la mise en attente du versement"""
-	try:
-		# Récupère les informations du propriétaire
-		proprietaire_email = None
-		proprietaire_nom = None
-		
-		if doc.mensualite_id:
-			mensualite = frappe.get_doc("Mensualite", doc.mensualite_id)
-			location = frappe.get_doc("Location Longue Duree", mensualite.location_longue_duree_id)
-			appartement = frappe.get_doc("Appartement", location.appartement_id)
-			proprietaire = frappe.get_doc("Proprietaire", appartement.proprietaire_id)
-			proprietaire_email = proprietaire.email
-			proprietaire_nom = proprietaire.nom_complet
-		
-		if proprietaire_email:
-			subject = f"Versement en attente - {doc.type_paiement}"
-			message = f"""
-			Bonjour {proprietaire_nom},
-			
-			Votre versement est en cours de traitement:
-			
-			- Type: {doc.type_paiement}
-			- Montant: {doc.montant} €
-			- Date prévue: {doc.date_paiement}
-			
-			Nous vous tiendrons informé de l'évolution du traitement.
-			
-			Cordialement,
-			L'équipe de gestion
-			"""
-			
-			# Envoie l'email (à implémenter selon la configuration email)
-			# frappe.sendmail(
-			#     recipients=[proprietaire_email],
-			#     subject=subject,
-			#     message=message
-			# )
-			
-	except Exception as e:
-		frappe.log_error(f"Erreur lors de l'envoi de notification d'attente: {str(e)}")
+		# Ne pas faire échouer la sauvegarde pour des erreurs de statistiques
 
 
 def auto_schedule_payouts():
@@ -481,14 +285,10 @@ def auto_schedule_payouts():
 				m.name as mensualite_id,
 				m.location_longue_duree_id,
 				m.loyer_proprietaire,
-				m.date_paiement_locataire,
-				lld.appartement_id,
-				a.proprietaire_id
+				m.date_paiement_locataire
 			FROM `tabMensualite` m
-			INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
-			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE m.statut_paiement_locataire = 'Payé'
-				AND m.statut_paiement_proprietaire = 'En attente'
+				AND m.statut_paiement_proprietaire = 'Nouveau'
 				AND NOT EXISTS (
 					SELECT 1 FROM `tabPaiement Propriétaire` pp 
 					WHERE pp.mensualite_id = m.name
@@ -505,7 +305,7 @@ def auto_schedule_payouts():
 				"montant": payout.loyer_proprietaire,
 				"montant_net": payout.loyer_proprietaire,  # À ajuster selon les frais
 				"date_paiement": add_months(getdate(payout.date_paiement_locataire), 0),  # Même mois
-				"statut": "En attente",
+				"status": "Nouveau",
 				"methode_paiement": "Virement bancaire",  # Par défaut
 				"commentaires": "Versement automatiquement programmé"
 			})
@@ -523,29 +323,73 @@ def calculate_owner_performance_metrics(proprietaire_id, start_date=None, end_da
 		if not end_date:
 			end_date = nowdate()
 		
-		metrics = frappe.db.sql("""
+		# Récupère d'abord les statistiques de base du propriétaire
+		base_stats = frappe.db.sql("""
 			SELECT 
 				COUNT(DISTINCT a.name) as nombre_appartements,
 				COUNT(DISTINCT lld.name) as nombre_locations_longues,
-				COUNT(DISTINCT lcd.name) as nombre_locations_courtes,
-				SUM(pp.montant) as total_verse,
-				SUM(pp.montant_net) as total_net_verse,
-				AVG(pp.montant) as montant_moyen_versement,
-				COUNT(pp.name) as nombre_versements,
-				SUM(CASE WHEN pp.statut = 'Payé' THEN pp.montant ELSE 0 END) as montant_paye,
-				COUNT(CASE WHEN pp.statut = 'Payé' THEN 1 END) as versements_payes,
-				COUNT(CASE WHEN pp.statut = 'En attente' THEN 1 END) as versements_en_attente,
-				COUNT(CASE WHEN pp.statut = 'Rejeté' THEN 1 END) as versements_rejetes
+				COUNT(DISTINCT lcd.name) as nombre_locations_courtes
 			FROM `tabProprietaire` p
 			LEFT JOIN `tabAppartement` a ON p.name = a.proprietaire_id
 			LEFT JOIN `tabLocation Longue Duree` lld ON a.name = lld.appartement_id
 			LEFT JOIN `tabLocation Courte Duree` lcd ON a.name = lcd.appartement_id
-			LEFT JOIN `tabMensualite` m ON lld.name = m.location_longue_duree_id
-			LEFT JOIN `tabPaiement Propriétaire` pp ON (m.name = pp.mensualite_id OR lld.name = pp.location_longue_duree_id OR lcd.name = pp.location_courte_duree_id)
 			WHERE p.name = %s
-				AND (pp.date_paiement IS NULL OR pp.date_paiement BETWEEN %s AND %s)
 			GROUP BY p.name
-		""", (proprietaire_id, start_date, end_date), as_dict=True)
+		""", (proprietaire_id,), as_dict=True)
+		
+		# Récupère les statistiques de paiement séparément
+		payment_stats = frappe.db.sql("""
+			SELECT 
+				SUM(montant) as total_verse,
+				SUM(montant_net) as total_net_verse,
+				AVG(montant) as montant_moyen_versement,
+				COUNT(name) as nombre_versements,
+				SUM(CASE WHEN status = 'Payé' THEN montant ELSE 0 END) as montant_paye,
+				SUM(CASE WHEN status = 'Payé' THEN 1 ELSE 0 END) as versements_payes,
+				SUM(CASE WHEN status = 'Nouveau' THEN 1 ELSE 0 END) as versements_en_attente,
+				SUM(CASE WHEN status = 'Annulé' THEN 1 ELSE 0 END) as versements_rejetes
+			FROM (
+				-- Paiements via mensualités
+				SELECT pp.* FROM `tabPaiement Propriétaire` pp
+				INNER JOIN `tabMensualite` m ON pp.mensualite_id = m.name
+				INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
+				INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
+				WHERE a.proprietaire_id = %s
+					AND (pp.date_paiement IS NULL OR pp.date_paiement BETWEEN %s AND %s)
+				
+				UNION ALL
+				
+				-- Paiements directs locations longue durée
+				SELECT pp.* FROM `tabPaiement Propriétaire` pp
+				INNER JOIN `tabLocation Longue Duree` lld ON pp.location_longue_duree_id = lld.name
+				INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
+				WHERE a.proprietaire_id = %s
+					AND pp.mensualite_id IS NULL
+					AND (pp.date_paiement IS NULL OR pp.date_paiement BETWEEN %s AND %s)
+				
+				UNION ALL
+				
+				-- Paiements locations courte durée
+				SELECT pp.* FROM `tabPaiement Propriétaire` pp
+				INNER JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
+				INNER JOIN `tabAppartement` a ON lcd.appartement_id = a.name
+				WHERE a.proprietaire_id = %s
+					AND (pp.date_paiement IS NULL OR pp.date_paiement BETWEEN %s AND %s)
+			) as all_payments
+		""", (proprietaire_id, start_date, end_date, proprietaire_id, start_date, end_date, proprietaire_id, start_date, end_date), as_dict=True)
+		
+		# Combine les résultats
+		if base_stats and payment_stats:
+			metrics = [{
+				**base_stats[0],
+				**(payment_stats[0] if payment_stats[0].get('nombre_versements') else {
+					'total_verse': 0, 'total_net_verse': 0, 'montant_moyen_versement': 0,
+					'nombre_versements': 0, 'montant_paye': 0, 'versements_payes': 0,
+					'versements_en_attente': 0, 'versements_rejetes': 0
+				})
+			}]
+		else:
+			metrics = []
 		
 		if metrics:
 			metric = metrics[0]
@@ -560,58 +404,13 @@ def calculate_owner_performance_metrics(proprietaire_id, start_date=None, end_da
 		return {}
 
 
-def process_referent_payment(doc):
-	"""Traite automatiquement le paiement du référent pour une location courte durée"""
-	if not doc.location_courte_duree_id:
-		return
-	
+def update_location_courte_duree_payment_status(doc):
+	"""Met à jour le statut des paiements de la location courte durée"""
 	try:
-		# Récupère la location courte durée
-		location = frappe.get_doc("Location Courte Duree", doc.location_courte_duree_id)
-		
-		# Vérifie s'il y a un référent
-		if not location.referent_id:
-			return
-		
-		# Vérifie s'il existe déjà une commission pour cette location
-		existing_commission = frappe.db.exists("Commission", {
-			"location_courte_duree_id": doc.location_courte_duree_id,
-			"referent_id": location.referent_id
-		})
-		
-		if existing_commission:
-			# Met à jour le statut de paiement de la commission existante
-			frappe.db.set_value("Commission", existing_commission, {
-				"statut_paiement": "Payé",
-				"date_paiement": doc.date_paiement,
-				"methode_paiement": doc.methode_paiement,
-				"reference_paiement": doc.reference_financiere
-			})
-			frappe.msgprint(f"Commission mise à jour pour le référent {location.referent_id}")
-		else:
-			# Calcule la commission du référent
-			commission_amount = location.calculate_referent_commission()
+		if doc.location_courte_duree_id:
+			# Déclencher la mise à jour de la location courte durée
+			# Cela va automatiquement appeler on_update qui calculera le statut des paiements
+			frappe.db.set_value("Location Courte Duree", doc.location_courte_duree_id, "modified", frappe.utils.now())
 			
-			if commission_amount > 0:
-				# Crée un nouveau document Commission
-				commission = frappe.get_doc({
-					"doctype": "Commission",
-					"referent_id": location.referent_id,
-					"location_courte_duree_id": doc.location_courte_duree_id,
-					"montant_commission": commission_amount,
-					"pourcentage_commission": location.pourcentage_commission_referent or 0,
-					"date_creation": nowdate(),
-					"statut_paiement": "Payé",
-					"date_paiement": doc.date_paiement,
-					"methode_paiement": doc.methode_paiement,
-					"reference_paiement": doc.reference_financiere,
-					"commentaires": f"Paiement automatique suite au versement propriétaire {doc.name}"
-				})
-				commission.insert()
-				commission.submit()
-				
-				frappe.msgprint(f"Commission de {commission_amount} € créée et payée pour le référent {location.referent_id}")
-		
 	except Exception as e:
-		frappe.log_error(f"Erreur lors du traitement du paiement référent: {str(e)}", "Process Referent Payment Error")
-		frappe.msgprint(f"Erreur lors du traitement du paiement référent: {str(e)}", indicator="red")
+		frappe.log_error(f"Erreur lors de la mise à jour du statut des paiements de la location courte durée: {str(e)}")
