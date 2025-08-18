@@ -25,18 +25,9 @@ frappe.ui.form.on('Location Courte Duree', {
 		// Vérifier que frm et frm.doc existent avant de continuer
 		if (!frm || !frm.doc) return;
 		
-		// Ajouter les boutons de création de paiements
+		// Stocker la référence du formulaire globalement pour les boutons des cartes
 		if (!frm.doc.__islocal) {
-			frm.add_custom_button(__('Paiement Locataire'), function() {
-				create_paiement_locataire(frm);
-			}, __('Créer'));
-			
-			frm.add_custom_button(__('Paiement Propriétaire'), function() {
-				create_paiement_proprietaire(frm);
-			}, __('Créer'));
-			
-			// Les champs de suivi des paiements sont mis à jour automatiquement
-			// via les hooks doc_events lors de la création/modification des paiements
+			window.current_location_courte_duree_frm = frm;
 		}
 
 		frm.trigger('update_dashboard');
@@ -83,11 +74,49 @@ frappe.ui.form.on('Location Courte Duree', {
 	load_dashboard_data: function(frm) {
 		if (!frm || !frm.doc || !frm.doc.name) return;
 		
-		// Générer le dashboard directement avec les données disponibles
-		const dashboard_html = createLocationCourteDureeDashboard(frm.doc);
-		if (frm.fields_dict && frm.fields_dict['dashboard']) {
-			$(frm.fields_dict['dashboard'].wrapper).html(dashboard_html);
-		}
+		// Récupérer les listes de paiements en parallèle
+		Promise.all([
+			// Récupérer les paiements locataire
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Paiement Locataire',
+					filters: {
+						location_courte_duree_id: frm.doc.name
+					},
+					fields: ['name', 'montant', 'status'],
+					order_by: 'creation desc'
+				}
+			}),
+			// Récupérer les paiements propriétaire
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Paiement Proprietaire',
+					filters: {
+						location_courte_duree_id: frm.doc.name
+					},
+					fields: ['name', 'montant', 'status'],
+					order_by: 'creation desc'
+				}
+			})
+		]).then(([paiements_locataire_response, paiements_proprietaire_response]) => {
+			const paiements_locataire = paiements_locataire_response.message || [];
+			const paiements_proprietaire = paiements_proprietaire_response.message || [];
+			
+			// Générer le dashboard avec les listes de paiements
+			const dashboard_html = createLocationCourteDureeDashboard(frm.doc, paiements_locataire, paiements_proprietaire);
+			if (frm.fields_dict && frm.fields_dict['dashboard']) {
+				$(frm.fields_dict['dashboard'].wrapper).html(dashboard_html);
+			}
+		}).catch(error => {
+			console.error('Erreur lors du chargement des paiements:', error);
+			// En cas d'erreur, afficher le dashboard sans les listes de paiements
+			const dashboard_html = createLocationCourteDureeDashboard(frm.doc);
+			if (frm.fields_dict && frm.fields_dict['dashboard']) {
+				$(frm.fields_dict['dashboard'].wrapper).html(dashboard_html);
+			}
+		});
 	},
 
 	location_bloc_id: function(frm) {
@@ -112,7 +141,7 @@ frappe.ui.form.on('Location Courte Duree', {
 });
 
 // Fonction pour créer le dashboard de Location Courte Durée
-function createLocationCourteDureeDashboard(doc) {
+function createLocationCourteDureeDashboard(doc, paiements_locataire = [], paiements_proprietaire = []) {
 	try {
 		// Récupérer les valeurs
 		const montant_total_loc = doc.montant_total_locataire || 0;
@@ -129,22 +158,154 @@ function createLocationCourteDureeDashboard(doc) {
 		const pourcentage_loc = montant_total_loc > 0 ? (montant_paye_loc / montant_total_loc * 100) : 0;
 		const pourcentage_prop = montant_total_prop > 0 ? (montant_paye_prop / montant_total_prop * 100) : 0;
 		
-		// Générer le HTML avec le style d'appartement
+		// Générer le HTML avec le style d'appartement responsive
 		const html = `
-		<div style="
-			display: grid;
-			grid-template-rows: auto auto;
-			gap: 16px;
-			font-family: 'Inter', sans-serif;
-			padding: 16px;
-		">
-			<!-- Ligne des 4 cartes statistiques -->
-			<div style="
+		<style>
+			.dashboard-container {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				grid-template-rows: auto auto;
+				gap: 16px;
+				font-family: 'Inter', sans-serif;
+				padding: 16px;
+				max-width: 100%;
+				overflow-x: hidden;
+			}
+			
+			.stats-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 				gap: 12px;
 				align-items: stretch;
-			">
+			}
+			
+			.details-grid {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 20px;
+			}
+			
+			@media (max-width: 768px) {
+				.dashboard-container {
+					padding: 12px;
+					gap: 12px;
+				}
+				
+				.stats-grid {
+					grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+					gap: 8px;
+				}
+				
+				.stat-card {
+					min-height: 100px !important;
+					padding: 8px 10px !important;
+				}
+				
+				.stat-title {
+					font-size: 0.75rem !important;
+				}
+				
+				.stat-value {
+					font-size: 1.1rem !important;
+				}
+				
+				.details-grid {
+					grid-template-columns: 1fr;
+					gap: 16px;
+				}
+				
+				.detail-card {
+					padding: 12px !important;
+				}
+				
+				.detail-header {
+					flex-direction: column !important;
+					align-items: flex-start !important;
+					gap: 8px !important;
+				}
+				
+				.detail-title {
+					font-size: 0.85rem !important;
+				}
+				
+				.detail-status {
+					font-size: 0.6rem !important;
+				}
+			}
+			
+			@media (max-width: 480px) {
+				.dashboard-container {
+					padding: 8px;
+				}
+				
+				.stats-grid {
+					grid-template-columns: 1fr 1fr;
+					gap: 6px;
+				}
+				
+				.stat-card {
+					min-height: 90px !important;
+					padding: 6px 8px !important;
+				}
+				
+				.stat-title {
+					font-size: 0.7rem !important;
+					line-height: 1.1 !important;
+				}
+				
+				.stat-value {
+					font-size: 1rem !important;
+				}
+				
+				.stat-footer {
+					font-size: 0.7rem !important;
+				}
+				
+				.stat-badge {
+					font-size: 0.65rem !important;
+					padding: 1px 4px !important;
+				}
+				
+				.details-grid {
+					gap: 12px;
+				}
+				
+				.detail-card {
+					padding: 10px !important;
+				}
+				
+				.detail-header {
+					flex-direction: column !important;
+					align-items: flex-start !important;
+					gap: 6px !important;
+				}
+				
+				.detail-title {
+					font-size: 0.8rem !important;
+				}
+				
+				.detail-status {
+					font-size: 0.55rem !important;
+					padding: 1px 4px !important;
+				}
+				
+				.detail-amount {
+					font-size: 0.75rem !important;
+				}
+				
+				.payment-list {
+					padding-top: 6px !important;
+					margin-top: 6px !important;
+				}
+				
+				.payment-item {
+					padding: 6px !important;
+					font-size: 0.7rem !important;
+				}
+			}
+		</style>
+		<div class="dashboard-container">
+			<!-- Ligne des 4 cartes statistiques -->
+			<div class="stats-grid">
 				${createStatCard("Montant Total Locataire", format_currency(montant_total_loc, 'EUR'), "Montant à payer", null)}
 				${createStatCard("Montant Payé Locataire", format_currency(montant_paye_loc, 'EUR'), "Montant déjà payé", pourcentage_loc)}
 				${createStatCard("Montant Total Propriétaire", format_currency(montant_total_prop, 'EUR'), "Montant à verser", null)}
@@ -152,112 +313,194 @@ function createLocationCourteDureeDashboard(doc) {
 			</div>
 			
 			<!-- Ligne des informations détaillées -->
-			<div style="
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 20px;
-			">
+			<div class="details-grid">
 				<!-- Section Locataire -->
-				<div style="
+				<div class="detail-card" style="
 					background: #fff;
 					border: 1px solid #e5e7eb;
 					border-radius: 10px;
 					padding: 16px;
 					box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+					position: relative;
 				">
-					<div style="
+					<div class="detail-header" style="
 						font-size: 0.9rem; 
 						color: #374151; 
 						margin-bottom: 12px; 
 						font-weight: 600;
 						display: flex;
 						align-items: center;
+						justify-content: space-between;
 					">
-						<span style="
-							width: 8px; 
-							height: 8px; 
-							background: #3b82f6; 
-							border-radius: 50%; 
-							margin-right: 8px;
-						"></span>
-						Paiements Locataire
-					</div>
-					
-					<div style="font-size: 0.8rem; color: #6b7280; line-height: 1.6;">
-						<div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
-							<span>Montant restant:</span> 
-							<span style="
-								color: ${montant_restant_loc > 0 ? '#dc2626' : '#16a34a'}; 
-								font-weight: 600;
-							">
-								${montant_restant_loc.toFixed(2)} €
-							</span>
-						</div>
-						<div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
-							<span>Statut:</span> 
-							<span style="
+						<div style="display: flex; align-items: center; gap: 8px;">
+							<div class="detail-title" style="display: flex; align-items: center;">
+								<span style="
+									width: 8px; 
+									height: 8px; 
+									background: #3b82f6; 
+									border-radius: 50%; 
+									margin-right: 8px;
+								"></span>
+								Locataire
+							</div>
+							<span class="detail-status" style="
 								background: ${getStatusColor(statut_loc).background}; 
 								color: ${getStatusColor(statut_loc).text}; 
-								padding: 2px 8px; 
-								border-radius: 12px; 
-								font-size: 0.75rem; 
+								padding: 2px 6px; 
+								border-radius: 8px; 
+								font-size: 0.65rem; 
 								font-weight: 600;
 							">
 								${statut_loc}
 							</span>
+						</div>
+						${montant_restant_loc > 0 ? `
+						<button 
+							onclick="window.create_paiement_locataire_from_card()" 
+							style="
+								background: #374151;
+								color: white;
+								border: none;
+								padding: 4px 8px;
+								border-radius: 6px;
+								font-size: 0.75rem;
+								font-weight: 500;
+								cursor: pointer;
+								transition: all 0.2s;
+								box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+							"
+							onmouseover="this.style.background='#1f2937'"
+							onmouseout="this.style.background='#374151'"
+							title="Créer un nouveau paiement locataire"
+						>
+							+ Paiement
+						</button>
+						` : ''}
+					</div>
+					
+					<div style="font-size: 0.8rem; color: #6b7280; line-height: 1.6;">
+						<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+							<span style="font-weight: 500;">Montant restant:</span> 
+							<span class="detail-amount" style="
+								color: ${montant_restant_loc > 0 ? '#dc2626' : '#16a34a'}; 
+								font-weight: 700;
+								font-size: 0.85rem;
+							">
+								${montant_restant_loc.toFixed(2)} €
+							</span>
+						</div>
+						
+						<!-- Liste des paiements locataire -->
+						<div class="payment-list" style="
+							border-top: 1px solid #e5e7eb; 
+							padding-top: 8px; 
+							margin-top: 8px;
+						">
+							<div style="
+								font-weight: 600; 
+								margin-bottom: 6px; 
+								color: #374151; 
+								font-size: 0.75rem;
+							">
+								Paiements:
+							</div>
+							${generatePaiementsList(paiements_locataire, 'locataire')}
 						</div>
 
 					</div>
 				</div>
 				
 				<!-- Section Propriétaire -->
-				<div style="
+				<div class="detail-card" style="
 					background: #fff;
 					border: 1px solid #e5e7eb;
 					border-radius: 10px;
 					padding: 16px;
 					box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+					position: relative;
 				">
-					<div style="
+					<div class="detail-header" style="
 						font-size: 0.9rem; 
 						color: #374151; 
 						margin-bottom: 12px; 
 						font-weight: 600;
 						display: flex;
 						align-items: center;
+						justify-content: space-between;
 					">
-						<span style="
-							width: 8px; 
-							height: 8px; 
-							background: #16a34a; 
-							border-radius: 50%; 
-							margin-right: 8px;
-						"></span>
-						Paiements Propriétaire
-					</div>
-					
-					<div style="font-size: 0.8rem; color: #6b7280; line-height: 1.6;">
-						<div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
-							<span>Montant restant:</span> 
-							<span style="
-								color: ${montant_restant_prop > 0 ? '#dc2626' : '#16a34a'}; 
-								font-weight: 600;
-							">
-								${montant_restant_prop.toFixed(2)} €
-							</span>
-						</div>
-						<div style="margin-bottom: 8px; display: flex; justify-content: space-between;">
-							<span>Statut:</span> 
-							<span style="
+						<div style="display: flex; align-items: center; gap: 8px;">
+							<div class="detail-title" style="display: flex; align-items: center;">
+								<span style="
+									width: 8px; 
+									height: 8px; 
+									background: #16a34a; 
+									border-radius: 50%; 
+									margin-right: 8px;
+								"></span>
+								Propriétaire
+							</div>
+							<span class="detail-status" style="
 								background: ${getStatusColor(statut_prop).background}; 
 								color: ${getStatusColor(statut_prop).text}; 
-								padding: 2px 8px; 
-								border-radius: 12px; 
-								font-size: 0.75rem; 
+								padding: 2px 6px; 
+								border-radius: 8px; 
+								font-size: 0.65rem; 
 								font-weight: 600;
 							">
 								${statut_prop}
 							</span>
+						</div>
+						${montant_restant_prop > 0 ? `
+						<button 
+							onclick="window.create_paiement_proprietaire_from_card()" 
+							style="
+								background: #374151;
+								color: white;
+								border: none;
+								padding: 4px 8px;
+								border-radius: 6px;
+								font-size: 0.75rem;
+								font-weight: 500;
+								cursor: pointer;
+								transition: all 0.2s;
+								box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+							"
+							onmouseover="this.style.background='#1f2937'"
+							onmouseout="this.style.background='#374151'"
+							title="Créer un nouveau paiement propriétaire"
+						>
+							+ Paiement
+						</button>
+						` : ''}
+					</div>
+					
+					<div style="font-size: 0.8rem; color: #6b7280; line-height: 1.6;">
+						<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+							<span style="font-weight: 500;">Montant restant:</span> 
+							<span class="detail-amount" style="
+								color: ${montant_restant_prop > 0 ? '#dc2626' : '#16a34a'}; 
+								font-weight: 700;
+								font-size: 0.85rem;
+							">
+								${montant_restant_prop.toFixed(2)} €
+							</span>
+						</div>
+						
+						<!-- Liste des paiements propriétaire -->
+						<div class="payment-list" style="
+							border-top: 1px solid #e5e7eb; 
+							padding-top: 8px; 
+							margin-top: 8px;
+						">
+							<div style="
+								font-weight: 600; 
+								margin-bottom: 6px; 
+								color: #374151; 
+								font-size: 0.75rem;
+							">
+								Paiements:
+							</div>
+							${generatePaiementsList(paiements_proprietaire, 'proprietaire')}
 						</div>
 
 					</div>
@@ -274,15 +517,14 @@ function createLocationCourteDureeDashboard(doc) {
 	}
 }
 
-// Fonction pour créer une carte de statistique (style identique à appartement)
+// Fonction pour créer une carte de statistique responsive
 function createStatCard(title, mainValue, footerValue, percentage) {
 	let showBadge = percentage !== null;
 	let isPositive = percentage >= 0;
 	let badgeColor = isPositive ? '#16a34a' : '#dc2626';
-	let arrow = isPositive ? '↑' : '↓';
 
 	return `
-		<div style="
+		<div class="stat-card" style="
 			background: #fff;
 			border: 1px solid #e5e7eb;
 			border-radius: 10px;
@@ -294,11 +536,11 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 			min-height: 120px;
 			min-width: 0;
 		">
-			<div style="font-size: 0.8rem; color: #6b7280;">${title}</div>
+			<div class="stat-title" style="font-size: 0.8rem; color: #6b7280; line-height: 1.2;">${title}</div>
 			
-			<div style="display: flex; align-items: center; justify-content: space-between; margin: 6px 0;">
-				<div style="font-size: 1.2rem; font-weight: 700; color: #111827;">${mainValue}</div>
-				${showBadge ? `<div style="
+			<div class="stat-content" style="display: flex; align-items: center; justify-content: space-between; margin: 6px 0; flex-wrap: wrap; gap: 4px;">
+				<div class="stat-value" style="font-size: 1.2rem; font-weight: 700; color: #111827; word-break: break-word; flex: 1; min-width: 0;">${mainValue}</div>
+				${showBadge ? `<div class="stat-badge" style="
 					font-size: 0.7rem;
 					padding: 2px 6px;
 					border-radius: 9999px;
@@ -306,12 +548,13 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 					color: ${badgeColor};
 					background: transparent;
 					white-space: nowrap;
+					flex-shrink: 0;
 				">
-					${arrow} ${percentage.toFixed(0)}%
+					${percentage.toFixed(0)}%
 				</div>` : ''}
 			</div>
 
-			<div style="
+			<div class="stat-footer" style="
 				font-size: 0.75rem;
 				color: #374151;
 				margin-top: auto;
@@ -695,3 +938,78 @@ function show_paiement_dialog(frm, montantRestant, proprietaire_id) {
 	});
 	dialog.show();
 }
+
+// Fonctions globales pour les boutons des cartes HTML
+window.create_paiement_locataire_from_card = function() {
+	if (window.current_location_courte_duree_frm) {
+		create_paiement_locataire(window.current_location_courte_duree_frm);
+	} else {
+		frappe.msgprint(__('Erreur: Formulaire non disponible'));
+	}
+};
+
+window.create_paiement_proprietaire_from_card = function() {
+	if (window.current_location_courte_duree_frm) {
+		create_paiement_proprietaire(window.current_location_courte_duree_frm);
+	} else {
+		frappe.msgprint(__('Erreur: Formulaire non disponible'));
+	}
+};
+
+// Fonction pour générer la liste des paiements
+function generatePaiementsList(paiements, type) {
+	if (!paiements || paiements.length === 0) {
+		return `<div style="color: #6b7280; font-style: italic; text-align: center; padding: 8px;">Aucun paiement</div>`;
+	}
+	
+	return paiements.map(paiement => {
+		const statusColor = getStatusColor(paiement.status);
+		return `
+			<div class="payment-item" style="
+				display: flex; 
+				justify-content: space-between; 
+				align-items: center; 
+				padding: 6px 0; 
+				border-bottom: 1px solid #f3f4f6;
+				font-size: 0.75rem;
+				flex-wrap: wrap;
+				gap: 4px;
+			">
+				<span 
+					onclick="navigateToPaiement('${paiement.name}', '${type}')" 
+					style="
+						color: #2563eb; 
+						cursor: pointer; 
+						text-decoration: underline;
+						font-weight: 500;
+						flex: 1;
+						min-width: 0;
+						word-break: break-word;
+					"
+				>
+					${paiement.name}
+				</span>
+				<div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+					<span style="font-weight: 600; white-space: nowrap;">${paiement.montant.toFixed(2)} €</span>
+					<span style="
+						background: ${statusColor.background}; 
+						color: ${statusColor.text}; 
+						padding: 1px 6px; 
+						border-radius: 8px; 
+						font-size: 0.65rem; 
+						font-weight: 600;
+						white-space: nowrap;
+					">
+						${paiement.status}
+					</span>
+				</div>
+			</div>
+		`;
+	}).join('');
+}
+
+// Fonction pour naviguer vers un paiement
+window.navigateToPaiement = function(paiement_name, type) {
+	const doctype = type === 'locataire' ? 'Paiement Locataire' : 'Paiement Proprietaire';
+	frappe.set_route('Form', doctype, paiement_name);
+};

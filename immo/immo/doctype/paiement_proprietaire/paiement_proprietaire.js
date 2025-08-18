@@ -51,7 +51,7 @@ function change_status(frm, new_status) {
 	
 	if (frm.doc.status === "Payé" && new_status !== "Payé") {
 		confirmation_needed = true;
-		confirmation_message = "Êtes-vous sûr de vouloir changer le statut d'un paiement payé vers '{0}' ?".format(new_status);
+		confirmation_message = `Êtes-vous sûr de vouloir changer le statut d'un paiement payé vers '${new_status}' ?`;
 	}
 	
 	if (new_status === "Annulé") {

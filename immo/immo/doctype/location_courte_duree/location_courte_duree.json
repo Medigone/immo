@@ -44,8 +44,7 @@
   "montant_restant_proprietaire",
   "referent_section",
   "referent_id",
-  "commission_referent",
-  "liens_tab"
+  "commission_referent"
  ],
  "fields": [
   {
@@ -69,7 +68,8 @@
    "fieldname": "location_bloc_id",
    "fieldtype": "Link",
    "label": "Location Bloc",
-   "options": "Location Bloc"
+   "options": "Location Bloc",
+   "read_only": 1
   },
   {
    "fieldname": "type_location",
@@ -110,6 +110,7 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "prix_section",
    "fieldtype": "Section Break",
    "label": "Prix et montants"
@@ -168,6 +169,7 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
    "fieldname": "referent_section",
    "fieldtype": "Section Break",
    "label": "R\u00e9f\u00e9rent"
@@ -241,12 +243,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "liens_tab",
-   "fieldtype": "Tab Break",
-   "label": "Liens",
-   "show_dashboard": 1
-  },
-  {
    "fieldname": "section_break_vair",
    "fieldtype": "Section Break"
   },
@@ -255,6 +251,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "collapsible": 1,
    "fieldname": "section_break_buuj",
    "fieldtype": "Section Break"
   },
@@ -281,24 +278,17 @@
   {
    "fieldname": "section_break_oucm",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "locataire_email",
+   "fieldtype": "Data",
+   "label": "Email du locataire",
+   "options": "Email"
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Commission",
-   "link_fieldname": "location_courte_duree_id"
-  },
-  {
-   "link_doctype": "Paiement Locataire",
-   "link_fieldname": "location_courte_duree_id"
-  },
-  {
-   "link_doctype": "Paiement Proprietaire",
-   "link_fieldname": "location_courte_duree_id"
-  }
- ],
- "modified": "2025-08-18 18:22:11.094241",
+ "links": [],
+ "modified": "2025-08-18 21:47:28.980121",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Courte Duree",
