@@ -51,8 +51,8 @@ class PaiementProprietaire(Document):
 			return
 		
 		old_doc = self.get_doc_before_save()
-		if old_doc and old_doc.status == "Reçu" and self.status != "Reçu":
-			frappe.throw(_("Un paiement reçu ne peut pas être modifié"))
+		if old_doc and old_doc.status == "Reçu" and self.status != "Reçu" and self.status != "Annulé":
+			frappe.throw(_("Un paiement reçu ne peut pas être modifié, sauf pour l'annuler"))
 	
 	def before_save(self):
 		"""Actions avant sauvegarde"""

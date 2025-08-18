@@ -8,6 +8,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "dashboard",
+  "section_break_vwpm",
   "naming_series",
   "proprietaire_id",
   "adresse_complete",
@@ -17,7 +19,11 @@
   "prix_section",
   "prix_journalier_defaut",
   "prix_mensuel_defaut",
-  "disponible"
+  "gps",
+  "ville",
+  "rue",
+  "complement_ad",
+  "liens_tab"
  ],
  "fields": [
   {
@@ -77,7 +83,6 @@
    "label": "Prix mensuel par d\u00e9faut",
    "precision": "2"
   },
-
   {
    "fieldname": "gps",
    "fieldtype": "Data",
@@ -100,23 +105,6 @@
    "label": "Complement adresse"
   },
   {
-   "fieldname": "section_break_hzvm",
-   "fieldtype": "Section Break",
-   "label": "Adresse"
-  },
-  {
-   "fieldname": "column_break_isul",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_cphi",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_isvs",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "dashboard",
    "fieldtype": "HTML"
   },
@@ -125,6 +113,10 @@
    "fieldtype": "Tab Break",
    "label": "Liens",
    "show_dashboard": 1
+  },
+  {
+   "fieldname": "section_break_vwpm",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -142,7 +134,7 @@
    "link_fieldname": "appartement_id"
   }
  ],
- "modified": "2025-08-10 22:52:00.111577",
+ "modified": "2025-08-18 16:31:35.634665",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Appartement",

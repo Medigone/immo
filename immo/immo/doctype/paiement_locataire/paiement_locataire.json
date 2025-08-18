@@ -109,6 +109,7 @@
    "default": "Nouveau",
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Statut",
    "options": "Nouveau\nPay\u00e9\nAnnul\u00e9"
   },
@@ -131,7 +132,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-17 18:58:10.744672",
+ "modified": "2025-08-18 18:41:09.695789",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Paiement Locataire",

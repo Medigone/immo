@@ -318,6 +318,7 @@ class LocationCourteDuree(Document):
 		"""Calcule les montants payés et restants pour le locataire"""
 		try:
 			# Récupérer tous les paiements validés (status = 'Payé')
+			# Exclure les paiements annulés (status = 'Annulé')
 			paiements = frappe.get_all("Paiement Locataire",
 				filters={
 					"location_courte_duree_id": self.name,
@@ -349,6 +350,7 @@ class LocationCourteDuree(Document):
 		"""Calcule les montants versés et restants pour le propriétaire"""
 		try:
 			# Récupérer tous les paiements validés (status = 'Payé')
+			# Exclure les paiements annulés (status = 'Annulé')
 			paiements = frappe.get_all("Paiement Proprietaire",
 				filters={
 					"location_courte_duree_id": self.name,
@@ -376,16 +378,4 @@ class LocationCourteDuree(Document):
 		except Exception as e:
 			frappe.log_error(f"Erreur calcul paiements propriétaire {self.name}: {str(e)}", "LCD Proprietaire Payment Error")
 	
-	@frappe.whitelist()
-	def refresh_payment_status(self):
-		"""Méthode publique pour rafraîchir le statut des paiements"""
-		self.calculate_payment_status()
-		self.save()
-		return {
-			"montant_paye_locataire": self.montant_paye_locataire,
-			"montant_restant_locataire": self.montant_restant_locataire,
-			"statut_paiement_locataire": self.statut_paiement_locataire,
-			"montant_paye_proprietaire": self.montant_paye_proprietaire,
-			"montant_restant_proprietaire": self.montant_restant_proprietaire,
-			"statut_paiement_proprietaire": self.statut_paiement_proprietaire
-		}
+

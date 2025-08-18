@@ -59,8 +59,8 @@ class PaiementLocataire(Document):
 			return
 		
 		old_doc = self.get_doc_before_save()
-		if old_doc and old_doc.status == "Payé" and self.status != "Payé":
-			frappe.throw(_("Un paiement payé ne peut pas être modifié"))
+		if old_doc and old_doc.status == "Payé" and self.status != "Payé" and self.status != "Annulé":
+			frappe.throw(_("Un paiement payé ne peut pas être modifié, sauf pour l'annuler"))
 	
 	def before_save(self):
 		"""Actions avant sauvegarde"""
