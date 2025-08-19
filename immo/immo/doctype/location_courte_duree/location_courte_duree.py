@@ -44,9 +44,8 @@ class LocationCourteDuree(Document):
 		if self.prix_journalier_proprietaire and self.prix_journalier_proprietaire <= 0:
 			frappe.throw("Le prix journalier propriétaire doit être positif")
 		
-		if (self.prix_journalier_locataire and self.prix_journalier_proprietaire and 
-			self.prix_journalier_proprietaire >= self.prix_journalier_locataire):
-			frappe.throw("Le prix propriétaire doit être inférieur au prix locataire")
+		# Suppression de la validation qui empêchait le prix propriétaire d'être >= prix locataire
+		# Le prix propriétaire peut maintenant être équivalent ou supérieur au prix locataire
 	
 	def validate_email(self):
 		"""Valide le format de l'email du locataire"""
