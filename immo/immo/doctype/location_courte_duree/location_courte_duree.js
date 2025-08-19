@@ -18,6 +18,7 @@ frappe.ui.form.on('Location Courte Duree', {
 	},
 
 	validate: function (frm) {
+		frm.trigger('calculate_marge_reelle');
 		frm.trigger('update_dashboard');
 	},
 
@@ -30,6 +31,7 @@ frappe.ui.form.on('Location Courte Duree', {
 			window.current_location_courte_duree_frm = frm;
 		}
 
+		frm.trigger('calculate_marge_reelle');
 		frm.trigger('update_dashboard');
 	},
 
@@ -44,6 +46,25 @@ frappe.ui.form.on('Location Courte Duree', {
 
 	montant_total_proprietaire: function(frm) {
 		frm.trigger('update_dashboard');
+	},
+
+	// Calculer la marge réelle quand les champs changent
+	marge_totale: function(frm) {
+		frm.trigger('calculate_marge_reelle');
+		frm.trigger('update_dashboard');
+	},
+
+	commission_referent: function(frm) {
+		frm.trigger('calculate_marge_reelle');
+		frm.trigger('update_dashboard');
+	},
+
+	calculate_marge_reelle: function(frm) {
+		if (frm.doc.marge_totale !== undefined && frm.doc.commission_referent !== undefined) {
+			const marge_totale = frm.doc.marge_totale || 0;
+			const commission_referent = frm.doc.commission_referent || 0;
+			frm.set_value('marge_reelle', marge_totale - commission_referent);
+		}
 	},
 
 	update_dashboard: function(frm) {

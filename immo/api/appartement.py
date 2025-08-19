@@ -42,8 +42,8 @@ def get_appartement_dashboard_data(appartement_id):
 		# Générer le calendrier d'occupation
 		calendrier = generate_occupation_calendar(date_debut, date_fin, locations_courte, locations_longue)
 		
-		# Calculer les statistiques
-		stats = calculate_appartement_stats(appartement_id, locations_courte, locations_longue)
+		# Calculer les statistiques avec la méthode unifiée
+		stats = appartement.calculate_rentability()
 		
 		return {
 			"calendrier": calendrier,
@@ -101,87 +101,4 @@ def generate_occupation_calendar(date_debut, date_fin, locations_courte, locatio
 	return calendrier
 
 
-def calculate_appartement_stats(appartement_id, locations_courte, locations_longue):
-	"""Calcule les statistiques de l'appartement"""
-	try:
-		# Période des 12 derniers mois
-		aujourdhui = getdate()
-		date_debut_stats = add_days(aujourdhui, -365)
-		
-		# Revenus des locations courte durée
-		revenus_courte = frappe.db.sql("""
-			SELECT SUM(pl.montant) as total
-			FROM `tabPaiement Locataire` pl
-			INNER JOIN `tabLocation Courte Duree` lcd ON pl.location_courte_duree_id = lcd.name
-			WHERE lcd.appartement_id = %s
-			AND pl.date_paiement BETWEEN %s AND %s
-			AND pl.statut = 'Payé'
-		""", (appartement_id, date_debut_stats, aujourdhui), as_dict=True)
-		
-		# Revenus des locations longue durée
-		revenus_longue = frappe.db.sql("""
-			SELECT SUM(pl.montant) as total
-			FROM `tabPaiement Locataire` pl
-			INNER JOIN `tabLocation Longue Duree` lld ON pl.location_longue_duree_id = lld.name
-			WHERE lld.appartement_id = %s
-			AND pl.date_paiement BETWEEN %s AND %s
-			AND pl.statut = 'Payé'
-		""", (appartement_id, date_debut_stats, aujourdhui), as_dict=True)
-		
-		# Charges de l'appartement
-		charges = frappe.db.sql("""
-			SELECT SUM(montant) as total
-			FROM `tabCharge`
-			WHERE appartement_id = %s
-			AND date_charge BETWEEN %s AND %s
-		""", (appartement_id, date_debut_stats, aujourdhui), as_dict=True)
-		
-		total_revenus_courte = revenus_courte[0].total or 0
-		total_revenus_longue = revenus_longue[0].total or 0
-		total_revenus = total_revenus_courte + total_revenus_longue
-		total_charges = charges[0].total or 0
-		benefit_net = total_revenus - total_charges
-		
-		# Calculer le taux d'occupation sur les 12 derniers mois
-		total_jours = 365
-		jours_occupes = 0
-		
-		# Compter les jours occupés par les locations courte durée
-		for location in locations_courte:
-			debut = max(getdate(location.date_debut), date_debut_stats)
-			fin = min(getdate(location.date_fin), aujourdhui)
-			if debut <= fin:
-				jours_occupes += date_diff(fin, debut) + 1
-		
-		# Compter les jours occupés par les locations longue durée
-		for location in locations_longue:
-			debut = max(getdate(location.date_debut), date_debut_stats)
-			fin = min(getdate(location.date_fin), aujourdhui)
-			if debut <= fin:
-				jours_occupes += date_diff(fin, debut) + 1
-		
-		taux_occupation = (jours_occupes / total_jours) * 100 if total_jours > 0 else 0
-		
-		return {
-			"revenus_total": total_revenus,
-			"revenus_courte_duree": total_revenus_courte,
-			"revenus_longue_duree": total_revenus_longue,
-			"charges_total": total_charges,
-			"benefice_net": benefit_net,
-			"taux_occupation": taux_occupation,
-			"jours_occupes": jours_occupes,
-			"total_jours": total_jours
-		}
-		
-	except Exception as e:
-		frappe.log_error(f"Erreur calculate_appartement_stats: {str(e)}")
-		return {
-			"revenus_total": 0,
-			"revenus_courte_duree": 0,
-			"revenus_longue_duree": 0,
-			"charges_total": 0,
-			"benefice_net": 0,
-			"taux_occupation": 0,
-			"jours_occupes": 0,
-			"total_jours": 365
-		}
+# Fonction calculate_appartement_stats supprimée - remplacée par la méthode unifiée calculate_rentability dans la classe Appartement

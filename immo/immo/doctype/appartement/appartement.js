@@ -16,86 +16,6 @@ frappe.ui.form.on("Appartement", {
 	},
 
 	refresh: function (frm) {
-		if (frm.doc.name) {
-			// Bouton pour créer une Location Courte Durée
-			frm.add_custom_button(__('Location Courte Durée'), function () {
-				let dialog = new frappe.ui.Dialog({
-					title: __('Créer une Location Courte Durée'),
-					fields: [
-						{ fieldname: 'locataire_nom', label: __('Nom du locataire'), fieldtype: 'Data', reqd: 1 },
-						{ fieldname: 'locataire_email', label: __('Email du locataire'), fieldtype: 'Data', options: 'Email' },
-						{ fieldname: 'date_debut', label: __('Date de début'), fieldtype: 'Date', default: frappe.datetime.get_today(), reqd: 1 },
-						{ fieldname: 'date_fin', label: __('Date de fin'), fieldtype: 'Date', default: frappe.datetime.add_days(frappe.datetime.get_today(), 1), reqd: 1 },
-						{ fieldname: 'prix_journalier_locataire', label: __('Prix journalier locataire'), fieldtype: 'Currency', default: frm.doc.prix_journalier_defaut, reqd: 1 }
-					],
-					primary_action_label: __('Créer'),
-					primary_action: function (values) {
-						frappe.call({
-							method: 'frappe.client.insert',
-							args: {
-								doc: {
-									doctype: 'Location Courte Duree',
-									appartement_id: frm.doc.name,
-									locataire_nom: values.locataire_nom,
-									locataire_email: values.locataire_email,
-									date_debut: values.date_debut,
-									date_fin: values.date_fin,
-									prix_journalier_locataire: values.prix_journalier_locataire
-								}
-							},
-							callback: function (r) {
-								if (!r.exc) {
-									dialog.hide();
-									frm.reload_doc();
-									frappe.show_alert({ message: __('Location Courte Durée créée avec succès'), indicator: 'green' });
-								}
-							}
-						});
-					}
-				});
-				dialog.show();
-			}, __('Créer'));
-
-			// Bouton pour créer une Location Longue Durée
-			frm.add_custom_button(__('Location Longue Duree'), function () {
-				let dialog = new frappe.ui.Dialog({
-					title: __('Créer une Location Longue Duree'),
-					fields: [
-						{ fieldname: 'locataire_nom', label: __('Nom du locataire'), fieldtype: 'Data', reqd: 1 },
-						{ fieldname: 'locataire_email', label: __('Email du locataire'), fieldtype: 'Data', options: 'Email' },
-						{ fieldname: 'date_debut', label: __('Date de début'), fieldtype: 'Date', default: frappe.datetime.get_today(), reqd: 1 },
-						{ fieldname: 'date_fin', label: __('Date de fin'), fieldtype: 'Date', reqd: 1 },
-						{ fieldname: 'loyer_mensuel_locataire', label: __('Loyer mensuel locataire'), fieldtype: 'Currency', default: frm.doc.prix_mensuel_defaut, reqd: 1 }
-					],
-					primary_action_label: __('Créer'),
-					primary_action: function (values) {
-						frappe.call({
-							method: 'frappe.client.insert',
-							args: {
-								doc: {
-									doctype: 'Location Longue Duree',
-									appartement_id: frm.doc.name,
-									locataire_nom: values.locataire_nom,
-									locataire_email: values.locataire_email,
-									date_debut: values.date_debut,
-									date_fin: values.date_fin,
-									loyer_mensuel_locataire: values.loyer_mensuel_locataire
-								}
-							},
-							callback: function (r) {
-								if (!r.exc) {
-									dialog.hide();
-									frm.reload_doc();
-									frappe.show_alert({ message: __('Location Longue Duree créée avec succès'), indicator: 'green' });
-								}
-							}
-						});
-					}
-				});
-				dialog.show();
-			}, __('Créer'));
-		}
-
 		frm.trigger('update_dashboard');
 	},
 
@@ -202,9 +122,13 @@ function createAppartementDashboard(data, appartement) {
 	const stats = data.stats || {};
 	const calendrier = data.calendrier || [];
 	
-	// Calculer les pourcentages pour les barres de progression
-	const taux_occupation = stats.taux_occupation || 0;
-	const rentabilite = stats.benefice_net > 0 ? ((stats.benefice_net / stats.revenus_total) * 100) : 0;
+	// Extraire les données simplifiées
+	const revenus_total = stats.revenus_total || 0;
+	const charges_total = stats.charges_total || 0;
+	const marge = stats.marge || 0;
+	
+	// Calculer le pourcentage de marge
+	const marge_percentage = revenus_total > 0 ? ((marge / revenus_total) * 100) : 0;
 	
 	let dashboard_html = `
 		<div style="
@@ -214,18 +138,21 @@ function createAppartementDashboard(data, appartement) {
 			font-family: 'Inter', sans-serif;
 			padding: 16px;
 		">
-			<!-- Ligne des 4 cartes statistiques -->
-			<div style="
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-				gap: 12px;
-				align-items: stretch;
-			">
-				${createStatCard("Taux d'occupation", taux_occupation.toFixed(1) + "%", stats.jours_occupes + "/" + stats.total_jours + " jours", taux_occupation)}
-				${createStatCard("Revenus Total", format_currency(stats.revenus_total || 0, 'EUR'), "12 derniers mois", null)}
-				${createStatCard("Charges", format_currency(stats.charges_total || 0, 'EUR'), "12 derniers mois", null)}
-				${createStatCard("Bénéfice Net", format_currency(stats.benefice_net || 0, 'EUR'), "Rentabilité : " + rentabilite.toFixed(1) + "%", rentabilite)}
+			<!-- Section Financière -->
+			<div>
+				<h3 style="margin: 0 0 12px 0; font-size: 1.1rem; font-weight: 600; color: #111827;">Statistiques Financières</h3>
+				<div style="
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+					gap: 12px;
+					align-items: stretch;
+				">
+					${createStatCard("Revenus", format_currency(revenus_total, 'EUR'), "Paiements Locataire", null)}
+					${createStatCard("Charges", format_currency(charges_total, 'EUR'), "Paiements Propriétaire", null)}
+					${createStatCard("Marge", format_currency(marge, 'EUR'), "Marge : " + marge_percentage.toFixed(1) + "%", marge_percentage)}
+				</div>
 			</div>
+			
 			<!-- Ligne du calendrier en pleine largeur -->
 			<div style="
 				width: 100%;

@@ -153,6 +153,9 @@ class LocationCourteDuree(Document):
 		# Calcule la commission du référent
 		self.calculate_referent_commission()
 		
+		# Calcule la marge réelle
+		self.calculate_marge_reelle()
+		
 		# Normalise le nom du locataire
 		if self.locataire_nom:
 			self.locataire_nom = self.locataire_nom.strip().title()
@@ -208,6 +211,12 @@ class LocationCourteDuree(Document):
 				self.commission_referent = (self.marge_totale * referent.pourcentage_commission_defaut) / 100
 		else:
 			self.commission_referent = 0
+	
+	def calculate_marge_reelle(self):
+		"""Calcule la marge réelle après déduction de la commission référent"""
+		marge_totale = self.marge_totale or 0
+		commission_referent = self.commission_referent or 0
+		self.marge_reelle = marge_totale - commission_referent
 	
 
 	

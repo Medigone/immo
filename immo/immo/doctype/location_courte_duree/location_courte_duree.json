@@ -34,6 +34,7 @@
   "quote_part_bloc",
   "column_break_lhfd",
   "marge_totale",
+  "marge_reelle",
   "marge_sur_bloc",
   "suivi_paiements_section",
   "statut_paiement_locataire",
@@ -289,11 +290,18 @@
   {
    "fieldname": "column_break_qmvt",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "marge_reelle",
+   "fieldtype": "Currency",
+   "label": "Marge R\u00e9elle",
+   "precision": "2",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-19 14:12:28.145181",
+ "modified": "2025-08-19 18:57:51.618836",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Courte Duree",
