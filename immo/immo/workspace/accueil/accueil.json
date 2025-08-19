@@ -1,0 +1,38 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"x1F5g1Ugzq\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Accueil\",\"col\":12}},{\"id\":\"T44BYbISF3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Actions Rapides\",\"col\":12}}]",
+ "creation": "2025-08-19 15:33:14.920234",
+ "custom_blocks": [
+  {
+   "custom_block_name": "Accueil",
+   "label": "Accueil"
+  },
+  {
+   "custom_block_name": "Actions Rapides",
+   "label": "Actions Rapides"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "retail",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Accueil",
+ "links": [],
+ "modified": "2025-08-19 15:53:10.177255",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Accueil",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [],
+ "title": "Accueil"
+}

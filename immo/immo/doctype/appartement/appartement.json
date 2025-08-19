@@ -16,13 +16,15 @@
   "caracteristiques_section",
   "nombre_pieces",
   "surface",
-  "prix_section",
+  "column_break_xjnq",
   "prix_journalier_defaut",
   "prix_mensuel_defaut",
-  "gps",
+  "adresse",
   "ville",
   "rue",
   "complement_ad",
+  "column_break_ndrx",
+  "gps",
   "liens_tab"
  ],
  "fields": [
@@ -65,11 +67,6 @@
    "fieldtype": "Float",
    "label": "Surface (m\u00b2)",
    "precision": "2"
-  },
-  {
-   "fieldname": "prix_section",
-   "fieldtype": "Section Break",
-   "label": "Prix par d\u00e9faut"
   },
   {
    "fieldname": "prix_journalier_defaut",
@@ -117,6 +114,19 @@
   {
    "fieldname": "section_break_vwpm",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_xjnq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "adresse",
+   "fieldtype": "Section Break",
+   "label": "Adresse"
+  },
+  {
+   "fieldname": "column_break_ndrx",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -134,7 +144,7 @@
    "link_fieldname": "appartement_id"
   }
  ],
- "modified": "2025-08-18 16:31:35.634665",
+ "modified": "2025-08-19 15:56:27.013570",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Appartement",
