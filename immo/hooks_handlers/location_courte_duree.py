@@ -8,12 +8,21 @@ from frappe.utils import nowdate, getdate, date_diff
 def on_update(doc, method):
 	"""Actions après mise à jour de la location courte durée"""
 	try:
-		# Mettre à jour le statut des paiements
-		doc.calculate_payment_status()
+		# Éviter les mises à jour inutiles si le document est en cours de mise à jour automatique
+		if getattr(doc, '_updating_payments', False):
+			return
 		
-		# Mettre à jour les métriques de la location bloc si applicable
-		if doc.location_bloc_id:
-			doc.update_location_bloc_metrics()
+		# Vérifier si les champs critiques ont changé pour éviter les mises à jour inutiles
+		critical_fields = ['montant_total_locataire', 'montant_total_proprietaire', 'date_debut', 'date_fin', 'location_bloc_id']
+		has_critical_changes = any(doc.has_value_changed(field) for field in critical_fields)
+		
+		if has_critical_changes:
+			# Mettre à jour le statut des paiements seulement si nécessaire
+			doc.calculate_payment_status()
+			
+			# Mettre à jour les métriques de la location bloc si applicable
+			if doc.location_bloc_id:
+				doc.update_location_bloc_metrics()
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur dans on_update Location Courte Duree {doc.name}: {str(e)}")

@@ -25,15 +25,16 @@
   "locataire_nom",
   "locataire_email",
   "locataire_telephone",
-  "prix_section",
+  "column_break_qmvt",
   "prix_journalier_locataire",
   "prix_journalier_proprietaire",
-  "column_break_lhfd",
+  "prix_section",
   "montant_total_locataire",
   "montant_total_proprietaire",
+  "quote_part_bloc",
+  "column_break_lhfd",
   "marge_totale",
   "marge_sur_bloc",
-  "quote_part_bloc",
   "suivi_paiements_section",
   "statut_paiement_locataire",
   "montant_paye_locataire",
@@ -113,7 +114,7 @@
    "collapsible": 1,
    "fieldname": "prix_section",
    "fieldtype": "Section Break",
-   "label": "Prix et montants"
+   "label": "Montants"
   },
   {
    "fieldname": "prix_journalier_locataire",
@@ -239,7 +240,7 @@
    "fieldname": "statut_paiement_proprietaire",
    "fieldtype": "Select",
    "label": "Statut du paiement propri\u00e9taire",
-   "options": "En attente\nPartiellement vers\u00e9\nEnti\u00e8rement vers\u00e9",
+   "options": "En attente\nPartiellement vers\u00e9\nEnti\u00e8rement vers\u00e9\nPartiellement pay\u00e9 via bloc\nPay\u00e9 via bloc",
    "read_only": 1
   },
   {
@@ -284,11 +285,15 @@
    "fieldtype": "Data",
    "label": "Email du locataire",
    "options": "Email"
+  },
+  {
+   "fieldname": "column_break_qmvt",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-19 14:10:30.992339",
+ "modified": "2025-08-19 14:12:28.145181",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Courte Duree",

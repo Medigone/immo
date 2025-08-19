@@ -440,17 +440,31 @@ function createLocationCourteDureeDashboard(doc, paiements_locataire = [], paiem
 								Propriétaire
 							</div>
 							<span class="detail-status" style="
-								background: ${getStatusColor(statut_prop).background}; 
-								color: ${getStatusColor(statut_prop).text}; 
+								background: ${doc.location_bloc_id ? getStatusColor('Payé').background : getStatusColor(statut_prop).background}; 
+								color: ${doc.location_bloc_id ? getStatusColor('Payé').text : getStatusColor(statut_prop).text}; 
 								padding: 2px 6px; 
 								border-radius: 8px; 
 								font-size: 0.65rem; 
 								font-weight: 600;
 							">
-								${statut_prop}
+								${doc.location_bloc_id ? 'Payé' : statut_prop}
 							</span>
 						</div>
-						${montant_restant_prop > 0 ? `
+						${doc.location_bloc_id ? `
+						<div style="
+							background: #dcfce7;
+							color: #16a34a;
+							border: 1px solid #22c55e;
+							padding: 6px 10px;
+							border-radius: 6px;
+							font-size: 0.7rem;
+							font-weight: 500;
+							text-align: center;
+							line-height: 1.3;
+						">
+							Payé via bloc
+						</div>
+						` : (montant_restant_prop > 0 ? `
 						<button 
 							onclick="window.create_paiement_proprietaire_from_card()" 
 							style="
@@ -471,20 +485,20 @@ function createLocationCourteDureeDashboard(doc, paiements_locataire = [], paiem
 						>
 							+ Paiement
 						</button>
-						` : ''}
+						` : '')}
 					</div>
 					
 					<div style="font-size: 0.8rem; color: #6b7280; line-height: 1.6;">
-						<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-							<span style="font-weight: 500;">Montant restant:</span> 
-							<span class="detail-amount" style="
-								color: ${montant_restant_prop > 0 ? '#dc2626' : '#16a34a'}; 
-								font-weight: 700;
-								font-size: 0.85rem;
-							">
-								${montant_restant_prop.toFixed(2)} €
-							</span>
-						</div>
+					<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+						<span style="font-weight: 500;">Montant restant:</span> 
+						<span class="detail-amount" style="
+							color: ${doc.location_bloc_id ? '#16a34a' : (montant_restant_prop > 0 ? '#dc2626' : '#16a34a')}; 
+							font-weight: 700;
+							font-size: 0.85rem;
+						">
+							${doc.location_bloc_id ? '0.00' : montant_restant_prop.toFixed(2)} €
+						</span>
+					</div>
 						
 						<!-- Liste des paiements propriétaire -->
 						<div class="payment-list" style="
@@ -792,6 +806,17 @@ function create_paiement_locataire(frm) {
 // Fonction pour créer un paiement propriétaire
 function create_paiement_proprietaire(frm) {
 	frm.refresh(); // Ensure latest data
+	
+	// Vérifier si cette location provient d'un bloc
+	if (frm.doc.location_bloc_id) {
+		frappe.msgprint({
+			title: __('Paiement via Bloc'),
+			message: __('Cette location provient d\'un bloc. Le propriétaire a déjà été payé via un Paiement Bloc. Aucun paiement direct n\'est nécessaire.'),
+			indicator: 'orange'
+		});
+		return;
+	}
+	
 	const montantRestant = frm.doc.montant_restant_proprietaire || 0;
 	
 	if (montantRestant <= 0) {

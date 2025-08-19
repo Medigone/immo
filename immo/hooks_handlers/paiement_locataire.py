@@ -45,7 +45,27 @@ def update_location_courte_duree_payment_status(doc):
 			
 			location_doc.calculate_payment_status()
 			
-			location_doc.save()
+			# Utiliser frappe.db.set_value pour éviter les conflits de concurrence
+			update_data = {
+				"montant_paye_locataire": location_doc.montant_paye_locataire,
+				"montant_restant_locataire": location_doc.montant_restant_locataire,
+				"statut_paiement_locataire": location_doc.statut_paiement_locataire,
+				"montant_paye_proprietaire": location_doc.montant_paye_proprietaire,
+				"montant_restant_proprietaire": location_doc.montant_restant_proprietaire,
+				"statut_paiement_proprietaire": location_doc.statut_paiement_proprietaire
+			}
+			
+			for field, value in update_data.items():
+				frappe.db.set_value("Location Courte Duree", doc.location_courte_duree_id, field, value)
+			
+			frappe.db.commit()
+			
+			# Ajouter à la liste des blocs à mettre à jour si applicable
+			if location_doc.location_bloc_id:
+				if not hasattr(frappe.local, 'pending_bloc_updates'):
+					frappe.local.pending_bloc_updates = set()
+				frappe.local.pending_bloc_updates.add(location_doc.location_bloc_id)
+				frappe.db.after_commit.add(process_pending_bloc_updates)
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur lors de la mise à jour du statut des paiements de la location courte durée: {str(e)}")
@@ -113,3 +133,21 @@ def on_trash(doc, method):
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur dans on_trash Paiement Locataire {doc.name}: {str(e)}")
+
+
+def process_pending_bloc_updates():
+	"""Traite les mises à jour de blocs en attente pour éviter les modifications multiples"""
+	try:
+		if hasattr(frappe.local, 'pending_bloc_updates') and frappe.local.pending_bloc_updates:
+			for bloc_id in frappe.local.pending_bloc_updates:
+				try:
+					location_bloc = frappe.get_doc("Location Bloc", bloc_id)
+					location_bloc.update_metrics()
+				except Exception as e:
+					frappe.log_error(f"Erreur MAJ métriques bloc {bloc_id}: {str(e)}", "Bloc Update Error")
+			
+			# Nettoyer la liste après traitement
+			frappe.local.pending_bloc_updates.clear()
+			
+	except Exception as e:
+		frappe.log_error(f"Erreur traitement mises à jour blocs: {str(e)}", "Pending Updates Error")

@@ -254,12 +254,30 @@ class LocationCourteDuree(Document):
 		"""Met à jour les métriques de la location bloc"""
 		try:
 			if self.location_bloc_id:
-				location_bloc = frappe.get_doc("Location Bloc", self.location_bloc_id)
-				location_bloc.reload()
-				location_bloc.update_metrics()
-				location_bloc.save()
+				# Ajouter à la liste des blocs à mettre à jour pour traitement différé
+				if not hasattr(frappe.local, 'pending_bloc_updates'):
+					frappe.local.pending_bloc_updates = set()
+				frappe.local.pending_bloc_updates.add(self.location_bloc_id)
+				frappe.db.after_commit.add(self._process_pending_bloc_updates)
 		except Exception as e:
 			frappe.log_error(f"Erreur MAJ métriques {self.location_bloc_id}: {str(e)[:50]}", "LCD Metrics Error")
+	
+	def _process_pending_bloc_updates(self):
+		"""Traite les mises à jour de blocs en attente pour éviter les modifications multiples"""
+		try:
+			if hasattr(frappe.local, 'pending_bloc_updates') and frappe.local.pending_bloc_updates:
+				for bloc_id in frappe.local.pending_bloc_updates:
+					try:
+						location_bloc = frappe.get_doc("Location Bloc", bloc_id)
+						location_bloc.update_metrics()
+					except Exception as e:
+						frappe.log_error(f"Erreur MAJ métriques bloc {bloc_id}: {str(e)}", "Bloc Update Error")
+				
+				# Nettoyer la liste après traitement
+				frappe.local.pending_bloc_updates.clear()
+				
+		except Exception as e:
+			frappe.log_error(f"Erreur traitement mises à jour blocs: {str(e)}", "Pending Updates Error")
 	
 	@frappe.whitelist()
 	def check_availability(self):
@@ -349,6 +367,34 @@ class LocationCourteDuree(Document):
 	def calculate_proprietaire_payments(self):
 		"""Calcule les montants versés et restants pour le propriétaire"""
 		try:
+			# Si la location provient d'un bloc, vérifier les paiements bloc
+			if self.location_bloc_id:
+				# Vérifier si des paiements bloc existent et sont payés
+				paiements_bloc = frappe.get_all("Paiement Bloc",
+					filters={
+						"location_bloc_id": self.location_bloc_id,
+						"statut": "Payé"
+					},
+					fields=["montant_paiement"]
+				)
+				
+				total_bloc_paye = sum(p.montant_paiement for p in paiements_bloc)
+				montant_total = self.montant_total_proprietaire or 0
+				
+				if total_bloc_paye >= montant_total:
+					# Le propriétaire est déjà entièrement payé via le bloc
+					self.montant_paye_proprietaire = montant_total
+					self.montant_restant_proprietaire = 0
+					self.statut_paiement_proprietaire = "Payé via bloc"
+					return
+				elif total_bloc_paye > 0:
+					# Paiement partiel via bloc
+					self.montant_paye_proprietaire = total_bloc_paye
+					self.montant_restant_proprietaire = max(0, montant_total - total_bloc_paye)
+					self.statut_paiement_proprietaire = "Partiellement payé via bloc"
+					return
+			
+			# Logique existante pour les paiements directs
 			# Récupérer tous les paiements validés (status = 'Payé')
 			# Exclure les paiements annulés (status = 'Annulé')
 			paiements = frappe.get_all("Paiement Proprietaire",
@@ -377,5 +423,19 @@ class LocationCourteDuree(Document):
 				
 		except Exception as e:
 			frappe.log_error(f"Erreur calcul paiements propriétaire {self.name}: {str(e)}", "LCD Proprietaire Payment Error")
+	
+	def is_proprietaire_paid_via_bloc(self):
+		"""Vérifie si le propriétaire est déjà payé via un paiement bloc"""
+		if not self.location_bloc_id:
+			return False
+			
+		# Vérifier les paiements bloc
+		total_bloc_paye = frappe.db.sql("""
+			SELECT COALESCE(SUM(montant_paiement), 0)
+			FROM `tabPaiement Bloc`
+			WHERE location_bloc_id = %s AND statut = 'Payé'
+		""", (self.location_bloc_id,))[0][0] or 0
+		
+		return total_bloc_paye >= (self.montant_total_proprietaire or 0)
 	
 
