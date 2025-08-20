@@ -13,6 +13,8 @@
   "naming_series",
   "proprietaire_id",
   "adresse_complete",
+  "column_break_pvrr",
+  "nom_prop",
   "caracteristiques_section",
   "nombre_pieces",
   "surface",
@@ -25,13 +27,18 @@
   "complement_ad",
   "column_break_ndrx",
   "gps",
+  "\u00e9quipements_section",
+  "clim",
+  "parking",
+  "column_break_wvbc",
+  "wifi",
+  "ascenseur",
   "liens_tab"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "S\u00e9rie de nommage",
    "options": "APT-.YYYY.-",
    "reqd": 1
@@ -40,6 +47,7 @@
    "fieldname": "proprietaire_id",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Propri\u00e9taire",
    "options": "Proprietaire",
    "reqd": 1
@@ -88,6 +96,7 @@
   {
    "fieldname": "ville",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Ville"
   },
   {
@@ -127,6 +136,49 @@
   {
    "fieldname": "column_break_ndrx",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "\u00e9quipements_section",
+   "fieldtype": "Section Break",
+   "label": "\u00c9quipements"
+  },
+  {
+   "default": "0",
+   "fieldname": "clim",
+   "fieldtype": "Check",
+   "label": "Climatisation"
+  },
+  {
+   "default": "0",
+   "fieldname": "parking",
+   "fieldtype": "Check",
+   "label": "Parking"
+  },
+  {
+   "fieldname": "column_break_wvbc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "wifi",
+   "fieldtype": "Check",
+   "label": "Wifi"
+  },
+  {
+   "default": "0",
+   "fieldname": "ascenseur",
+   "fieldtype": "Check",
+   "label": "Ascenseur"
+  },
+  {
+   "fieldname": "column_break_pvrr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "proprietaire_id.nom_complet",
+   "fieldname": "nom_prop",
+   "fieldtype": "Data",
+   "label": "Nom Proprietaire"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -144,7 +196,7 @@
    "link_fieldname": "appartement_id"
   }
  ],
- "modified": "2025-08-19 15:56:27.013570",
+ "modified": "2025-08-20 17:01:09.233738",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Appartement",
@@ -165,6 +217,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "nom_prop",
  "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",

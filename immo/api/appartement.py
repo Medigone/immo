@@ -10,6 +10,13 @@ from frappe.utils import getdate, add_days, date_diff
 def get_appartement_dashboard_data(appartement_id):
 	"""Récupère les données du dashboard pour un appartement"""
 	try:
+		# Vérifier que l'appartement_id n'est pas un ID temporaire
+		if not appartement_id or appartement_id.startswith('new-'):
+			return {
+				"error": "Document non sauvegardé",
+				"message": "Le dashboard sera disponible après la sauvegarde de l'appartement"
+			}
+		
 		# Vérifier que l'appartement existe
 		appartement = frappe.get_doc("Appartement", appartement_id)
 		

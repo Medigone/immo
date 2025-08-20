@@ -76,29 +76,34 @@ function createProprietaireDashboard(data, proprietaire) {
 			font-family: 'Inter', sans-serif;
 			padding: 16px;
 		">
-			<!-- Ligne des 4 cartes statistiques principales -->
-			<div style="
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-				gap: 12px;
-				align-items: stretch;
-			">
-				${createStatCard("Appartements", general.total_appartements || 0, "Total possédés", null)}
-				${createStatCard("Revenus Annuels", format_currency(financial.total_revenus_locataire || 0, 'EUR'), "Année en cours", null)}
-				${createStatCard("Marge Nette", format_currency(financial.marge_nette || 0, 'EUR'), "Rentabilité : " + marge_percentage.toFixed(1) + "%", marge_percentage)}
-				${createStatCard("Taux d'Occupation", taux_occupation.toFixed(1) + "%", "Moyenne portfolio", taux_occupation)}
+			<!-- Section Financière -->
+			<div>
+				
+				<div style="
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+					gap: 12px;
+					align-items: stretch;
+				">
+					${createStatCard("Appartements", general.total_appartements || 0, "Total possédés", null)}
+					${createStatCard("Revenus Annuels", format_currency(financial.total_revenus_locataire || 0, 'EUR'), "Année en cours", null)}
+					${createStatCard("Marge Nette", format_currency(financial.marge_nette || 0, 'EUR'), "Rentabilité : " + marge_percentage.toFixed(1) + "%", marge_percentage)}
+				</div>
 			</div>
-			<!-- Ligne des métriques de paiement -->
-			<div style="
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-				gap: 12px;
-				align-items: stretch;
-			">
-				${createStatCard("Paiements Reçus", payments.proprietaires_payes || 0, "Versements effectués", null)}
-				${createStatCard("En Attente", payments.proprietaires_en_attente || 0, "Versements à faire", null)}
-				${createStatCard("Montant Versé", format_currency(payments.montant_proprietaires_paye || 0, 'EUR'), "Total année", null)}
-				${createStatCard("Taux de Paiement", taux_paiement.toFixed(1) + "%", "Locataires à jour", taux_paiement)}
+			
+			<!-- Section Paiements -->
+			<div>
+				
+				<div style="
+					display: grid;
+					grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+					gap: 12px;
+					align-items: stretch;
+				">
+					${createStatCard("Paiements Reçus", format_currency(payments.montant_proprietaires_paye || 0, 'EUR'), "Versements effectués", null)}
+					${createStatCard("En Attente", format_currency(payments.montant_proprietaires_en_attente || 0, 'EUR'), "Versements à faire", null)}
+					${createStatCard("Montant Versé", format_currency(payments.montant_proprietaires_paye || 0, 'EUR'), "Total année", null)}
+				</div>
 			</div>
 		</div>
 	`;
@@ -106,78 +111,64 @@ function createProprietaireDashboard(data, proprietaire) {
 	return dashboard_html;
 }
 
-// Fonction utilitaire pour créer une carte de statistique
-function createStatCard(title, value, subtitle, percentage) {
-	let progressBar = '';
-	let progressColor = '#10b981'; // Vert par défaut
-
-	if (percentage !== null && percentage !== undefined) {
-		// Déterminer la couleur selon le pourcentage
-		if (percentage >= 80) {
-			progressColor = '#10b981'; // Vert
-		} else if (percentage >= 60) {
-			progressColor = '#f59e0b'; // Orange
-		} else {
-			progressColor = '#ef4444'; // Rouge
-		}
-
-		progressBar = `
-			<div style="
-				width: 100%;
-				height: 4px;
-				background-color: #e5e7eb;
-				border-radius: 2px;
-				margin-top: 8px;
-				overflow: hidden;
-			">
-				<div style="
-					width: ${Math.min(percentage, 100)}%;
-					height: 100%;
-					background-color: ${progressColor};
-					transition: width 0.3s ease;
-				"></div>
-			</div>
-		`;
-	}
+// Fonction utilitaire pour créer une carte de statistique (style appartement.js)
+function createStatCard(title, mainValue, footerValue, percentage) {
+	let showBadge = percentage !== null && percentage !== undefined;
+	let isPositive = percentage >= 0;
+	let badgeColor = isPositive ? '#16a34a' : '#dc2626';
+	let arrow = isPositive ? '↑' : '↓';
 
 	return `
 		<div style="
 			background: #fff;
 			border: 1px solid #e5e7eb;
 			border-radius: 10px;
-			padding: 16px;
-			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-			transition: transform 0.2s ease, box-shadow 0.2s ease;
-			cursor: default;
-		" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.1)'">
-			<div style="
-				font-size: 0.875rem;
-				font-weight: 500;
-				color: #6b7280;
-				margin-bottom: 4px;
-			">${title}</div>
-			<div style="
-				font-size: 1.5rem;
-				font-weight: 700;
-				color: #111827;
-				margin-bottom: 4px;
-			">${value}</div>
+			padding: 10px 12px;
+			display: flex;
+			flex-direction: column;
+			justify-content: flex-start;
+			height: 100%;
+			min-height: 120px;
+			min-width: 0;
+		">
+			<div style="font-size: 0.8rem; color: #6b7280;">${title}</div>
+			
+			<div style="display: flex; align-items: center; justify-content: space-between; margin: 6px 0;">
+				<div style="font-size: 1.2rem; font-weight: 700; color: #111827;">${mainValue}</div>
+				${showBadge ? `<div style="
+					font-size: 0.7rem;
+					padding: 2px 6px;
+					border-radius: 9999px;
+					border: 1px solid ${badgeColor};
+					color: ${badgeColor};
+					background: transparent;
+					white-space: nowrap;
+				">
+					${arrow} ${percentage.toFixed(0)}%
+				</div>` : ''}
+			</div>
+
 			<div style="
 				font-size: 0.75rem;
-				color: #9ca3af;
-			">${subtitle}</div>
-			${progressBar}
+				color: #374151;
+				margin-top: auto;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			">
+				${footerValue}
+			</div>
 		</div>
 	`;
 }
 
-// Fonction utilitaire pour formater les devises
-function format_currency(amount, currency) {
-	if (typeof amount !== 'number') {
-		amount = parseFloat(amount) || 0;
-	}
-	return new Intl.NumberFormat('fr-FR', {
-		style: 'currency',
-		currency: currency || 'EUR'
-	}).format(amount);
+// Fonction utilitaire pour formater les devises (style appartement.js)
+function format_currency(value, currency) {
+	// Formatage manuel pour éviter le HTML généré par frappe.format
+	if (!value) value = 0;
+	const formatted = parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	return `€ ${formatted}`;
 }

@@ -108,7 +108,8 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 		paiements_stats = frappe.db.sql("""
 			SELECT 
 				SUM(CASE WHEN status = 'Payé' AND date_paiement BETWEEN %s AND %s THEN 1 ELSE 0 END) as payes,
-				SUM(CASE WHEN status = 'Nouveau' THEN 1 ELSE 0 END) as en_attente
+				SUM(CASE WHEN status = 'Nouveau' THEN 1 ELSE 0 END) as en_attente,
+				COALESCE(SUM(CASE WHEN status = 'Nouveau' THEN montant ELSE 0 END), 0) as montant_en_attente
 			FROM `tabPaiement Proprietaire` pp
 			WHERE pp.proprietaire = %s
 		""", (date_debut, date_fin, proprietaire_id), as_dict=True)[0]
@@ -122,6 +123,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			'montant_verse_courte': paiements_courte or 0,
 			'paiements_payes': paiements_stats['payes'] or 0,
 			'paiements_en_attente': paiements_stats['en_attente'] or 0,
+			'montant_paiements_en_attente': paiements_stats['montant_en_attente'] or 0,
 			'charges_total': charges_total or 0
 		}
 		
@@ -155,6 +157,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 		charges_totales = stats_financieres.get('charges_total', 0) or 0
 		paiements_payes = stats_financieres.get('paiements_payes', 0) or 0
 		paiements_en_attente = stats_financieres.get('paiements_en_attente', 0) or 0
+		montant_paiements_en_attente = stats_financieres.get('montant_paiements_en_attente', 0) or 0
 		
 		marge_brute = revenus_totaux - montant_verse
 		marge_nette = marge_brute - charges_totales
@@ -200,6 +203,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 				"proprietaires_payes": int(paiements_payes),
 				"proprietaires_en_attente": int(paiements_en_attente),
 				"montant_proprietaires_paye": montant_verse,
+				"montant_proprietaires_en_attente": montant_paiements_en_attente,
 				"taux_paiement_locataires": taux_paiement_locataires
 			},
 			"occupancy": {

@@ -19,6 +19,11 @@ class Appartement(Document):
 		"""Valide qu'il n'y a pas de chevauchement entre les locations"""
 		from datetime import datetime
 		
+		# Vérifier que le document a un nom (n'est pas nouveau)
+		if not self.name or self.name.startswith('new-'):
+			# Pour un nouveau document, pas de conflit possible
+			return True
+		
 		if isinstance(date_debut, str):
 			date_debut = datetime.strptime(date_debut, '%Y-%m-%d').date()
 		if isinstance(date_fin, str):
@@ -123,6 +128,8 @@ class Appartement(Document):
 	@frappe.whitelist()
 	def get_locations_longue_duree(self):
 		"""Retourne les locations longue durée de l'appartement"""
+		if not self.name or self.name.startswith('new-'):
+			return []
 		return frappe.get_all("Location Longue Duree",
 			filters={"appartement_id": self.name},
 			fields=["name", "locataire_nom", "date_debut", "date_fin", "loyer_mensuel_locataire", "statut"],
@@ -131,6 +138,8 @@ class Appartement(Document):
 	@frappe.whitelist()
 	def get_locations_courte_duree(self):
 		"""Retourne les locations courte durée de l'appartement"""
+		if not self.name or self.name.startswith('new-'):
+			return []
 		return frappe.get_all("Location Courte Duree",
 			filters={"appartement_id": self.name},
 			fields=["name", "locataire_nom", "date_debut", "date_fin", "montant_total_locataire", "statut"],
@@ -139,6 +148,8 @@ class Appartement(Document):
 	@frappe.whitelist()
 	def get_charges(self):
 		"""Retourne les charges de l'appartement"""
+		if not self.name or self.name.startswith('new-'):
+			return []
 		return frappe.get_all("Charge",
 			filters={"appartement_id": self.name},
 			fields=["name", "date_charge", "description", "categorie", "montant", "recupere_proprietaire"],
@@ -148,6 +159,15 @@ class Appartement(Document):
 	def calculate_rentability(self):
 		"""Calcule la rentabilité de l'appartement - Revenus, Charges et Marge"""
 		try:
+			# Vérifier que le document a un nom (n'est pas nouveau)
+			if not self.name or self.name.startswith('new-'):
+				return {
+					"revenus_total": 0,
+					"charges_total": 0,
+					"marge": 0,
+					"periode": "Aucune donnée disponible pour un nouveau document"
+				}
+			
 			from datetime import datetime, timedelta
 			end_date = datetime.now()
 			start_date = end_date - timedelta(days=365)

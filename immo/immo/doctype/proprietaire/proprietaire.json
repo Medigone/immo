@@ -82,8 +82,7 @@
   },
   {
    "fieldname": "dashboard_section",
-   "fieldtype": "Section Break",
-   "label": "Tableau de bord"
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "dashboard",
@@ -93,7 +92,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-17 18:01:43.211596",
+ "modified": "2025-08-20 14:07:17.442269",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Proprietaire",

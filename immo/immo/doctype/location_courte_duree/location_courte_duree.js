@@ -158,6 +158,70 @@ frappe.ui.form.on('Location Courte Duree', {
 	date_fin: function(frm) {
 		// Mettre à jour l'affichage du type de location
 		update_type_location_display(frm);
+	},
+
+	// Gérer le clic sur le bouton commission
+	bout_comission: function(frm) {
+		if (!frm.doc.referent_id) {
+			frappe.msgprint({
+				title: 'Erreur',
+				message: 'Veuillez d\'abord sélectionner un référent pour cette location.',
+				indicator: 'red'
+			});
+			return;
+		}
+
+		if (!frm.doc.commission_referent || frm.doc.commission_referent <= 0) {
+			frappe.msgprint({
+				title: 'Erreur',
+				message: 'Le montant de la commission référent doit être calculé et supérieur à 0.',
+				indicator: 'red'
+			});
+			return;
+		}
+
+		// Confirmer la création de la commission
+		frappe.confirm(
+			'Êtes-vous sûr de vouloir créer une commission de ' + 
+			format_currency(frm.doc.commission_referent) + 
+			' pour le référent ' + frm.doc.referent_id + ' ?',
+			function() {
+				// Appeler la méthode Python pour créer la commission
+				frappe.call({
+					method: 'create_commission',
+					doc: frm.doc,
+					callback: function(response) {
+						if (response.message) {
+							// Rafraîchir le formulaire pour afficher le champ commission mis à jour
+							frm.reload_doc();
+							
+							frappe.msgprint({
+								title: 'Succès',
+								message: response.message.message,
+								indicator: 'green'
+							});
+							
+							// Proposer d'ouvrir la commission créée
+							setTimeout(function() {
+								frappe.confirm(
+									'Voulez-vous ouvrir la commission créée ?',
+									function() {
+										frappe.set_route('Form', 'Commission', response.message.commission_name);
+									}
+								);
+							}, 1500);
+						}
+					},
+					error: function(error) {
+						frappe.msgprint({
+							title: 'Erreur',
+							message: error.message || 'Une erreur est survenue lors de la création de la commission.',
+							indicator: 'red'
+						});
+					}
+				});
+			}
+		);
 	}
 });
 

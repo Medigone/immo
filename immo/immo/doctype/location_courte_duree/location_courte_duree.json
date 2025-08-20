@@ -46,7 +46,10 @@
   "montant_restant_proprietaire",
   "referent_section",
   "referent_id",
-  "commission_referent"
+  "bout_comission",
+  "column_break_acow",
+  "commission_referent",
+  "commission"
  ],
  "fields": [
   {
@@ -297,11 +300,27 @@
    "label": "Marge R\u00e9elle",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.commission",
+   "fieldname": "bout_comission",
+   "fieldtype": "Button",
+   "label": "Cr\u00e9er Commission"
+  },
+  {
+   "fieldname": "column_break_acow",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "commission",
+   "fieldtype": "Link",
+   "label": "Commission",
+   "options": "Commission"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-19 18:57:51.618836",
+ "modified": "2025-08-20 14:46:57.332430",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Courte Duree",

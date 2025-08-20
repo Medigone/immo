@@ -70,6 +70,7 @@
    "reqd": 1
   },
   {
+   "fetch_from": "appartement_id.proprietaire_id",
    "fieldname": "proprietaire_id",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -247,7 +248,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-08 19:04:30.732748",
+ "modified": "2025-08-20 15:29:44.373348",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Bloc",

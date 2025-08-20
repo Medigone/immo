@@ -446,4 +446,49 @@ class LocationCourteDuree(Document):
 		
 		return total_bloc_paye >= (self.montant_total_proprietaire or 0)
 	
+	@frappe.whitelist()
+	def create_commission(self):
+		"""Crée une commission pour cette location courte durée"""
+		# Vérifier qu'un référent est défini
+		if not self.referent_id:
+			frappe.throw("Aucun référent défini pour cette location")
+		
+		# Vérifier qu'il n'y a pas déjà une commission
+		existing_commission = frappe.get_all("Commission", 
+			filters={"location_courte_duree_id": self.name},
+			limit=1)
+		
+		if existing_commission:
+			frappe.throw("Une commission existe déjà pour cette location")
+		
+		# Vérifier que la commission référent est calculée
+		if not self.commission_referent or self.commission_referent <= 0:
+			frappe.throw("Le montant de la commission référent doit être supérieur à 0")
+		
+		# Récupérer les informations du référent
+		referent = frappe.get_doc("Referent", self.referent_id)
+		
+		# Créer la commission
+		commission = frappe.new_doc("Commission")
+		commission.referent_id = self.referent_id
+		commission.location_courte_duree_id = self.name
+		commission.montant_commission = self.commission_referent
+		commission.pourcentage_commission = referent.pourcentage_commission_defaut or 0
+		commission.statut_paiement = "En attente"
+		
+		# Sauvegarder la commission
+		commission.insert()
+		
+		# Recharger le document pour éviter les conflits de concurrence
+		self.reload()
+		
+		# Mettre à jour le champ commission dans la location courte durée
+		self.commission = commission.name
+		self.save()
+		
+		return {
+			"message": f"Commission créée avec succès: {commission.name}",
+			"commission_name": commission.name
+		}
+	
 

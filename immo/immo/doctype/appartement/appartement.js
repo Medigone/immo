@@ -20,7 +20,27 @@ frappe.ui.form.on("Appartement", {
 	},
 
 	update_dashboard: function(frm) {
-		if (!frm.doc.name) return;
+		// Vérifier si le document existe et n'est pas un nouveau document
+		if (!frm.doc.name || frm.doc.__islocal || frm.doc.name.startsWith('new-')) {
+			// Afficher un message pour les nouveaux documents
+			let placeholder_html = `
+				<div style="
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					height: 200px;
+					font-family: 'Inter', sans-serif;
+					color: #6b7280;
+				">
+					<div>Le dashboard sera disponible après la sauvegarde de l'appartement</div>
+				</div>
+			`;
+			
+			if (frm.fields_dict['dashboard']) {
+				$(frm.fields_dict['dashboard'].wrapper).html(placeholder_html);
+			}
+			return;
+		}
 		
 		// Afficher un placeholder pendant le chargement
 		let loading_html = `
@@ -45,7 +65,8 @@ frappe.ui.form.on("Appartement", {
 	},
 
 	load_dashboard_data: function(frm) {
-		if (!frm.doc.name) return;
+		// Vérifier si le document existe et n'est pas un nouveau document
+		if (!frm.doc.name || frm.doc.__islocal || frm.doc.name.startsWith('new-')) return;
 		
 		frappe.call({
 			method: 'immo.api.appartement.get_appartement_dashboard_data',
