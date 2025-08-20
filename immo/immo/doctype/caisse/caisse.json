@@ -1,0 +1,52 @@
+{
+ "actions": [],
+ "creation": "2024-01-01 00:00:00",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "solde_actuel",
+  "date_derniere_maj"
+ ],
+ "fields": [
+  {
+   "fieldname": "solde_actuel",
+   "fieldtype": "Currency",
+   "label": "Solde Actuel",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date_derniere_maj",
+   "fieldtype": "Datetime",
+   "label": "Date Derni\u00e8re MAJ",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-08-20 19:19:22.403633",
+ "modified_by": "Administrator",
+ "module": "Immo",
+ "name": "Caisse",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
