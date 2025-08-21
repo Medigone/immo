@@ -101,7 +101,7 @@ class TestReferent(unittest.TestCase):
 			"montant_commission": 100.0,
 			"pourcentage_commission": 10.0,
 			"date_creation": today,
-			"statut_paiement": "En attente"
+			"status": "Nouveau"
 		})
 		commission1.insert()
 		
@@ -111,7 +111,7 @@ class TestReferent(unittest.TestCase):
 			"montant_commission": 50.0,
 			"pourcentage_commission": 10.0,
 			"date_creation": today,
-			"statut_paiement": "Payé"
+			"status": "Payé"
 		})
 		commission2.insert()
 		

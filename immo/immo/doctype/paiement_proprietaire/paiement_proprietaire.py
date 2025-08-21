@@ -42,7 +42,7 @@ class PaiementProprietaire(Document):
 		"""Valide la date de paiement"""
 		if self.date_paiement:
 			# Pour les paiements programmés, la date peut être dans le futur
-			if self.status in ["Envoyé", "Reçu"] and self.date_paiement > frappe.utils.nowdate():
+			if self.status in ["Envoyé", "Reçu"] and frappe.utils.getdate(self.date_paiement) > frappe.utils.getdate(frappe.utils.nowdate()):
 				frappe.throw(_("La date de paiement ne peut pas être dans le futur pour un paiement envoyé ou reçu"))
 	
 	def validate_status_change(self):

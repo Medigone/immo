@@ -23,7 +23,8 @@
   "column_break_xkgy",
   "location_courte_duree_id",
   "location_bloc_id",
-  "proprietaire_id"
+  "proprietaire_id",
+  "amended_from"
  ],
  "fields": [
   {
@@ -128,11 +129,22 @@
   {
    "fieldname": "column_break_vfxm",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Paiement Locataire",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-08-18 18:41:09.695789",
+ "modified": "2025-08-21 12:43:53.165661",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Paiement Locataire",
@@ -150,27 +162,6 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Immo Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Immo User",
-   "share": 1
   }
  ],
  "row_format": "Dynamic",

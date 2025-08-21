@@ -49,18 +49,10 @@ La fonctionnalité **Gestion de Caisse** permet de centraliser et tracer tous le
   - `naming_series`: Série de nommage (APPORT-.YYYY.-.#####)
   - `montant`: Montant (Currency)
   - `date_apport`: Date d'apport (Date)
-  - `methode_apport`: Méthode (Select):
-    - Virement bancaire
-    - Chèque
-    - Espèces
-    - Carte bancaire
-    - Autre
   - `reference_apport`: Référence (Data)
   - `motif`: Motif de l'apport (Text)
-  - `statut`: Statut (Select) - En attente, Confirmé, Annulé
-  - `utilisateur`: Utilisateur (Link → User)
+  - `status`: Statut (Select) - En attente, Confirmé, Annulé
   - `date_validation`: Date de validation (Datetime)
-  - `validateur`: Validateur (Link → User)
   - `commentaires`: Commentaires (Text)
 
 #### 4. Retrait Caisse
@@ -69,16 +61,9 @@ La fonctionnalité **Gestion de Caisse** permet de centraliser et tracer tous le
   - `naming_series`: Série de nommage (RETRAIT-.YYYY.-.#####)
   - `montant`: Montant (Currency)
   - `date_retrait`: Date de retrait (Date)
-  - `methode_retrait`: Méthode (Select):
-    - Virement bancaire
-    - Chèque
-    - Espèces
-    - Carte bancaire
-    - Autre
   - `reference_retrait`: Référence (Data)
   - `motif`: Motif du retrait (Text)
-  - `statut`: Statut (Select) - En attente, Confirmé, Annulé
-  - `utilisateur`: Utilisateur (Link → User)
+  - `status`: Statut (Select) - En attente, Confirmé, Annulé
   - `date_validation`: Date de validation (Datetime)
   - `validateur`: Validateur (Link → User)
   - `commentaires`: Commentaires (Text)

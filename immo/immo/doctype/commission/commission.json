@@ -2,30 +2,33 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-01 00:00:00.000000",
+ "creation": "2024-01-01 00:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "date_creation",
+  "status",
+  "section_break_dobr",
   "referent_id",
   "location_courte_duree_id",
+  "column_break_zwjq",
   "montant_commission",
   "pourcentage_commission",
-  "date_creation",
-  "statut_paiement",
   "section_break_1",
   "date_paiement",
   "methode_paiement",
   "reference_paiement",
-  "commentaires"
+  "commentaires",
+  "amended_from"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
+   "label": "S\u00e9rie de nommage",
    "options": "COM-.YYYY.-.#####",
    "reqd": 1
   },
@@ -33,7 +36,7 @@
    "fieldname": "referent_id",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Référent",
+   "label": "R\u00e9f\u00e9rent",
    "options": "Referent",
    "reqd": 1
   },
@@ -49,7 +52,7 @@
    "fieldname": "montant_commission",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Montant Commission (€)",
+   "label": "Montant Commission (\u20ac)",
    "precision": "2",
    "reqd": 1
   },
@@ -65,51 +68,71 @@
    "fieldname": "date_creation",
    "fieldtype": "Date",
    "in_list_view": 1,
-   "label": "Date de création",
-   "reqd": 1
-  },
-  {
-   "default": "En attente",
-   "fieldname": "statut_paiement",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Statut Paiement",
-   "options": "En attente\nPayé\nAnnulé",
+   "label": "Date de cr\u00e9ation",
    "reqd": 1
   },
   {
    "fieldname": "section_break_1",
    "fieldtype": "Section Break",
-   "label": "Détails du Paiement"
+   "label": "D\u00e9tails du Paiement"
   },
   {
-   "depends_on": "eval:doc.statut_paiement == 'Payé'",
+   "allow_on_submit": 1,
    "fieldname": "date_paiement",
    "fieldtype": "Date",
    "label": "Date de paiement"
   },
   {
-   "depends_on": "eval:doc.statut_paiement == 'Payé'",
+   "allow_on_submit": 1,
    "fieldname": "methode_paiement",
    "fieldtype": "Select",
-   "label": "Méthode de paiement",
-   "options": "Virement\nChèque\nEspèces\nPayPal\nAutre"
+   "label": "M\u00e9thode de paiement",
+   "options": "Virement\nCh\u00e8que\nEsp\u00e8ces\nPayPal\nAutre"
   },
   {
-   "depends_on": "eval:doc.statut_paiement == 'Payé'",
+   "allow_on_submit": 1,
    "fieldname": "reference_paiement",
    "fieldtype": "Data",
-   "label": "Référence de paiement"
+   "label": "R\u00e9f\u00e9rence de paiement"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "commentaires",
    "fieldtype": "Text",
    "label": "Commentaires"
+  },
+  {
+   "fieldname": "section_break_dobr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_zwjq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Nouveau",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Statut",
+   "options": "Nouveau\nPay\u00e9\nAnnul\u00e9",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Commission",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2024-01-01 00:00:00.000000",
+ "modified": "2025-08-21 14:10:40.968284",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Commission",
@@ -150,6 +173,7 @@
    "share": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

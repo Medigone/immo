@@ -7,11 +7,17 @@ from frappe.utils import nowdate, getdate, add_months, flt
 from datetime import datetime, timedelta
 
 
-# FONCTION DÉSACTIVÉE - Génération automatique de paiements désactivée
-"""
 @frappe.whitelist()
-def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month, payment_data):
-	Crée des paiements locataire en lot pour plusieurs mois
+def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month, payment_data, auto_submit=False):
+	"""Crée des paiements locataire en lot pour plusieurs mois
+	
+	Args:
+		location_longue_duree_id: ID de la location longue durée
+		start_month: Mois de début (format YYYY-MM)
+		end_month: Mois de fin (format YYYY-MM)
+		payment_data: Données du paiement
+		auto_submit: Si True, soumet automatiquement les paiements créés
+	"""
 	try:
 		# Vérification de la location
 		if not frappe.db.exists("Location Longue Duree", location_longue_duree_id):
@@ -73,10 +79,19 @@ def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month
 					"commentaires": payment_data.get("commentaires", f"Paiement automatique pour {mois_annee}")
 				})
 				payment_doc.insert()
+				
+				# Soumettre automatiquement si demandé
+				if auto_submit:
+					try:
+						payment_doc.submit()
+					except Exception as e:
+						frappe.log_error(f"Erreur lors de la soumission automatique du paiement {payment_doc.name}: {str(e)}")
+				
 				created_payments.append({
 					"mois": mois_annee,
 					"paiement_id": payment_doc.name,
-					"mensualite_id": mensualite
+					"mensualite_id": mensualite,
+					"submitted": auto_submit and payment_doc.docstatus == 1
 				})
 			
 			current_date = add_months(current_date, 1)
@@ -91,10 +106,9 @@ def create_bulk_tenant_payments(location_longue_duree_id, start_month, end_month
 	except Exception as e:
 		frappe.log_error(f"Erreur création paiements en lot: {str(e)}")
 		return {
-			"success": False,
-			"error": str(e)
-		}
-"""
+				"success": False,
+				"error": str(e)
+			}
 
 
 @frappe.whitelist()
@@ -405,7 +419,7 @@ def get_overdue_payments(days_overdue=30):
 			LEFT JOIN `tabLocation Courte Duree` lcd ON pp.location_courte_duree_id = lcd.name
 			LEFT JOIN `tabAppartement` a ON (lld.appartement_id = a.name OR lcd.appartement_id = a.name)
 			LEFT JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
-			WHERE pp.statut = 'En attente'
+			WHERE pp.docstatus = 0
 				AND pp.date_paiement <= %s
 			ORDER BY pp.date_paiement ASC
 		""", (cutoff_date,), as_dict=True)

@@ -2,13 +2,14 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-15 10:00:00.000000",
+ "creation": "2024-01-15 10:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "status",
   "section_break_2",
   "appartement_id",
   "proprietaire_id",
@@ -31,10 +32,9 @@
   "montant_locataire",
   "montant_proprietaire",
   "section_break_22",
-  "statut",
-  "column_break_24",
   "date_paiement",
   "methode_paiement",
+  "column_break_24",
   "reference_paiement",
   "section_break_28",
   "justificatif",
@@ -42,15 +42,16 @@
   "date_creation",
   "cree_par",
   "section_break_33",
-  "commentaires"
+  "commentaires",
+  "amended_from"
  ],
  "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
-   "options": "CHG-.YYYY.-.MM.-.#####",
-   "reqd": 1
+   "hidden": 1,
+   "label": "S\u00e9rie de nommage",
+   "options": "CHG-.YYYY.-.MM.-.#####"
   },
   {
    "fieldname": "section_break_2",
@@ -60,17 +61,19 @@
   {
    "fieldname": "appartement_id",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Appartement",
    "options": "Appartement",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
+   "fetch_from": "appartement_id.proprietaire_id",
    "fieldname": "proprietaire_id",
    "fieldtype": "Link",
-   "label": "Propriétaire",
+   "label": "Propri\u00e9taire",
    "options": "Proprietaire",
-   "read_only": 1,
-   "fetch_from": "appartement_id.proprietaire_id"
+   "read_only": 1
   },
   {
    "fieldname": "location_longue_duree_id",
@@ -91,6 +94,7 @@
   {
    "fieldname": "type_charge",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type de charge",
    "options": "Charges locatives\nTravaux\nEntretien\nAssurance\nTaxes\nCommissions\nAutre",
    "reqd": 1
@@ -98,8 +102,9 @@
   {
    "fieldname": "categorie",
    "fieldtype": "Select",
-   "label": "Catégorie",
-   "options": "Récurrente\nPonctuelle\nUrgente",
+   "in_list_view": 1,
+   "label": "Cat\u00e9gorie",
+   "options": "R\u00e9currente\nPonctuelle\nUrgente",
    "reqd": 1
   },
   {
@@ -111,7 +116,7 @@
   {
    "fieldname": "section_break_10",
    "fieldtype": "Section Break",
-   "label": "Détails financiers"
+   "label": "D\u00e9tails financiers"
   },
   {
    "fieldname": "montant",
@@ -138,26 +143,26 @@
   {
    "fieldname": "numero_facture",
    "fieldtype": "Data",
-   "label": "Numéro de facture"
+   "label": "Num\u00e9ro de facture"
   },
   {
    "fieldname": "section_break_16",
    "fieldtype": "Section Break",
-   "label": "Répartition des charges"
+   "label": "R\u00e9partition des charges"
   },
   {
+   "default": "0",
    "fieldname": "repartition_locataire",
    "fieldtype": "Percent",
-   "label": "Répartition locataire (%)",
-   "precision": "2",
-   "default": "0"
+   "label": "R\u00e9partition locataire (%)",
+   "precision": "2"
   },
   {
+   "default": "100",
    "fieldname": "repartition_proprietaire",
    "fieldtype": "Percent",
-   "label": "Répartition propriétaire (%)",
-   "precision": "2",
-   "default": "100"
+   "label": "R\u00e9partition propri\u00e9taire (%)",
+   "precision": "2"
   },
   {
    "fieldname": "column_break_19",
@@ -173,7 +178,7 @@
   {
    "fieldname": "montant_proprietaire",
    "fieldtype": "Currency",
-   "label": "Montant propriétaire",
+   "label": "Montant propri\u00e9taire",
    "precision": "2",
    "read_only": 1
   },
@@ -181,14 +186,6 @@
    "fieldname": "section_break_22",
    "fieldtype": "Section Break",
    "label": "Statut et paiement"
-  },
-  {
-   "fieldname": "statut",
-   "fieldtype": "Select",
-   "label": "Statut",
-   "options": "En attente\nValidée\nPayée\nRemboursée\nRejetée",
-   "reqd": 1,
-   "default": "En attente"
   },
   {
    "fieldname": "column_break_24",
@@ -202,13 +199,13 @@
   {
    "fieldname": "methode_paiement",
    "fieldtype": "Select",
-   "label": "Méthode de paiement",
-   "options": "Virement bancaire\nChèque\nEspèces\nCarte bancaire\nPrélèvement\nAutre"
+   "label": "M\u00e9thode de paiement",
+   "options": "Virement bancaire\nCh\u00e8que\nEsp\u00e8ces\nCarte bancaire\nPr\u00e9l\u00e8vement\nAutre"
   },
   {
    "fieldname": "reference_paiement",
    "fieldtype": "Data",
-   "label": "Référence de paiement"
+   "label": "R\u00e9f\u00e9rence de paiement"
   },
   {
    "fieldname": "section_break_28",
@@ -218,7 +215,7 @@
   {
    "fieldname": "justificatif",
    "fieldtype": "Attach",
-   "label": "Justificatif (facture, reçu)"
+   "label": "Justificatif (facture, re\u00e7u)"
   },
   {
    "fieldname": "column_break_30",
@@ -227,13 +224,13 @@
   {
    "fieldname": "date_creation",
    "fieldtype": "Datetime",
-   "label": "Date de création",
+   "label": "Date de cr\u00e9ation",
    "read_only": 1
   },
   {
    "fieldname": "cree_par",
    "fieldtype": "Link",
-   "label": "Créé par",
+   "label": "Cr\u00e9\u00e9 par",
    "options": "User",
    "read_only": 1
   },
@@ -246,24 +243,30 @@
    "fieldname": "commentaires",
    "fieldtype": "Text",
    "label": "Commentaires"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Charge",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Nouveau",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Statut",
+   "options": "Nouveau\nValid\u00e9\nPay\u00e9\nRejet\u00e9\nAnnul\u00e9"
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "link_doctype": "Appartement",
-   "link_fieldname": "appartement_id"
-  },
-  {
-   "link_doctype": "Location Longue Duree",
-   "link_fieldname": "location_longue_duree_id"
-  },
-  {
-   "link_doctype": "Location Courte Duree",
-   "link_fieldname": "location_courte_duree_id"
-  }
- ],
- "modified": "2024-01-15 10:00:00.000000",
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-08-21 15:11:22.292100",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Charge",
@@ -281,31 +284,9 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Gestionnaire Immobilier",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Assistant Immobilier",
-   "share": 1,
-   "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

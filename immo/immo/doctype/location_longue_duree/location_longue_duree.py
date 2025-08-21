@@ -123,18 +123,44 @@ class LocationLongueDuree(Document):
 	@frappe.whitelist()
 	def get_paiements_locataire(self):
 		"""Retourne les paiements du locataire"""
-		return frappe.get_all("Paiement Locataire",
+		paiements = frappe.get_all("Paiement Locataire",
 			filters={"location_longue_duree_id": self.name},
-			fields=["name", "montant", "date_paiement", "status", "methode_paiement"],
+			fields=["name", "montant", "date_paiement", "docstatus", "methode_paiement"],
 			order_by="date_paiement desc")
+		
+		# Convertir docstatus en status lisible
+		for paiement in paiements:
+			if paiement.docstatus == 0:
+				paiement.status = "Nouveau"
+			elif paiement.docstatus == 1:
+				paiement.status = "Payé"
+			elif paiement.docstatus == 2:
+				paiement.status = "Annulé"
+			else:
+				paiement.status = "Inconnu"
+		
+		return paiements
 	
 	@frappe.whitelist()
 	def get_paiements_proprietaire(self):
 		"""Retourne les paiements au propriétaire"""
-		return frappe.get_all("Paiement Propriétaire",
+		paiements = frappe.get_all("Paiement Propriétaire",
             filters={"location_longue_duree_id": self.name},
-            fields=["name", "montant", "date_paiement", "status", "methode_paiement"],
+            fields=["name", "montant", "date_paiement", "docstatus", "methode_paiement"],
 			order_by="date_paiement desc")
+		
+		# Convertir docstatus en status lisible
+		for paiement in paiements:
+			if paiement.docstatus == 0:
+				paiement.status = "Nouveau"
+			elif paiement.docstatus == 1:
+				paiement.status = "Payé"
+			elif paiement.docstatus == 2:
+				paiement.status = "Annulé"
+			else:
+				paiement.status = "Inconnu"
+		
+		return paiements
 	
 	@frappe.whitelist()
 	def calculate_total_margin(self):

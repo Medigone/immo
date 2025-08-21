@@ -23,11 +23,11 @@ def validate(doc, method):
 def on_update(doc, method):
 	"""Actions après mise à jour"""
 	# Met à jour les marges des mensualités si la charge est validée
-	if doc.statut == "Validée":
+	if doc.status == "Validée":
 		update_mensualite_margins(doc)
 	
-	# Met à jour les statistiques de l'appartement
-	update_apartment_charges_statistics(doc)
+	# Note: update_apartment_charges_statistics disabled - fields don't exist in Appartement doctype
+	# update_apartment_charges_statistics(doc)
 	
 	# Notifie les parties concernées selon le statut
 	notify_stakeholders(doc)
@@ -38,8 +38,8 @@ def on_cancel(doc, method):
 	# Remet à jour les marges des mensualités
 	revert_mensualite_margins(doc)
 	
-	# Met à jour les statistiques de l'appartement
-	update_apartment_charges_statistics(doc)
+	# Note: update_apartment_charges_statistics disabled - function removed as fields don't exist in Appartement doctype
+	# update_apartment_charges_statistics(doc)
 
 
 def validate_amounts_and_distribution(doc):
@@ -58,12 +58,12 @@ def validate_amounts_and_distribution(doc):
 		frappe.throw("La somme des répartitions doit être égale à 100%")
 	
 	# Validation des détails de paiement si nécessaire
-	if doc.statut in ["Payée", "Remboursée"]:
+	if doc.status == "Payée":
 		if not doc.date_paiement:
-			frappe.throw("La date de paiement est obligatoire pour une charge payée ou remboursée")
+			frappe.throw("La date de paiement est obligatoire pour une charge payée")
 		
 		if not doc.methode_paiement:
-			frappe.throw("La méthode de paiement est obligatoire pour une charge payée ou remboursée")
+			frappe.throw("La méthode de paiement est obligatoire pour une charge payée")
 
 
 def validate_apartment_location_consistency(doc):
@@ -174,7 +174,7 @@ def recalculate_mensualite_charges(mensualite_name):
 			FROM `tabLocation Longue Duree` 
 			WHERE name = %s
 		)
-		AND statut = 'Validée'
+		AND status = 'Validée'
 		AND MONTH(date_charge) = %s
 		AND YEAR(date_charge) = %s
 
@@ -194,41 +194,41 @@ def recalculate_mensualite_charges(mensualite_name):
 		mensualite.save(ignore_permissions=True)
 
 
-def update_apartment_charges_statistics(doc):
-	"""Met à jour les statistiques des charges de l'appartement"""
-	if not doc.appartement_id:
-		return
-	
-	# Calcule les statistiques des charges pour cet appartement
-	stats = frappe.db.sql("""
-		SELECT 
-			COUNT(*) as total_charges,
-			SUM(montant) as montant_total_charges,
-			SUM(montant_locataire) as montant_total_locataire,
-			SUM(montant_proprietaire) as montant_total_proprietaire,
-			SUM(CASE WHEN statut = 'Payée' THEN montant ELSE 0 END) as montant_paye,
-			SUM(CASE WHEN statut IN ('En attente', 'Validée') THEN montant ELSE 0 END) as montant_en_attente
-		FROM `tabCharge`
-		WHERE appartement_id = %s
-
-			AND YEAR(date_charge) = YEAR(CURDATE())
-	""", (doc.appartement_id,), as_dict=True)
-	
-	if stats:
-		stat = stats[0]
-		# Met à jour l'appartement avec les nouvelles statistiques
-		frappe.db.set_value("Appartement", doc.appartement_id, {
-			"charges_annuelles_totales": stat.montant_total_charges or 0,
-			"charges_locataire_annuelles": stat.montant_total_locataire or 0,
-			"charges_proprietaire_annuelles": stat.montant_total_proprietaire or 0,
-			"charges_payees_annuelles": stat.montant_paye or 0,
-			"charges_en_attente_annuelles": stat.montant_en_attente or 0
-		})
+# DISABLED: Function removed because Appartement doctype doesn't have charges statistics fields
+# def update_apartment_charges_statistics(doc):
+#	"""Met à jour les statistiques des charges de l'appartement"""
+#	if not doc.appartement_id:
+#		return
+#	
+#	# Calcule les statistiques des charges pour cet appartement
+#	stats = frappe.db.sql("""
+#		SELECT 
+#			COUNT(*) as total_charges,
+#			SUM(montant) as montant_total_charges,
+#			SUM(montant_locataire) as montant_total_locataire,
+#			SUM(montant_proprietaire) as montant_total_proprietaire,
+#			SUM(CASE WHEN status = 'Payée' THEN montant ELSE 0 END) as montant_paye,
+#			SUM(CASE WHEN status IN ('En attente', 'Validée') THEN montant ELSE 0 END) as montant_en_attente
+#		FROM `tabCharge`
+#		WHERE appartement_id = %s
+#			AND YEAR(date_charge) = YEAR(CURDATE())
+#	""", (doc.appartement_id,), as_dict=True)
+#	
+#	if stats:
+#		stat = stats[0]
+#		# Met à jour l'appartement avec les nouvelles statistiques
+#		frappe.db.set_value("Appartement", doc.appartement_id, {
+#			"charges_annuelles_totales": stat.montant_total_charges or 0,
+#			"charges_locataire_annuelles": stat.montant_total_locataire or 0,
+#			"charges_proprietaire_annuelles": stat.montant_total_proprietaire or 0,
+#			"charges_payees_annuelles": stat.montant_paye or 0,
+#			"charges_en_attente_annuelles": stat.montant_en_attente or 0
+#		})
 
 
 def notify_stakeholders(doc):
 	"""Notifie les parties concernées selon le statut de la charge"""
-	if doc.statut == "Validée":
+	if doc.status == "Validée":
 		# Notifie le propriétaire de la nouvelle charge validée
 		notify_owner_charge_validated(doc)
 		
@@ -236,11 +236,11 @@ def notify_stakeholders(doc):
 		if doc.montant_locataire > 0:
 			notify_tenant_charge_validated(doc)
 	
-	elif doc.statut == "Payée":
+	elif doc.status == "Payée":
 		# Notifie que la charge a été payée
 		notify_charge_paid(doc)
 	
-	elif doc.statut == "Rejetée":
+	elif doc.status == "Rejetée":
 		# Notifie le rejet de la charge
 		notify_charge_rejected(doc)
 
@@ -350,13 +350,13 @@ def calculate_monthly_charges_summary(appartement_id, month, year):
 			SUM(montant) as montant_total,
 			SUM(montant_locataire) as total_locataire,
 			SUM(montant_proprietaire) as total_proprietaire,
-			statut
+			status
 		FROM `tabCharge`
 		WHERE appartement_id = %s
 			AND MONTH(date_charge) = %s
 			AND YEAR(date_charge) = %s
 
-		GROUP BY type_charge, categorie, statut
+		GROUP BY type_charge, categorie, status
 		ORDER BY type_charge, categorie
 	""", (appartement_id, month, year), as_dict=True)
 	

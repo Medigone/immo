@@ -5,8 +5,75 @@ import frappe
 from frappe.utils import nowdate, getdate
 
 
+def validate(doc, method):
+	"""Validation avant sauvegarde du paiement locataire"""
+	# Valider que le montant est positif
+	if doc.montant <= 0:
+		frappe.throw("Le montant du paiement doit être positif")
+	
+	# Valider qu'au moins une référence de location est fournie
+	if not any([doc.mensualite_id, doc.location_courte_duree_id, doc.location_bloc_id]):
+		frappe.throw("Au moins une référence de location doit être fournie")
+	
+	# Valider la date de paiement
+	if not doc.date_paiement:
+		frappe.throw("La date de paiement est obligatoire")
+
+
+def on_submit(doc, method):
+	"""Actions lors de la soumission du paiement locataire"""
+	try:
+		# Mettre à jour le statut à "Payé"
+		doc.db_set("status", "Payé")
+		
+		# Exécuter les mêmes actions que lors de la mise à jour
+		# Met à jour le statut de la mensualité si c'est un loyer mensuel
+		if doc.type_paiement == "Loyer mensuel":
+			update_mensualite_status(doc)
+		
+		# Mettre à jour le statut des paiements de la location courte durée
+		if doc.location_courte_duree_id:
+			update_location_courte_duree_payment_status(doc)
+			
+		frappe.msgprint(f"Paiement {doc.name} validé avec succès")
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors de la soumission du paiement {doc.name}: {str(e)}")
+		frappe.throw(f"Erreur lors de la validation du paiement: {str(e)}")
+
+
+def on_cancel(doc, method):
+	"""Actions lors de l'annulation du paiement locataire"""
+	try:
+		# Mettre à jour le statut à "Annulé"
+		doc.db_set("status", "Annulé")
+		
+		# Réinitialiser les informations de paiement de la mensualité si applicable
+		if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
+			frappe.db.set_value("Mensualite", doc.mensualite_id, {
+				"date_paiement_locataire": None,
+				"methode_paiement_locataire": None,
+				"reference_paiement_locataire": None
+			})
+		
+		# Mettre à jour le statut des paiements de la location courte durée
+		if doc.location_courte_duree_id:
+			update_location_courte_duree_payment_status(doc)
+			
+		frappe.msgprint(f"Paiement {doc.name} annulé avec succès")
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur lors de l'annulation du paiement {doc.name}: {str(e)}")
+		frappe.throw(f"Erreur lors de l'annulation du paiement: {str(e)}")
+
+
 def on_update(doc, method):
 	"""Actions après mise à jour du paiement locataire"""
+	# Ne traiter les mises à jour que si le document est soumis (validé)
+	# Les documents en brouillon ne doivent pas affecter les autres documents
+	if doc.docstatus != 1:  # 1 = Submitted
+		return
+	
 	# Met à jour le statut de la mensualité si c'est un loyer mensuel
 	if doc.type_paiement == "Loyer mensuel":
 		update_mensualite_status(doc)
@@ -76,11 +143,15 @@ def after_insert(doc, method):
 	try:
 		if not doc.name:
 			return
-			
-		# Mettre à jour le statut des paiements de la location courte durée
-		# pour recalculer les montants et mettre à jour le statut
-		if doc.location_courte_duree_id:
-			update_location_courte_duree_payment_status(doc)
+		
+		# Pour les documents submittables, les actions de mise à jour
+		# sont maintenant gérées dans on_submit plutôt qu'after_insert
+		# Cette fonction peut être utilisée pour des actions qui doivent
+		# se produire même pour les brouillons si nécessaire
+		
+		# Initialiser le statut à "Nouveau" si pas déjà défini
+		if not doc.status:
+			doc.db_set("status", "Nouveau")
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur dans after_insert Paiement Locataire {doc.name}: {str(e)}")
@@ -91,6 +162,11 @@ def on_trash(doc, method):
 	try:
 		if not doc.name:
 			return
+		
+		# Vérifier que le document peut être supprimé
+		# Les documents soumis doivent d'abord être annulés
+		if doc.docstatus == 1:  # Submitted
+			frappe.throw("Impossible de supprimer un paiement validé. Veuillez d'abord l'annuler.")
 			
 		# Capturer l'ID de la location avant la suppression
 		location_id = doc.location_courte_duree_id

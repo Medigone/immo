@@ -49,30 +49,43 @@ class Charge(Document):
 		if self.repartition_proprietaire is None:
 			self.repartition_proprietaire = 100
 		
-		if self.repartition_locataire < 0 or self.repartition_locataire > 100:
+		# Convert to float to handle string values from form
+		try:
+			repartition_locataire = float(self.repartition_locataire or 0)
+			repartition_proprietaire = float(self.repartition_proprietaire or 100)
+		except (ValueError, TypeError):
+			frappe.throw(_("Les valeurs de répartition doivent être numériques"))
+		
+		# Update the actual values
+		self.repartition_locataire = repartition_locataire
+		self.repartition_proprietaire = repartition_proprietaire
+		
+		if repartition_locataire < 0 or repartition_locataire > 100:
 			frappe.throw(_("La répartition locataire doit être entre 0 et 100%"))
 		
-		if self.repartition_proprietaire < 0 or self.repartition_proprietaire > 100:
+		if repartition_proprietaire < 0 or repartition_proprietaire > 100:
 			frappe.throw(_("La répartition propriétaire doit être entre 0 et 100%"))
 		
-		total_repartition = self.repartition_locataire + self.repartition_proprietaire
+		total_repartition = repartition_locataire + repartition_proprietaire
 		if abs(total_repartition - 100) > 0.01:  # Tolérance pour les erreurs d'arrondi
 			frappe.throw(_("La somme des répartitions doit être égale à 100%"))
 	
 	def validate_payment_details(self):
-		"""Valide les détails de paiement"""
-		if self.statut in ["Payée", "Remboursée"]:
+		"""Valide les détails de paiement selon le statut"""
+		if self.status == "Payée":
 			if not self.date_paiement:
-				frappe.throw(_("La date de paiement est obligatoire pour une charge payée ou remboursée"))
+				frappe.throw(_("La date de paiement est obligatoire pour une charge payée"))
 			if not self.methode_paiement:
-				frappe.throw(_("La méthode de paiement est obligatoire pour une charge payée ou remboursée"))
+				frappe.throw(_("La méthode de paiement est obligatoire pour une charge payée"))
 	
 	def validate_date(self):
 		"""Valide les dates"""
-		if self.date_charge and self.date_charge > frappe.utils.nowdate():
+		today = frappe.utils.getdate(frappe.utils.nowdate())
+		
+		if self.date_charge and frappe.utils.getdate(self.date_charge) > today:
 			frappe.throw(_("La date de la charge ne peut pas être dans le futur"))
 		
-		if self.date_paiement and self.date_paiement > frappe.utils.nowdate():
+		if self.date_paiement and frappe.utils.getdate(self.date_paiement) > today:
 			frappe.throw(_("La date de paiement ne peut pas être dans le futur"))
 	
 	def before_save(self):
@@ -93,7 +106,7 @@ class Charge(Document):
 	def on_update(self):
 		"""Actions après mise à jour"""
 		# Met à jour les marges des locations si nécessaire
-		if self.statut == "Validée":
+		if self.status == "Validée":
 			self.update_location_margins()
 	
 	def update_location_margins(self):
@@ -120,10 +133,10 @@ class Charge(Document):
 	@frappe.whitelist()
 	def validate_charge(self):
 		"""Valide la charge"""
-		if self.statut == "Validée":
+		if self.status == "Validée":
 			frappe.throw(_("La charge est déjà validée"))
 		
-		self.statut = "Validée"
+		self.status = "Validée"
 		self.save()
 		
 		return {
@@ -134,13 +147,13 @@ class Charge(Document):
 	@frappe.whitelist()
 	def mark_as_paid(self, payment_date=None, payment_method=None, payment_reference=None):
 		"""Marque la charge comme payée"""
-		if self.statut == "Payée":
+		if self.status == "Payée":
 			frappe.throw(_("La charge est déjà marquée comme payée"))
 		
-		if self.statut != "Validée":
+		if self.status != "Validée":
 			frappe.throw(_("La charge doit être validée avant d'être marquée comme payée"))
 		
-		self.statut = "Payée"
+		self.status = "Payée"
 		self.date_paiement = payment_date or frappe.utils.nowdate()
 		self.methode_paiement = payment_method
 		self.reference_paiement = payment_reference
@@ -151,36 +164,15 @@ class Charge(Document):
 			"charge_id": self.name
 		}
 	
-	@frappe.whitelist()
-	def mark_as_reimbursed(self, reimbursement_date=None, reimbursement_method=None, reimbursement_reference=None):
-		"""Marque la charge comme remboursée"""
-		if self.statut == "Remboursée":
-			frappe.throw(_("La charge est déjà marquée comme remboursée"))
-		
-		if self.statut != "Payée":
-			frappe.throw(_("La charge doit être payée avant d'être marquée comme remboursée"))
-		
-		self.statut = "Remboursée"
-		if reimbursement_date:
-			self.date_paiement = reimbursement_date
-		if reimbursement_method:
-			self.methode_paiement = reimbursement_method
-		if reimbursement_reference:
-			self.reference_paiement = reimbursement_reference
-		self.save()
-		
-		return {
-			"message": _("Charge marquée comme remboursée"),
-			"charge_id": self.name
-		}
+
 	
 	@frappe.whitelist()
 	def reject_charge(self, reason=None):
 		"""Rejette la charge"""
-		if self.statut in ["Payée", "Remboursée"]:
-			frappe.throw(_("Une charge payée ou remboursée ne peut pas être rejetée"))
+		if self.status == "Payée":
+			frappe.throw(_("Une charge payée ne peut pas être rejetée"))
 		
-		self.statut = "Rejetée"
+		self.status = "Rejetée"
 		if reason:
 			self.commentaires = (self.commentaires or "") + f"\nRejetée: {reason}"
 		self.save()
@@ -203,7 +195,7 @@ class Charge(Document):
 				"montant_locataire": self.montant_locataire,
 				"montant_proprietaire": self.montant_proprietaire,
 				"date_charge": self.date_charge,
-				"statut": self.statut,
+				"status": self.status,
 				"fournisseur": self.fournisseur,
 				"numero_facture": self.numero_facture
 			}
@@ -246,7 +238,7 @@ class Charge(Document):
 	@frappe.whitelist()
 	def calculate_charges_statistics(self, start_date=None, end_date=None, appartement_id=None):
 		"""Calcule les statistiques des charges pour une période"""
-		filters = {"statut": ["in", ["Validée", "Payée", "Remboursée"]]}
+		filters = {"status": ["in", ["Validée", "Payée"]]}
 		
 		if start_date:
 			filters["date_charge"] = [">=", start_date]
@@ -262,7 +254,7 @@ class Charge(Document):
 		charges = frappe.get_all(
 			"Charge",
 			filters=filters,
-			fields=["montant", "montant_locataire", "montant_proprietaire", "type_charge", "categorie", "statut"]
+			fields=["montant", "montant_locataire", "montant_proprietaire", "type_charge", "categorie", "status"]
 		)
 		
 		total_montant = sum(c.montant for c in charges)
@@ -285,13 +277,13 @@ class Charge(Document):
 			par_categorie[c.categorie]["count"] += 1
 			par_categorie[c.categorie]["montant"] += c.montant
 		
-		# Répartition par statut
-		par_statut = {}
+		# Répartition par status
+		par_status = {}
 		for c in charges:
-			if c.statut not in par_statut:
-				par_statut[c.statut] = {"count": 0, "montant": 0}
-			par_statut[c.statut]["count"] += 1
-			par_statut[c.statut]["montant"] += c.montant
+			if c.status not in par_status:
+				par_status[c.status] = {"count": 0, "montant": 0}
+			par_status[c.status]["count"] += 1
+			par_status[c.status]["montant"] += c.montant
 		
 		return {
 			"periode": {"debut": start_date, "fin": end_date},
@@ -302,13 +294,13 @@ class Charge(Document):
 			"montant_proprietaire_total": total_proprietaire,
 			"repartition_par_type": par_type,
 			"repartition_par_categorie": par_categorie,
-			"repartition_par_statut": par_statut
+			"repartition_par_status": par_status
 		}
 	
 	@frappe.whitelist()
 	def get_pending_charges(self, appartement_id=None, proprietaire_id=None):
 		"""Récupère les charges en attente"""
-		filters = {"statut": ["in", ["En attente", "Validée"]]}
+		filters = {"status": ["in", ["En attente", "Validée"]]}
 		
 		if appartement_id:
 			filters["appartement_id"] = appartement_id
@@ -325,7 +317,7 @@ class Charge(Document):
 		charges = frappe.get_all(
 			"Charge",
 			filters=filters,
-			fields=["name", "type_charge", "description", "montant", "date_charge", "statut", "appartement_id"],
+			fields=["name", "type_charge", "description", "montant", "date_charge", "status", "appartement_id"],
 			order_by="date_charge desc"
 		)
 		
@@ -368,7 +360,7 @@ class Charge(Document):
 			- Montant total : {self.montant}€
 			- Votre part : {montant_concerne}€
 			- Date : {self.date_charge}
-			- Statut : {self.statut}
+			- status : {self.status}
 			
 			{f'Fournisseur : {self.fournisseur}' if self.fournisseur else ''}
 			{f'Numéro de facture : {self.numero_facture}' if self.numero_facture else ''}

@@ -161,18 +161,25 @@ doc_events = {
 	},
 	"Commission": {
 		"on_update": "immo.hooks_handlers.commission.on_update",
+		"on_submit": "immo.hooks_handlers.commission.on_submit",
 		"on_cancel": "immo.hooks_handlers.commission.on_cancel",
 		"validate": "immo.hooks_handlers.commission.validate"
 	},
 	"Paiement Locataire": {
 		"on_update": "immo.hooks_handlers.paiement_locataire.on_update",
 		"after_insert": "immo.hooks_handlers.paiement_locataire.after_insert",
-		"on_trash": "immo.hooks_handlers.paiement_locataire.on_trash"
+		"on_trash": "immo.hooks_handlers.paiement_locataire.on_trash",
+		"on_submit": "immo.hooks_handlers.paiement_locataire.on_submit",
+		"on_cancel": "immo.hooks_handlers.paiement_locataire.on_cancel",
+		"validate": "immo.hooks_handlers.paiement_locataire.validate"
 	},
 	"Paiement Proprietaire": {
 		"on_update": "immo.hooks_handlers.paiement_proprietaire.on_update",
 		"after_insert": "immo.hooks_handlers.paiement_proprietaire.after_insert",
-		"on_trash": "immo.hooks_handlers.paiement_proprietaire.on_trash"
+		"on_trash": "immo.hooks_handlers.paiement_proprietaire.on_trash",
+		"on_submit": "immo.hooks_handlers.paiement_proprietaire.on_submit",
+		"on_cancel": "immo.hooks_handlers.paiement_proprietaire.on_cancel",
+		"validate": "immo.hooks_handlers.paiement_proprietaire.validate"
 	},
 	"Location Bloc": {
 		"on_update": "immo.hooks_handlers.location_bloc.on_update",

@@ -66,7 +66,7 @@ class Referent(Document):
 			"filters": {"referent_id": self.name},
 			"fields": [
 				"name", "location_courte_duree_id", "montant_commission",
-				"pourcentage_commission", "date_creation", "statut_paiement"
+				"pourcentage_commission", "date_creation", "status"
 			],
 			"order_by": "date_creation desc"
 		}
@@ -93,20 +93,20 @@ class Referent(Document):
 		commissions = frappe.get_all(
 			"Commission",
 			filters=filters,
-			fields=["montant_commission", "statut_paiement"]
+			fields=["montant_commission", "docstatus"]
 		)
 		
 		total_commissions = sum(c.montant_commission for c in commissions)
 		commissions_payees = sum(
 			c.montant_commission for c in commissions 
-			if c.statut_paiement == "Payé"
+			if c.docstatus == 1
 		)
-		commissions_en_attente = total_commissions - commissions_payees
+		commissions_nouveau = total_commissions - commissions_payees
 		
 		return {
 			"total_commissions": total_commissions,
 			"commissions_payees": commissions_payees,
-			"commissions_en_attente": commissions_en_attente,
+			"commissions_nouveau": commissions_nouveau,
 			"nombre_commissions": len(commissions)
 		}
 	
@@ -255,7 +255,7 @@ class Referent(Document):
 			<div class="stats-grid">
 				{self._create_stat_card("Total Commissions", f"{commission_data.get('total_commissions', 0):,.2f} €", "Montant total généré", None)}
 				{self._create_stat_card("Commissions Payées", f"{commission_data.get('commissions_payees', 0):,.2f} €", "Montant déjà versé", pourcentage_paiement)}
-				{self._create_stat_card("En Attente", f"{commission_data.get('commissions_en_attente', 0):,.2f} €", "Montant à verser", None)}
+				{self._create_stat_card("Nouveau", f"{commission_data.get('commissions_nouveau', 0):,.2f} €", "Montant à verser", None)}
 				{self._create_stat_card("Nombre Total", str(commission_data.get('nombre_commissions', 0)), "Commissions créées", None)}
 			</div>
 			
@@ -367,7 +367,7 @@ class Referent(Document):
 		
 		commissions_html = ""
 		for commission in commissions_to_display:
-			status_color = self._get_status_color(commission.statut_paiement)
+			status_color = self._get_status_color(commission.status)
 			# Créer les liens cliquables pour les IDs en utilisant les routes Frappe appropriées
 			# Utiliser onclick avec frappe.set_route pour une navigation appropriée dans Frappe
 			commission_onclick = f"frappe.set_route('Form', 'Commission', '{commission.name}'); return false;"
@@ -422,7 +422,7 @@ class Referent(Document):
 						border-radius: 4px;
 						font-size: 0.6rem;
 						font-weight: 600;
-					">{commission.statut_paiement}</div>
+				">{commission.status}</div>
 				</div>
 			</div>
 			"""
@@ -454,7 +454,7 @@ class Referent(Document):
 				'text': '#166534',
 				'border': '#16a34a'
 			}
-		elif status == 'En attente':
+		elif status == 'Nouveau':
 			return {
 				'background': '#fef3c7',
 				'text': '#92400e',

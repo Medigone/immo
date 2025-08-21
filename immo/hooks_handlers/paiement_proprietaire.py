@@ -5,11 +5,73 @@ import frappe
 from frappe.utils import nowdate, getdate, add_months
 
 
+def validate(doc, method):
+	"""Validation avant sauvegarde du paiement propriétaire"""
+	try:
+		# Vérifier que le montant est positif
+		if doc.montant and doc.montant <= 0:
+			frappe.throw("Le montant du paiement doit être positif")
+		
+		# Vérifier qu'une référence de location est fournie
+		if not doc.mensualite_id and not doc.location_courte_duree_id:
+			frappe.throw("Une référence de mensualité ou de location courte durée est requise")
+		
+		# Vérifier que la date de paiement est présente
+		if not doc.date_paiement:
+			frappe.throw("La date de paiement est requise")
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur dans validate Paiement Proprietaire {doc.name}: {str(e)}")
+		raise
+
+
+def on_submit(doc, method):
+	"""Actions lors de la soumission du paiement propriétaire"""
+	try:
+		# Mettre le statut à "Payé"
+		doc.db_set("status", "Payé")
+		
+		# Met à jour le statut de la mensualité si confirmé
+		if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
+			update_mensualite_status(doc)
+		
+		# Mettre à jour le statut des paiements de la location courte durée
+		if doc.location_courte_duree_id:
+			update_location_courte_duree_payment_status(doc)
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur dans on_submit Paiement Proprietaire {doc.name}: {str(e)}")
+		raise
+
+
+def on_cancel(doc, method):
+	"""Actions lors de l'annulation du paiement propriétaire"""
+	try:
+		# Mettre le statut à "Annulé"
+		doc.db_set("status", "Annulé")
+		
+		# Remet à jour le statut de la mensualité
+		if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
+			revert_mensualite_status(doc)
+		
+		# Mettre à jour le statut des paiements de la location courte durée
+		if doc.location_courte_duree_id:
+			update_location_courte_duree_payment_status(doc)
+		
+	except Exception as e:
+		frappe.log_error(f"Erreur dans on_cancel Paiement Proprietaire {doc.name}: {str(e)}")
+		raise
+
+
 def on_update(doc, method):
 	"""Actions après mise à jour du paiement propriétaire"""
 	try:
 		# Vérifier que le document existe en base et a un nom
 		if not doc.name:
+			return
+		
+		# Ne traiter les mises à jour que si le document est soumis
+		if doc.docstatus != 1:
 			return
 		
 		# Met à jour le statut de la mensualité si confirmé
@@ -28,23 +90,7 @@ def on_update(doc, method):
 		# Ne pas faire échouer la sauvegarde pour des erreurs de statistiques
 
 
-def on_cancel(doc, method):
-	"""Actions lors de l'annulation du paiement"""
-	try:
-		# Remet à jour le statut de la mensualité
-		if doc.type_paiement == "Loyer mensuel" and doc.mensualite_id:
-			revert_mensualite_status(doc)
-		
-		# NOTE: Les statistiques du propriétaire ne sont plus mises à jour
-		# car le dashboard HTML affiche ces informations en temps réel
-		
-		# Mettre à jour le statut des paiements de la location courte durée
-		if doc.location_courte_duree_id:
-			update_location_courte_duree_payment_status(doc)
-		
-	except Exception as e:
-		frappe.log_error(f"Erreur dans on_cancel Paiement Proprietaire {doc.name}: {str(e)}")
-		# Ne pas faire échouer l'annulation pour des erreurs de statistiques
+
 
 
 def update_mensualite_status(doc):
@@ -170,10 +216,9 @@ def after_insert(doc, method):
 		if not doc.name:
 			return
 			
-		# Mettre à jour le statut des paiements de la location courte durée
-		# pour recalculer les montants et mettre à jour le statut
-		if doc.location_courte_duree_id:
-			update_location_courte_duree_payment_status(doc)
+		# Initialiser le statut à "Nouveau" pour les nouveaux paiements
+		if not doc.status:
+			doc.db_set("status", "Nouveau")
 			
 	except Exception as e:
 		frappe.log_error(f"Erreur dans after_insert Paiement Proprietaire {doc.name}: {str(e)}")
@@ -182,6 +227,10 @@ def after_insert(doc, method):
 def on_trash(doc, method):
 	"""Appelé lors de la suppression d'un paiement propriétaire"""
 	try:
+		# Empêcher la suppression des paiements soumis
+		if doc.docstatus == 1:
+			frappe.throw("Impossible de supprimer un paiement soumis. Veuillez d'abord l'annuler.")
+		
 		if not doc.name:
 			return
 			

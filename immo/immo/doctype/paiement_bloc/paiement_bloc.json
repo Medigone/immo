@@ -2,13 +2,14 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2024-01-01 00:00:00.000000",
+ "creation": "2024-01-01 00:00:00",
  "default_view": "List",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
+  "status",
   "section_break_2",
   "location_bloc_id",
   "proprietaire_id",
@@ -31,7 +32,8 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "label": "Série de nommage",
+   "in_list_view": 1,
+   "label": "S\u00e9rie de nommage",
    "options": "PB-.YYYY.-.#####",
    "reqd": 1
   },
@@ -43,6 +45,7 @@
   {
    "fieldname": "location_bloc_id",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Location Bloc",
    "options": "Location Bloc",
    "reqd": 1
@@ -50,7 +53,8 @@
   {
    "fieldname": "proprietaire_id",
    "fieldtype": "Link",
-   "label": "Propriétaire",
+   "in_list_view": 1,
+   "label": "Propri\u00e9taire",
    "options": "Proprietaire",
    "reqd": 1
   },
@@ -66,17 +70,18 @@
    "read_only": 1
   },
   {
+   "default": "Unique",
    "fieldname": "type_paiement",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Type de paiement",
    "options": "Avance\nAcompte\nSolde\nUnique",
-   "default": "Unique",
    "reqd": 1
   },
   {
    "fieldname": "section_break_8",
    "fieldtype": "Section Break",
-   "label": "Détails du paiement"
+   "label": "D\u00e9tails du paiement"
   },
   {
    "fieldname": "montant_paiement",
@@ -95,22 +100,21 @@
    "fieldname": "column_break_11",
    "fieldtype": "Column Break"
   },
-
   {
    "fieldname": "methode_paiement",
    "fieldtype": "Select",
-   "label": "Méthode de paiement",
-   "options": "Virement\nChèque\nEspèces\nCarte bancaire\nPayPal\nAutre"
+   "label": "M\u00e9thode de paiement",
+   "options": "Virement\nCh\u00e8que\nEsp\u00e8ces\nCarte bancaire\nPayPal\nAutre"
   },
   {
    "fieldname": "section_break_14",
    "fieldtype": "Section Break",
-   "label": "Informations complémentaires"
+   "label": "Informations compl\u00e9mentaires"
   },
   {
    "fieldname": "reference_paiement",
    "fieldtype": "Data",
-   "label": "Référence de paiement"
+   "label": "R\u00e9f\u00e9rence de paiement"
   },
   {
    "fieldname": "notes",
@@ -124,7 +128,7 @@
   {
    "fieldname": "date_creation",
    "fieldtype": "Datetime",
-   "label": "Date de création",
+   "label": "Date de cr\u00e9ation",
    "read_only": 1
   },
   {
@@ -132,11 +136,17 @@
    "fieldtype": "Datetime",
    "label": "Date de modification",
    "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Statut",
+   "options": "Nouveau\nPay\u00e9\nAnnul\u00e9"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-01 00:00:00.000000",
+ "modified": "2025-08-21 12:46:59.124381",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Paiement Bloc",
@@ -156,8 +166,22 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Nouveau"
+  },
+  {
+   "color": "Green",
+   "title": "Pay\u00e9"
+  },
+  {
+   "color": "Red",
+   "title": "Annul\u00e9"
+  }
+ ],
  "track_changes": 1
 }

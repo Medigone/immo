@@ -247,35 +247,7 @@ class TestCharge(unittest.TestCase):
 		self.assertEqual(charge.reference_paiement, "REF123")
 		self.assertIn("payée", result["message"])
 	
-	def test_mark_as_reimbursed(self):
-		"""Test de marquage d'une charge comme remboursée"""
-		charge = frappe.get_doc({
-			"doctype": "Charge",
-			"appartement_id": self.appartement.name,
-			"type_charge": "Travaux",
-			"categorie": "Urgente",
-			"description": "Réparation urgente",
-			"montant": 800,
-			"date_charge": nowdate(),
-			"statut": "En attente"
-		})
-		charge.insert()
-		
-		# Valide et marque comme payée
-		charge.validate_charge()
-		charge.mark_as_paid()
-		
-		# Marque comme remboursée
-		result = charge.mark_as_reimbursed(
-			reimbursement_date=nowdate(),
-			reimbursement_method="Chèque",
-			reimbursement_reference="CHQ456"
-		)
-		
-		self.assertEqual(charge.statut, "Remboursée")
-		self.assertEqual(charge.methode_paiement, "Chèque")
-		self.assertEqual(charge.reference_paiement, "CHQ456")
-		self.assertIn("remboursée", result["message"])
+
 	
 	def test_reject_charge(self):
 		"""Test de rejet d'une charge"""
@@ -457,22 +429,7 @@ class TestCharge(unittest.TestCase):
 		with self.assertRaises(frappe.ValidationError):
 			charge.mark_as_paid()
 	
-	def test_validation_mark_reimbursed_without_payment(self):
-		"""Test d'erreur lors du marquage comme remboursée sans paiement"""
-		charge = frappe.get_doc({
-			"doctype": "Charge",
-			"appartement_id": self.appartement.name,
-			"type_charge": "Travaux",
-			"categorie": "Ponctuelle",
-			"description": "Test",
-			"montant": 100,
-			"date_charge": nowdate(),
-			"statut": "Validée"
-		})
-		charge.insert()
-		
-		with self.assertRaises(frappe.ValidationError):
-			charge.mark_as_reimbursed()
+
 	
 	def test_validation_reject_paid_charge(self):
 		"""Test d'erreur lors du rejet d'une charge payée"""

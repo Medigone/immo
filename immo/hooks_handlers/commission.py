@@ -29,6 +29,18 @@ def on_update(doc, method):
 	notify_commission_status_change(doc)
 
 
+def on_submit(doc, method):
+	"""Actions lors de la soumission"""
+	# Met à jour les statistiques du référent
+	update_referent_statistics(doc)
+	
+	# Met à jour la marge nette de la location
+	update_location_net_margin(doc)
+	
+	# Notifie le changement de statut
+	notify_commission_status_change(doc)
+
+
 def on_cancel(doc, method):
 	"""Actions lors de l'annulation"""
 	# Remet à jour les statistiques du référent
@@ -100,7 +112,7 @@ def validate_data_consistency(doc):
 		frappe.throw("Une commission existe déjà pour cette location et ce référent")
 	
 	# Validation des dates de paiement
-	if doc.statut_paiement == "Payé":
+	if doc.status == "Payé":
 		if not doc.date_paiement:
 			frappe.throw("La date de paiement est obligatoire pour une commission payée")
 		
@@ -121,8 +133,8 @@ def update_referent_statistics(doc):
 		SELECT 
 			COUNT(*) as total_commissions,
 			SUM(montant_commission) as total_montant,
-			SUM(CASE WHEN statut_paiement = 'Payé' THEN montant_commission ELSE 0 END) as montant_paye,
-			SUM(CASE WHEN statut_paiement = 'En attente' THEN montant_commission ELSE 0 END) as montant_en_attente,
+			SUM(CASE WHEN status = 'Payé' THEN montant_commission ELSE 0 END) as montant_paye,
+		SUM(CASE WHEN status = 'En attente' THEN montant_commission ELSE 0 END) as montant_en_attente,
 			AVG(pourcentage_commission) as pourcentage_moyen,
 			COUNT(DISTINCT location_courte_duree_id) as nombre_locations
 		FROM `tabCommission`
@@ -143,10 +155,10 @@ def update_location_net_margin(doc):
 
 def notify_commission_status_change(doc):
 	"""Notifie les changements de statut de commission"""
-	if doc.has_value_changed("statut_paiement"):
-		if doc.statut_paiement == "Payé":
+	if doc.has_value_changed("status"):
+		if doc.status == "Payé":
 			notify_commission_paid(doc)
-		elif doc.statut_paiement == "Rejeté":
+		elif doc.status == "Rejeté":
 			notify_commission_rejected(doc)
 
 
@@ -257,7 +269,7 @@ def auto_calculate_commission_on_location_completion(location_name):
 					"referent_id": referent.name,
 					"location_courte_duree_id": location_name,
 					"pourcentage_commission": referent.pourcentage_commission_defaut,
-					"statut_paiement": "En attente",
+					"status": "Nouveau",
 					"commentaires": "Commission générée automatiquement"
 				})
 				commission.insert(ignore_permissions=True)
@@ -283,8 +295,8 @@ def calculate_referent_performance_metrics(referent_id, period_start=None, perio
 			SUM(l.marge_totale) as marge_totale_generee,
 			AVG(l.marge_totale) as marge_moyenne_par_location,
 			SUM(l.montant_total_locataire) as chiffre_affaires_genere,
-			COUNT(CASE WHEN c.statut_paiement = 'Payé' THEN 1 END) as commissions_payees,
-			COUNT(CASE WHEN c.statut_paiement = 'En attente' THEN 1 END) as commissions_en_attente
+			COUNT(CASE WHEN c.docstatus = 1 THEN 1 END) as commissions_payees,
+		COUNT(CASE WHEN c.docstatus = 0 THEN 1 END) as commissions_en_attente
 		FROM `tabCommission` c
 		JOIN `tabLocation Courte Duree` l ON c.location_courte_duree_id = l.name
 		WHERE c.referent_id = %s
@@ -321,7 +333,7 @@ def generate_commission_report(referent_id=None, period_start=None, period_end=N
 			l.marge_totale,
 			c.pourcentage_commission,
 			c.montant_commission,
-			c.statut_paiement,
+			c.status,
 			c.date_paiement,
 			c.methode_paiement,
 			c.creation as date_creation_commission

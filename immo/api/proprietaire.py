@@ -34,7 +34,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 		
 		# Calculer les statistiques financières
 		
-		# Calculer les revenus locataires
+		# Calculer les revenus locataires (seulement les paiements soumis/validés)
 		revenus_mensualites = frappe.db.sql("""
 			SELECT COALESCE(SUM(pl.montant), 0) as total
 			FROM `tabPaiement Locataire` pl
@@ -42,7 +42,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			INNER JOIN `tabLocation Longue Duree` lld ON m.location_longue_duree_id = lld.name
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
-				AND pl.status = 'Payé'
+				AND pl.docstatus = 1
 				AND pl.date_paiement BETWEEN %s AND %s
 		""", (proprietaire_id, date_debut, date_fin), as_dict=True)[0]['total']
 		
@@ -53,7 +53,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			INNER JOIN `tabAppartement` a ON lld.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
 				AND pl.mensualite_id IS NULL
-				AND pl.status = 'Payé'
+				AND pl.docstatus = 1
 				AND pl.date_paiement BETWEEN %s AND %s
 		""", (proprietaire_id, date_debut, date_fin), as_dict=True)[0]['total']
 		
@@ -63,7 +63,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			INNER JOIN `tabLocation Courte Duree` lcd ON pl.location_courte_duree_id = lcd.name
 			INNER JOIN `tabAppartement` a ON lcd.appartement_id = a.name
 			WHERE a.proprietaire_id = %s
-				AND pl.status = 'Payé'
+				AND pl.docstatus = 1
 				AND pl.date_paiement BETWEEN %s AND %s
 		""", (proprietaire_id, date_debut, date_fin), as_dict=True)[0]['total']
 		
@@ -73,7 +73,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			FROM `tabPaiement Proprietaire` pp
 			WHERE pp.proprietaire = %s
 				AND pp.mensualite_id IS NOT NULL
-				AND pp.status = 'Payé'
+				AND pp.docstatus = 1
 				AND pp.date_paiement BETWEEN %s AND %s
 		""", (proprietaire_id, date_debut, date_fin), as_dict=True)[0]['total']
 		
@@ -83,7 +83,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			WHERE pp.proprietaire = %s
 				AND pp.location_longue_duree_id IS NOT NULL
 				AND pp.mensualite_id IS NULL
-				AND pp.status = 'Payé'
+				AND pp.docstatus = 1
 				AND pp.date_paiement BETWEEN %s AND %s
 		""", (proprietaire_id, date_debut, date_fin), as_dict=True)[0]['total']
 		
@@ -92,7 +92,7 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 			FROM `tabPaiement Proprietaire` pp
 			WHERE pp.proprietaire = %s
 				AND pp.location_courte_duree_id IS NOT NULL
-				AND pp.status = 'Payé'
+				AND pp.docstatus = 1
 				AND pp.date_paiement BETWEEN %s AND %s
 		""", (proprietaire_id, date_debut, date_fin), as_dict=True)[0]['total']
 		
@@ -107,9 +107,9 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 		# Compter les paiements
 		paiements_stats = frappe.db.sql("""
 			SELECT 
-				SUM(CASE WHEN status = 'Payé' AND date_paiement BETWEEN %s AND %s THEN 1 ELSE 0 END) as payes,
-				SUM(CASE WHEN status = 'Nouveau' THEN 1 ELSE 0 END) as en_attente,
-				COALESCE(SUM(CASE WHEN status = 'Nouveau' THEN montant ELSE 0 END), 0) as montant_en_attente
+				SUM(CASE WHEN docstatus = 1 AND date_paiement BETWEEN %s AND %s THEN 1 ELSE 0 END) as payes,
+				SUM(CASE WHEN docstatus = 0 THEN 1 ELSE 0 END) as en_attente,
+				COALESCE(SUM(CASE WHEN docstatus = 0 THEN montant ELSE 0 END), 0) as montant_en_attente
 			FROM `tabPaiement Proprietaire` pp
 			WHERE pp.proprietaire = %s
 		""", (date_debut, date_fin, proprietaire_id), as_dict=True)[0]
@@ -167,14 +167,15 @@ def get_proprietaire_dashboard_data(proprietaire_id):
 		appartements_loues = flt(stats_occupation.get('appartements_loues_ld', 0)) + flt(stats_occupation.get('appartements_loues_cd', 0))
 		taux_occupation = (appartements_loues / total_appartements * 100) if total_appartements > 0 else 0
 		
-		# Calculer le taux de paiement des locataires (simplifié avec le champ proprietaire_id direct)
+		# Calculer le taux de paiement des locataires (basé sur les paiements soumis)
 		total_paiements_locataires = frappe.db.count('Paiement Locataire', {
 			'proprietaire_id': proprietaire_id,
-			'creation': ['between', [date_debut, date_fin]]
+			'creation': ['between', [date_debut, date_fin]],
+			'docstatus': ['in', [0, 1]]  # Brouillon ou soumis
 		})
 		paiements_confirmes = frappe.db.count('Paiement Locataire', {
 			'proprietaire_id': proprietaire_id,
-			'status': 'Payé',
+			'docstatus': 1,  # Seulement les paiements soumis (validés)
 			'creation': ['between', [date_debut, date_fin]]
 		})
 		taux_paiement_locataires = (paiements_confirmes / total_paiements_locataires * 100) if total_paiements_locataires > 0 else 0

@@ -114,7 +114,7 @@ def send_bulk_payment_reminders(payment_type, filters=None, reminder_type="stand
 		if payment_type == "tenant":
 			doctype = "Paiement Locataire"
 			default_filters = {
-				"statut": ["in", ["En attente", "Rejeté"]],
+				"docstatus": 0,  # Seulement les paiements en brouillon (non soumis)
 				"date_echeance": ["<", nowdate()]
 			}
 		else:

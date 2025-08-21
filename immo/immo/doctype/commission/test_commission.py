@@ -75,7 +75,7 @@ class TestCommission(unittest.TestCase):
 			"referent_id": self.referent.name,
 			"location_courte_duree_id": self.location.name,
 			"pourcentage_commission": 15.0,
-			"statut_paiement": "En attente"
+			"status": "Nouveau"
 		})
 		commission.insert()
 		
@@ -90,7 +90,7 @@ class TestCommission(unittest.TestCase):
 			"doctype": "Commission",
 			"referent_id": self.referent.name,
 			"location_courte_duree_id": self.location.name,
-			"statut_paiement": "En attente"
+			"status": "Nouveau"
 		})
 		commission.insert()
 		
@@ -163,7 +163,7 @@ class TestCommission(unittest.TestCase):
 			"referent_id": self.referent.name,
 			"location_courte_duree_id": self.location.name,
 			"pourcentage_commission": 15.0,
-			"statut_paiement": "Payé"  # Sans date ni méthode
+			"status": "Payé"  # Sans date ni méthode
 		})
 		
 		with self.assertRaises(frappe.ValidationError):
@@ -176,7 +176,7 @@ class TestCommission(unittest.TestCase):
 			"referent_id": self.referent.name,
 			"location_courte_duree_id": self.location.name,
 			"pourcentage_commission": 15.0,
-			"statut_paiement": "En attente"
+			"status": "Nouveau"
 		})
 		commission.insert()
 		
@@ -187,7 +187,7 @@ class TestCommission(unittest.TestCase):
 			reference_paiement="REF123"
 		)
 		
-		self.assertEqual(commission.statut_paiement, "Payé")
+		self.assertEqual(commission.status, "Payé")
 		self.assertEqual(commission.date_paiement, today)
 		self.assertEqual(commission.methode_paiement, "Virement")
 		self.assertEqual(commission.reference_paiement, "REF123")
@@ -199,7 +199,7 @@ class TestCommission(unittest.TestCase):
 			"referent_id": self.referent.name,
 			"location_courte_duree_id": self.location.name,
 			"pourcentage_commission": 15.0,
-			"statut_paiement": "En attente"
+			"status": "Nouveau"
 		})
 		commission.insert()
 		
@@ -218,7 +218,7 @@ class TestCommission(unittest.TestCase):
 			"referent_id": self.referent.name,
 			"location_courte_duree_id": self.location.name,
 			"pourcentage_commission": 15.0,
-			"statut_paiement": "En attente"
+			"status": "Nouveau"
 		})
 		commission.insert()
 		

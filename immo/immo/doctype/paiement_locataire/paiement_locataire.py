@@ -49,8 +49,8 @@ class PaiementLocataire(Document):
 		"""Valide la date de paiement"""
 		if self.date_paiement:
 			# La date de paiement ne peut pas être dans le futur
-			today = frappe.utils.nowdate()
-			if self.date_paiement > today:
+			today = frappe.utils.getdate(frappe.utils.nowdate())
+			if frappe.utils.getdate(self.date_paiement) > today:
 				frappe.throw(_("La date de paiement ne peut pas être dans le futur"))
 	
 	def validate_status_change(self):

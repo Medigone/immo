@@ -39,7 +39,7 @@ class Commission(Document):
 	
 	def validate_payment_details(self):
 		"""Valide les détails de paiement"""
-		if self.statut_paiement == "Payé":
+		if self.status == "Payé":
 			if not self.date_paiement:
 				frappe.throw(_("La date de paiement est obligatoire pour un statut 'Payé'"))
 			if not self.methode_paiement:
@@ -83,7 +83,7 @@ class Commission(Document):
 	@frappe.whitelist()
 	def mark_as_paid(self, date_paiement, methode_paiement, reference_paiement=None):
 		"""Marque la commission comme payée"""
-		self.statut_paiement = "Payé"
+		self.status = "Payé"
 		self.date_paiement = date_paiement
 		self.methode_paiement = methode_paiement
 		if reference_paiement:
@@ -108,7 +108,7 @@ class Commission(Document):
 				"montant_commission": self.montant_commission,
 				"pourcentage_commission": self.pourcentage_commission,
 				"date_creation": self.date_creation,
-				"statut_paiement": self.statut_paiement,
+				"status": self.status,
 				"date_paiement": self.date_paiement,
 				"methode_paiement": self.methode_paiement
 			},
@@ -150,7 +150,7 @@ class Commission(Document):
 	@frappe.whitelist()
 	def send_payment_notification(self):
 		"""Envoie une notification de paiement au référent"""
-		if self.statut_paiement != "Payé":
+		if self.status != "Payé":
 			frappe.throw(_("La commission doit être marquée comme payée"))
 		
 		referent = frappe.get_doc("Referent", self.referent_id)

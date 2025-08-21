@@ -518,8 +518,7 @@ def generate_charges_report(start_date=None, end_date=None, appartement_id=None,
 				SUM(ch.montant_proprietaire) as total_charges_proprietaire,
 				AVG(ch.montant_total) as charge_moyenne,
 				COUNT(CASE WHEN ch.statut = 'Validée' THEN 1 END) as charges_validees,
-				COUNT(CASE WHEN ch.statut = 'Payée' THEN 1 END) as charges_payees,
-				COUNT(CASE WHEN ch.statut = 'Remboursée' THEN 1 END) as charges_remboursees
+			COUNT(CASE WHEN ch.statut = 'Payée' THEN 1 END) as charges_payees
 			FROM `tabAppartement` a
 			INNER JOIN `tabProprietaire` p ON a.proprietaire_id = p.name
 			LEFT JOIN `tabCharge` ch ON a.name = ch.appartement_id
