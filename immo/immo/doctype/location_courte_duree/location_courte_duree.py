@@ -369,12 +369,12 @@ class LocationCourteDuree(Document):
 	def calculate_locataire_payments(self):
 		"""Calcule les montants payés et restants pour le locataire"""
 		try:
-			# Récupérer tous les paiements validés (status = 'Payé')
-			# Exclure les paiements annulés (status = 'Annulé')
+			# Récupérer tous les paiements validés (docstatus = 1)
+			# Exclure les paiements annulés (docstatus = 2)
 			paiements = frappe.get_all("Paiement Locataire",
 				filters={
 					"location_courte_duree_id": self.name,
-					"status": "Payé"
+					"docstatus": 1
 				},
 				fields=["montant"]
 			)
@@ -385,7 +385,11 @@ class LocationCourteDuree(Document):
 			
 			# Calculer le montant restant
 			montant_total = self.montant_total_locataire or 0
-			self.montant_restant_locataire = max(0, montant_total - total_paye)
+			# Si aucun paiement et montant_total_locataire existe, utiliser la valeur du champ
+			if total_paye == 0 and self.montant_total_locataire:
+				self.montant_restant_locataire = self.montant_total_locataire
+			else:
+				self.montant_restant_locataire = max(0, montant_total - total_paye)
 			
 			# Déterminer le statut
 			if total_paye == 0:

@@ -429,21 +429,21 @@ function createLocationCourteDureeDashboard(doc, paiements_locataire = [], paiem
 								Locataire
 							</div>
 							<span class="detail-status" style="
-								background: ${getStatusColor(statut_loc).background}; 
-								color: ${getStatusColor(statut_loc).text}; 
+								background: ${doc.location_bloc_id ? getStatusColor('En cours').background : getStatusColor(statut_loc).background}; 
+								color: ${doc.location_bloc_id ? getStatusColor('En cours').text : getStatusColor(statut_loc).text}; 
 								padding: 2px 6px; 
 								border-radius: 8px; 
 								font-size: 0.65rem; 
 								font-weight: 600;
 							">
-								${statut_loc}
+								${doc.location_bloc_id ? 'En cours' : statut_loc}
 							</span>
 						</div>
 						${montant_restant_loc > 0 ? `
 						<button 
 							onclick="window.create_paiement_locataire_from_card()" 
 							style="
-								background: #374151;
+								background: ${doc.location_bloc_id ? '#3b82f6' : '#374151'};
 								color: white;
 								border: none;
 								padding: 4px 8px;
@@ -454,8 +454,8 @@ function createLocationCourteDureeDashboard(doc, paiements_locataire = [], paiem
 								transition: all 0.2s;
 								box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 							"
-							onmouseover="this.style.background='#1f2937'"
-							onmouseout="this.style.background='#374151'"
+							onmouseover="this.style.background='${doc.location_bloc_id ? '#2563eb' : '#1f2937'}'"
+							onmouseout="this.style.background='${doc.location_bloc_id ? '#3b82f6' : '#374151'}'"
 							title="Créer un nouveau paiement locataire"
 						>
 							+ Paiement

@@ -3,8 +3,8 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import getdate, date_diff, flt
-from datetime import datetime
+from frappe.utils import getdate, date_diff, flt, add_days
+from datetime import datetime, timedelta
 
 
 class LocationBloc(Document):
@@ -135,15 +135,8 @@ class LocationBloc(Document):
 				if flt(self.montant_total_proprietaire) > 0:
 					self.rentabilite_pourcentage = (flt(self.marge_totale) / flt(self.montant_total_proprietaire)) * 100
 			
-			# Calculer le taux d'occupation
-			nuits_occupees = frappe.db.sql("""
-				SELECT COALESCE(SUM(nombre_nuits), 0)
-				FROM `tabLocation Courte Duree`
-				WHERE location_bloc_id = %s
-			""", (self.name,))[0][0] or 0
-			
-			if self.nombre_nuits_total and self.nombre_nuits_total > 0:
-				self.taux_occupation = (flt(nuits_occupees) / self.nombre_nuits_total) * 100
+			# Calculer le taux d'occupation basé sur le calendrier réel
+			self.taux_occupation = self.calculate_occupation_rate_from_calendar()
 			
 			# Sauvegarder sans déclencher les hooks
 			frappe.db.set_value("Location Bloc", self.name, {
@@ -155,11 +148,50 @@ class LocationBloc(Document):
 				"taux_occupation": self.taux_occupation
 			})
 			
+			# Déclencher une mise à jour en temps réel pour le dashboard
+			frappe.publish_realtime(
+				'location_bloc_updated',
+				{
+					'location_bloc_id': self.name,
+					'action': 'metrics_updated',
+					'taux_occupation': self.taux_occupation,
+					'rentabilite_pourcentage': self.rentabilite_pourcentage
+				}
+			)
+			
 		except Exception as e:
 			frappe.log_error(f"Erreur lors de la mise à jour des métriques pour Location Bloc {self.name}: {str(e)}")
-	
 
-	
+	def calculate_occupation_rate_from_calendar(self):
+		"""Calcule le taux d'occupation basé sur les nuitées (même logique que le dashboard)."""
+		try:
+			if not self.date_debut_bloc or not self.date_fin_bloc:
+				return 0
+			
+			# Calculer le nombre total de nuits du bloc
+			total_nuits = date_diff(self.date_fin_bloc, self.date_debut_bloc)
+			if total_nuits <= 0:
+				return 0
+			
+			# Récupérer toutes les sous-locations avec leur nombre de nuits
+			sous_locations = frappe.get_all(
+				"Location Courte Duree",
+				filters={"location_bloc_id": self.name},
+				fields=["name", "nombre_nuits"]
+			)
+			
+			# Calculer le total des nuits occupées
+			nuits_occupees = sum(sl.nombre_nuits or 0 for sl in sous_locations)
+			
+			# Calculer le taux d'occupation basé sur les nuitées
+			if total_nuits > 0:
+				return (nuits_occupees / total_nuits) * 100
+			else:
+				return 0
+			
+		except Exception as e:
+			frappe.log_error(f"Erreur calcul taux occupation nuitées pour Location Bloc {self.name}: {str(e)}")
+			return 0
 
 	
 

@@ -26,7 +26,8 @@
   "notes",
   "column_break_17",
   "date_creation",
-  "date_modification"
+  "date_modification",
+  "amended_from"
  ],
  "fields": [
   {
@@ -140,13 +141,25 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Statut",
    "options": "Nouveau\nPay\u00e9\nAnnul\u00e9"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Paiement Bloc",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2025-08-21 12:46:59.124381",
+ "modified": "2025-08-22 12:49:23.466097",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Paiement Bloc",

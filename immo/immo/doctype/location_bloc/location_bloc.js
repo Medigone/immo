@@ -1,6 +1,9 @@
 // Location Bloc JavaScript - v11
 frappe.ui.form.on('Location Bloc', {
 	onload: function (frm) {
+		// Stocker la référence du formulaire pour les fonctions globales
+		window.current_location_bloc_frm = frm;
+		
 		frm.trigger('update_dashboard');
 
 		// Écouter les mises à jour en temps réel des paiements et locations
@@ -10,12 +13,30 @@ frappe.ui.form.on('Location Bloc', {
 				(data.action === 'payment_updated' ||
 					data.action === 'payment_deleted' ||
 					data.action === 'location_updated' ||
-					data.action === 'location_deleted')
+					data.action === 'location_deleted' ||
+					data.action === 'metrics_updated')
 			) {
-				// Recharger le document pour obtenir les nouvelles valeurs
-				frm.reload_doc().then(() => {
+				// Pour les mises à jour de métriques et locations, mettre à jour directement les valeurs
+				if (data.action === 'metrics_updated' || data.action === 'location_updated' || data.action === 'location_deleted') {
+					// Mettre à jour les valeurs du document
+					if (data.taux_occupation !== undefined) {
+						frm.doc.taux_occupation = data.taux_occupation;
+					}
+					if (data.rentabilite_pourcentage !== undefined) {
+						frm.doc.rentabilite_pourcentage = data.rentabilite_pourcentage;
+					}
+					// Mettre à jour le dashboard et recharger le calendrier
 					frm.trigger('update_dashboard');
-				});
+					// Recharger aussi le calendrier d'occupation pour les changements de location
+					if (data.action === 'location_updated' || data.action === 'location_deleted') {
+						frm.trigger('load_occupation_calendar');
+					}
+				} else {
+					// Pour les autres actions, recharger le document complet
+					frm.reload_doc().then(() => {
+						frm.trigger('update_dashboard');
+					});
+				}
 			}
 		});
 	},
@@ -29,6 +50,9 @@ frappe.ui.form.on('Location Bloc', {
 	},
 
 	refresh: function (frm) {
+		// Stocker la référence du formulaire pour les fonctions globales
+		window.current_location_bloc_frm = frm;
+		
 		if (frm.doc.name) {
 			// Bouton pour créer une Location Courte Durée
 			frm.add_custom_button(__('Location Courte Durée'), function () {
@@ -121,52 +145,109 @@ frappe.ui.form.on('Location Bloc', {
 	},
 
 	update_dashboard: function(frm) {
-		let rentabilite = frm.doc.rentabilite_pourcentage || 0;
-		let payment_percentage = frm.doc.montant_total_proprietaire > 0 ? (frm.doc.montant_total_paye / frm.doc.montant_total_proprietaire) * 100 : 0;
-		let occupation_percentage = frm.doc.taux_occupation || 0;
-		let tenant_payment_total = frm.doc.total_encaisse || 0;
+		if (!frm || !frm.doc || !frm.doc.name) return;
 		
-		// Calculer les nuits occupées basées sur le taux d'occupation
-		let total_nights = frm.doc.nombre_nuits_total || 0;
-		let occupied_nights = Math.round((occupation_percentage / 100) * total_nights);
-
-		// Préparer le calendrier d'occupation
-		let calendar_card = '<div id="occupation-calendar-placeholder" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #6b7280;">Chargement du calendrier...</div>';
-
-		let dashboard_html = `
+		// Stocker la référence du formulaire globalement pour les boutons des cartes
+		if (!frm.doc.__islocal) {
+			window.current_location_bloc_frm = frm;
+		}
+		
+		// Afficher un placeholder pendant le chargement
+		let loading_html = `
 			<div style="
-				display: grid;
-				grid-template-rows: auto auto;
-				gap: 16px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 200px;
 				font-family: 'Inter', sans-serif;
+				color: #6b7280;
 			">
-				<!-- Ligne des 4 cartes statistiques -->
-				<div style="
-					display: grid;
-					grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-					gap: 12px;
-					align-items: stretch;
-				">
-					${createStatCard("Rentabilité", rentabilite.toFixed(1) + "%", "Marge : " + format_currency(frm.doc.marge_totale || 0, 'EUR'), rentabilite)}
-					${createStatCard("Paiements Propriétaire", payment_percentage.toFixed(1) + "%", format_currency(frm.doc.montant_total_paye || 0, 'EUR') + "/" + format_currency(frm.doc.montant_total_proprietaire || 0, 'EUR'), payment_percentage)}
-					${createStatCard("Taux d'occupation", occupation_percentage.toFixed(1) + "%", occupied_nights + "/" + total_nights + " nuits", occupation_percentage)}
-					${createStatCard("Paiements Locataires", format_currency(tenant_payment_total, 'EUR'), "Total encaissé", null)}
-				</div>
-				<!-- Ligne du calendrier en pleine largeur -->
-				<div style="
-					width: 100%;
-				">
-					${calendar_card}
-				</div>
+				<div>Chargement du dashboard...</div>
 			</div>
 		`;
-
-		if (frm.fields_dict['rentabilite_progress_html']) {
-			$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#rentabilite-progress-container").html(dashboard_html);
-			
-			// Charger le calendrier d'occupation
-			frm.trigger('load_occupation_calendar');
+		
+		if (frm.fields_dict && frm.fields_dict['rentabilite_progress_html']) {
+			$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#rentabilite-progress-container").html(loading_html);
 		}
+		
+		// Charger les données du dashboard
+		frm.trigger('load_dashboard_data');
+	},
+	
+	load_dashboard_data: function(frm) {
+		if (!frm || !frm.doc || !frm.doc.name) return;
+		
+		// Récupérer les paiements bloc en parallèle avec les données du calendrier
+		Promise.all([
+			// Récupérer les paiements bloc
+			frappe.call({
+				method: 'frappe.client.get_list',
+				args: {
+					doctype: 'Paiement Bloc',
+					filters: {
+						location_bloc_id: frm.doc.name
+					},
+					fields: ['name', 'montant_paiement', 'status', 'date_paiement'],
+					order_by: 'creation desc'
+				}
+			}),
+			// Récupérer les données du calendrier et métriques en temps réel
+			frappe.call({
+				method: 'immo.api.location_bloc.get_bloc_dashboard_data',
+				args: {
+					location_bloc_id: frm.doc.name
+				}
+			})
+		]).then(([paiements_response, calendar_response]) => {
+			const paiements_bloc = paiements_response.message || [];
+			const calendar_data = calendar_response.message || {};
+			
+			// Mettre à jour les valeurs du document avec les métriques calculées en temps réel
+			if (calendar_data.metriques) {
+				// Mettre à jour le taux d'occupation avec la valeur calculée en temps réel
+				if (calendar_data.metriques.taux_occupation_reel !== undefined) {
+					frm.doc.taux_occupation = calendar_data.metriques.taux_occupation_reel;
+				}
+				// Mettre à jour la rentabilité avec la valeur calculée en temps réel
+				if (calendar_data.metriques.rentabilite_reelle !== undefined) {
+					frm.doc.rentabilite_pourcentage = calendar_data.metriques.rentabilite_reelle;
+				}
+				// Mettre à jour les autres métriques
+				if (calendar_data.metriques.total_revenus !== undefined) {
+					frm.doc.total_encaisse = calendar_data.metriques.total_revenus;
+				}
+				if (calendar_data.metriques.total_marge !== undefined) {
+					frm.doc.marge_totale = calendar_data.metriques.total_marge;
+				}
+			}
+			
+			// Générer le dashboard avec les listes de paiements et les métriques mises à jour
+			const dashboard_html = createLocationBlocDashboard(frm.doc, paiements_bloc, calendar_data);
+			if (frm.fields_dict && frm.fields_dict['rentabilite_progress_html']) {
+				$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#rentabilite-progress-container").html(dashboard_html);
+				
+				// Charger le calendrier d'occupation après avoir généré le dashboard
+				if (calendar_data.calendrier) {
+					const calendar_html = createOccupationCalendar(calendar_data.calendrier, frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
+					$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(calendar_html);
+				} else {
+					// Si pas de données, afficher un calendrier vide
+					const empty_calendar = createOccupationCalendar([], frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
+					$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(empty_calendar);
+				}
+			}
+		}).catch(error => {
+			console.error('Erreur lors du chargement des données du dashboard:', error);
+			// En cas d'erreur, afficher le dashboard sans les listes de paiements
+			const dashboard_html = createLocationBlocDashboard(frm.doc);
+			if (frm.fields_dict && frm.fields_dict['rentabilite_progress_html']) {
+				$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#rentabilite-progress-container").html(dashboard_html);
+				
+				// Afficher un calendrier vide en cas d'erreur
+				const empty_calendar = createOccupationCalendar([], frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
+				$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(empty_calendar);
+			}
+		});
 	},
 
 	load_occupation_calendar: function(frm) {
@@ -178,13 +259,50 @@ frappe.ui.form.on('Location Bloc', {
 				location_bloc_id: frm.doc.name
 			},
 			callback: function(r) {
-				if (r.message && r.message.calendrier) {
-					const calendar_html = createOccupationCalendar(r.message.calendrier, frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
-					$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(calendar_html);
-				} else {
-					// Si pas de données, afficher un calendrier vide
-					const empty_calendar = createOccupationCalendar([], frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
-					$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(empty_calendar);
+				if (r.message) {
+					let metrics_changed = false;
+					
+					// Mettre à jour les valeurs du document avec les métriques calculées en temps réel
+					if (r.message.metriques) {
+						// Mettre à jour le taux d'occupation avec la valeur calculée en temps réel
+						if (r.message.metriques.taux_occupation_reel !== undefined && 
+							r.message.metriques.taux_occupation_reel !== frm.doc.taux_occupation) {
+							frm.doc.taux_occupation = r.message.metriques.taux_occupation_reel;
+							metrics_changed = true;
+						}
+						// Mettre à jour la rentabilité avec la valeur calculée en temps réel
+						if (r.message.metriques.rentabilite_reelle !== undefined && 
+							r.message.metriques.rentabilite_reelle !== frm.doc.rentabilite_pourcentage) {
+							frm.doc.rentabilite_pourcentage = r.message.metriques.rentabilite_reelle;
+							metrics_changed = true;
+						}
+						// Mettre à jour les autres métriques
+						if (r.message.metriques.total_revenus !== undefined && 
+							r.message.metriques.total_revenus !== frm.doc.total_encaisse) {
+							frm.doc.total_encaisse = r.message.metriques.total_revenus;
+							metrics_changed = true;
+						}
+						if (r.message.metriques.total_marge !== undefined && 
+							r.message.metriques.total_marge !== frm.doc.marge_totale) {
+							frm.doc.marge_totale = r.message.metriques.total_marge;
+							metrics_changed = true;
+						}
+					}
+					
+					// Mettre à jour le calendrier
+					if (r.message.calendrier) {
+						const calendar_html = createOccupationCalendar(r.message.calendrier, frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
+						$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(calendar_html);
+					} else {
+						// Si pas de données, afficher un calendrier vide
+						const empty_calendar = createOccupationCalendar([], frm.doc.date_debut_bloc, frm.doc.date_fin_bloc);
+						$(frm.fields_dict['rentabilite_progress_html'].wrapper).find("#occupation-calendar-placeholder").replaceWith(empty_calendar);
+					}
+					
+					// Recharger le dashboard seulement si les métriques ont changé
+					if (metrics_changed) {
+						frm.trigger('update_dashboard');
+					}
 				}
 			}
 		});
@@ -244,11 +362,349 @@ function createStatCard(title, mainValue, footerValue, percentage) {
 	`;
 }
 
+// Fonction pour créer le dashboard complet de Location Bloc
+function createLocationBlocDashboard(doc, paiements_bloc = [], calendar_data = {}) {
+	if (!doc) return '';
+	
+	// Calculer les statistiques de base
+	let rentabilite = doc.rentabilite_pourcentage || 0;
+	let payment_percentage = doc.montant_total_proprietaire > 0 ? (doc.montant_total_paye / doc.montant_total_proprietaire) * 100 : 0;
+	let occupation_percentage = doc.taux_occupation || 0;
+	let tenant_payment_total = doc.total_encaisse || 0;
+	
+	// Calculer les nuits occupées
+	let total_nights = doc.nombre_nuits_total || 0;
+	let occupied_nights = Math.round((occupation_percentage / 100) * total_nights);
+	
+	// Calculer les statistiques des paiements bloc
+	let total_paiements = paiements_bloc.length;
+	let paiements_payes = paiements_bloc.filter(p => p.status === 'Payé').length;
+	let montant_paye_bloc = paiements_bloc.filter(p => p.status === 'Payé').reduce((sum, p) => sum + (p.montant_paiement || 0), 0);
+	let montant_restant_bloc = (doc.montant_total_proprietaire || 0) - montant_paye_bloc;
+	
+	// Créer la section des paiements avec bouton
+	let paiements_section = createPaiementsBlocSection(doc, paiements_bloc, montant_paye_bloc, montant_restant_bloc);
+	
+	// Préparer le calendrier d'occupation
+	let calendar_card = '<div id="occupation-calendar-placeholder" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #6b7280;">Chargement du calendrier...</div>';
+	
+	return `
+		<div style="
+			display: grid;
+			grid-template-rows: auto auto auto;
+			gap: 16px;
+			font-family: 'Inter', sans-serif;
+		">
+			<!-- Ligne des 3 cartes statistiques -->
+			<div style="
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 12px;
+				align-items: stretch;
+			">
+				${createStatCard("Rentabilité", rentabilite.toFixed(1) + "%", "Marge : " + format_currency(doc.marge_totale || 0, 'EUR'), rentabilite)}
+				${createStatCard("Taux d'occupation", occupation_percentage.toFixed(1) + "%", occupied_nights + "/" + total_nights + " nuits", occupation_percentage)}
+				${createStatCard("Paiements Locataires", format_currency(tenant_payment_total, 'EUR'), "Total encaissé", null)}
+			</div>
+			<!-- Section des paiements bloc avec boutons -->
+			${paiements_section}
+			<!-- Ligne du calendrier en pleine largeur -->
+			<div style="width: 100%;">
+				${calendar_card}
+			</div>
+		</div>
+	`;
+}
+
+// Fonction pour créer la section des paiements bloc
+function createPaiementsBlocSection(doc, paiements_bloc, montant_paye, montant_restant) {
+	if (!doc) return '';
+	
+	let status_text = montant_restant <= 0 ? 'Entièrement payé' : montant_restant < (doc.montant_total_proprietaire || 0) ? 'Partiellement payé' : 'Nouveau';
+	
+	// Fonction pour obtenir les couleurs du statut (similaire à Location Courte Duree)
+	function getStatusColor(status) {
+		switch(status) {
+			case 'Entièrement payé':
+				return { background: '#dcfce7', text: '#16a34a' };
+			case 'Partiellement payé':
+				return { background: '#fef3c7', text: '#d97706' };
+			case 'Nouveau':
+			default:
+				return { background: '#dbeafe', text: '#2563eb' };
+		}
+	}
+	
+	return `
+		<div style="
+			background: #fff;
+			border: 1px solid #e5e7eb;
+			border-radius: 10px;
+			padding: 16px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+			position: relative;
+		">
+			<div style="
+				font-size: 0.9rem; 
+				color: #374151; 
+				margin-bottom: 12px; 
+				font-weight: 600;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			">
+				<div style="display: flex; align-items: center; gap: 8px;">
+					<div style="display: flex; align-items: center;">
+						<span style="
+							width: 8px; 
+							height: 8px; 
+							background: #16a34a; 
+							border-radius: 50%; 
+							margin-right: 8px;
+						"></span>
+						Propriétaire
+					</div>
+					<span style="
+						background: ${getStatusColor(status_text).background}; 
+						color: ${getStatusColor(status_text).text}; 
+						padding: 2px 6px; 
+						border-radius: 8px; 
+						font-size: 0.65rem; 
+						font-weight: 600;
+					">
+						${status_text}
+					</span>
+				</div>
+				${montant_restant > 0 ? `
+				<button 
+					onclick="create_paiement_bloc()" 
+					style="
+						background: #374151;
+						color: white;
+						border: none;
+						padding: 4px 8px;
+						border-radius: 6px;
+						font-size: 0.75rem;
+						font-weight: 500;
+						cursor: pointer;
+						transition: all 0.2s;
+						box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+					"
+					onmouseover="this.style.background='#1f2937'"
+					onmouseout="this.style.background='#374151'"
+					title="Créer un nouveau paiement propriétaire"
+				>
+					+ Paiement
+				</button>
+				` : ''}
+			</div>
+			
+			<div style="font-size: 0.8rem; color: #6b7280; line-height: 1.6;">
+				<div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+					<span style="font-weight: 500;">Montant restant:</span> 
+					<span style="
+						color: ${montant_restant > 0 ? '#dc2626' : '#16a34a'}; 
+						font-weight: 700;
+						font-size: 0.85rem;
+					">
+						${montant_restant.toFixed(2)} €
+					</span>
+				</div>
+				
+				<!-- Liste des paiements propriétaire -->
+				<div style="
+					border-top: 1px solid #e5e7eb; 
+					padding-top: 8px; 
+					margin-top: 8px;
+				">
+					<div style="
+						font-weight: 600; 
+						margin-bottom: 6px; 
+						color: #374151; 
+						font-size: 0.75rem;
+					">
+						Paiements:
+					</div>
+					${createPaiementsBlocList(paiements_bloc)}
+				</div>
+			</div>
+		</div>
+	`;
+}
+
+// Fonction pour créer la liste des paiements bloc (style Location Courte Duree)
+function createPaiementsBlocList(paiements_bloc) {
+	if (!paiements_bloc || paiements_bloc.length === 0) {
+		return `
+			<div style="
+				padding: 12px;
+				text-align: center;
+				color: #9ca3af;
+				font-size: 0.8rem;
+				font-style: italic;
+			">
+				Aucun paiement
+			</div>
+		`;
+	}
+	
+	let paiements_html = paiements_bloc.map(paiement => {
+		// Fonction pour obtenir les couleurs du statut
+		function getPaymentStatusColor(status) {
+			switch(status) {
+				case 'Payé':
+					return '#16a34a';
+				case 'Annulé':
+					return '#dc2626';
+				case 'Nouveau':
+				default:
+					return '#2563eb';
+			}
+		}
+		
+		let status_color = getPaymentStatusColor(paiement.status);
+		let date_formatted = paiement.date_paiement ? frappe.datetime.str_to_user(paiement.date_paiement) : 'Non définie';
+		
+		return `
+			<div style="
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 8px;
+				border-bottom: 1px solid #f3f4f6;
+				cursor: pointer;
+				transition: background-color 0.15s;
+				font-size: 0.8rem;
+			" onclick="frappe.set_route('Form', 'Paiement Bloc', '${paiement.name}')" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
+				<div style="flex: 1;">
+					<div style="font-weight: 500; color: #374151; margin-bottom: 1px; font-size: 0.75rem;">${paiement.name}</div>
+					<div style="font-size: 0.7rem; color: #9ca3af;">${date_formatted}</div>
+				</div>
+				<div style="text-align: right; flex-shrink: 0;">
+					<div style="font-weight: 600; color: #374151; margin-bottom: 1px; font-size: 0.75rem;">${format_currency(paiement.montant_paiement || 0, 'EUR')}</div>
+					<div style="font-size: 0.7rem; font-weight: 500; color: ${status_color};">${paiement.status || 'Nouveau'}</div>
+				</div>
+			</div>
+		`;
+	}).join('');
+	
+	return `
+		<div style="max-height: 200px; overflow-y: auto;">
+			${paiements_html}
+		</div>
+	`;
+}
+
 function format_currency(value, currency) {
 	// Formatage manuel pour éviter le HTML généré par frappe.format
 	if (!value) value = 0;
 	const formatted = parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 	return `€ ${formatted}`;
+}
+
+// Fonction pour créer un nouveau paiement bloc
+window.create_paiement_bloc = function() {
+	if (!window.current_location_bloc_frm || !window.current_location_bloc_frm.doc) {
+		frappe.msgprint('Erreur: Impossible d\'accéder aux données de la Location Bloc');
+		return;
+	}
+	
+	let frm = window.current_location_bloc_frm;
+	let doc = frm.doc;
+	
+	// Calculer le montant suggéré (montant restant ou montant total si aucun paiement)
+	let montant_suggere = doc.solde_restant || doc.montant_total_proprietaire || 0;
+	
+	// Créer le dialog pour saisir les informations du paiement
+	let dialog = new frappe.ui.Dialog({
+		title: 'Créer un Paiement Bloc',
+		fields: [
+			{
+				fieldname: 'montant_paiement',
+				label: 'Montant du Paiement',
+				fieldtype: 'Currency',
+				default: montant_suggere,
+				reqd: 1,
+				description: `Montant restant à payer: ${format_currency(doc.solde_restant || 0, 'EUR')}`
+			},
+			{
+				fieldname: 'date_paiement',
+				label: 'Date de Paiement',
+				fieldtype: 'Date',
+				default: frappe.datetime.get_today(),
+				reqd: 1
+			},
+			{
+				fieldname: 'mode_paiement',
+				label: 'Mode de Paiement',
+				fieldtype: 'Select',
+				options: 'Virement\nChèque\nEspèces\nCarte bancaire\nAutre',
+				default: 'Virement'
+			},
+			{
+				fieldname: 'description',
+				label: 'Description',
+				fieldtype: 'Small Text',
+				description: 'Description optionnelle du paiement'
+			}
+		],
+		size: 'small',
+		primary_action_label: 'Créer le Paiement',
+		primary_action(values) {
+			// Validation du montant
+			if (values.montant_paiement <= 0) {
+				frappe.msgprint('Le montant doit être supérieur à 0');
+				return;
+			}
+			
+			// Créer le document Paiement Bloc
+			frappe.call({
+				method: 'frappe.client.insert',
+				args: {
+					doc: {
+						doctype: 'Paiement Bloc',
+						location_bloc_id: doc.name,
+						proprietaire_id: doc.proprietaire_id,
+						appartement_id: doc.appartement_id,
+						montant_paiement: values.montant_paiement,
+						date_paiement: values.date_paiement,
+						methode_paiement: values.mode_paiement,
+						notes: values.description || '',
+						status: 'Nouveau',
+						type_paiement: 'Unique'
+					}
+				},
+				callback: function(response) {
+					if (response.message) {
+						dialog.hide();
+						frappe.msgprint({
+							title: 'Succès',
+							message: `Paiement Bloc ${response.message.name} créé avec succès`,
+							indicator: 'green'
+						});
+						
+						// Recharger le dashboard pour afficher le nouveau paiement
+						frm.trigger('load_dashboard_data');
+						
+						// Optionnel: ouvrir le nouveau paiement
+						setTimeout(() => {
+							frappe.set_route('Form', 'Paiement Bloc', response.message.name);
+						}, 1000);
+					}
+				},
+				error: function(error) {
+					console.error('Erreur lors de la création du paiement:', error);
+					frappe.msgprint({
+						title: 'Erreur',
+						message: 'Erreur lors de la création du paiement. Veuillez réessayer.',
+						indicator: 'red'
+					});
+				}
+			});
+		}
+	});
+	
+	dialog.show();
 }
 
 function createOccupationCalendar(calendrier, date_debut, date_fin) {

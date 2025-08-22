@@ -16,16 +16,16 @@ def get_bloc_dashboard_data(location_bloc_id):
 		
 		# Récupérer toutes les sous-locations
 		sous_locations = frappe.get_all("Location Courte Duree",
-			filters={"location_bloc_id": location_bloc_id, "docstatus": ["!=", 2]},
+			filters={"location_bloc_id": location_bloc_id},
 			fields=["name", "locataire_nom", "date_debut", "date_fin", "nombre_nuits", 
 					"montant_total_locataire", "marge_sur_bloc"],
 			order_by="date_debut")
 		
-		# Récupérer les paiements
+		# Récupérer les paiements (utiliser status pour Paiement Bloc validable)
 		paiements = frappe.get_all("Paiement Bloc",
-			filters={"location_bloc_id": location_bloc_id, "docstatus": ["!=", 2]},
-			fields=["name", "montant_paiement", "date_paiement", "type_paiement"],
-			order_by="date_paiement")
+			filters={"location_bloc_id": location_bloc_id, "status": ["!=", "Annulé"]},
+			fields=["name", "montant_paiement", "date_paiement", "type_paiement", "status"],
+			order_by="creation desc")
 		
 		# Calculer les métriques
 		total_nuits_occupees = sum([sl.nombre_nuits for sl in sous_locations])
