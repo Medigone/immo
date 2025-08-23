@@ -12,6 +12,10 @@ from datetime import datetime, timedelta
 def get_bloc_dashboard_data(location_bloc_id):
 	"""Retourne les données du dashboard pour une location bloc"""
 	try:
+		# Vérifier si le document existe avant de le récupérer
+		if not location_bloc_id or not frappe.db.exists("Location Bloc", location_bloc_id):
+			return {"error": "Location Bloc introuvable"}
+		
 		location_bloc = frappe.get_doc("Location Bloc", location_bloc_id)
 		
 		# Récupérer toutes les sous-locations

@@ -4,7 +4,10 @@ frappe.ui.form.on('Location Bloc', {
 		// Stocker la référence du formulaire pour les fonctions globales
 		window.current_location_bloc_frm = frm;
 		
-		frm.trigger('update_dashboard');
+		// Ne charger le dashboard que si le document existe déjà (pas nouveau)
+		if (!frm.doc.__islocal && frm.doc.name) {
+			frm.trigger('update_dashboard');
+		}
 
 		// Écouter les mises à jour en temps réel des paiements et locations
 		frappe.realtime.on('location_bloc_updated', function (data) {
@@ -42,16 +45,27 @@ frappe.ui.form.on('Location Bloc', {
 	},
 
 	validate: function (frm) {
-		frm.trigger('update_dashboard');
+		// Charger le dashboard seulement si le document a un nom valide
+		if (frm.doc.name) {
+			frm.trigger('update_dashboard');
+		}
 	},
 
 	after_save: function (frm) {
-		frm.trigger('update_dashboard');
+		// Charger le dashboard seulement si le document a un nom valide
+		if (frm.doc.name) {
+			frm.trigger('update_dashboard');
+		}
 	},
 
 	refresh: function (frm) {
 		// Stocker la référence du formulaire pour les fonctions globales
 		window.current_location_bloc_frm = frm;
+		
+		// Charger le dashboard seulement si le document existe
+		if (!frm.doc.__islocal && frm.doc.name) {
+			frm.trigger('update_dashboard');
+		}
 		
 		if (frm.doc.name) {
 			// Bouton pour créer une Location Courte Durée
@@ -137,12 +151,10 @@ frappe.ui.form.on('Location Bloc', {
 						});
 					}
 				});
-				dialog.show();
-			}, __('Créer'));
-		}
-
-		frm.trigger('update_dashboard');
-	},
+			dialog.show();
+		}, __('Créer'));
+	}
+},
 
 	update_dashboard: function(frm) {
 		if (!frm || !frm.doc || !frm.doc.name) return;
@@ -201,6 +213,12 @@ frappe.ui.form.on('Location Bloc', {
 		]).then(([paiements_response, calendar_response]) => {
 			const paiements_bloc = paiements_response.message || [];
 			const calendar_data = calendar_response.message || {};
+			
+			// Vérifier si l'API a retourné une erreur
+			if (calendar_data.error) {
+				console.log('Dashboard data not available:', calendar_data.error);
+				return; // Sortir silencieusement sans afficher d'erreur
+			}
 			
 			// Mettre à jour les valeurs du document avec les métriques calculées en temps réel
 			if (calendar_data.metriques) {

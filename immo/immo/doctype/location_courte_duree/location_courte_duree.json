@@ -55,7 +55,6 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "label": "S\u00e9rie de nommage",
    "options": "LCD-.YYYY.-",
    "reqd": 1
@@ -64,6 +63,7 @@
    "fieldname": "appartement_id",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Appartement",
    "options": "Appartement",
    "reqd": 1,
@@ -72,6 +72,7 @@
   {
    "fieldname": "location_bloc_id",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Location Bloc",
    "options": "Location Bloc",
    "read_only": 1
@@ -105,6 +106,7 @@
   {
    "fieldname": "date_fin",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Date de fin",
    "reqd": 1
   },
@@ -320,7 +322,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-20 14:46:57.332430",
+ "modified": "2025-08-23 14:10:27.195105",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Location Courte Duree",
