@@ -46,27 +46,22 @@ La fonctionnalité **Gestion de Caisse** permet de centraliser et tracer tous le
 #### 3. Apport Caisse
 - **Description**: Gestion des apports manuels en caisse
 - **Champs principaux**:
-  - `naming_series`: Série de nommage (APPORT-.YYYY.-.#####)
+  - `naming_series`: Série de nommage (APPORT-.YY.-.MM.-.#####)
+  - `date`: Date d'apport (Date)
+  - `status`: Statut (Select) - Nouveau, Confirmé, Annulé
   - `montant`: Montant (Currency)
-  - `date_apport`: Date d'apport (Date)
-  - `reference_apport`: Référence (Data)
   - `motif`: Motif de l'apport (Text)
-  - `status`: Statut (Select) - En attente, Confirmé, Annulé
   - `date_validation`: Date de validation (Datetime)
-  - `commentaires`: Commentaires (Text)
 
 #### 4. Retrait Caisse
 - **Description**: Gestion des retraits manuels de caisse
 - **Champs principaux**:
-  - `naming_series`: Série de nommage (RETRAIT-.YYYY.-.#####)
+  - `naming_series`: Série de nommage (RETRAIT-.YY.-.MM.-.#####)
+  - `date`: Date de retrait (Date)
+  - `status`: Statut (Select) - Nouveau, Confirmé, Annulé
   - `montant`: Montant (Currency)
-  - `date_retrait`: Date de retrait (Date)
-  - `reference_retrait`: Référence (Data)
   - `motif`: Motif du retrait (Text)
-  - `status`: Statut (Select) - En attente, Confirmé, Annulé
   - `date_validation`: Date de validation (Datetime)
-  - `validateur`: Validateur (Link → User)
-  - `commentaires`: Commentaires (Text)
 
 ### Modifications des DocTypes existants
 

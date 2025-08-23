@@ -9,16 +9,15 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "type_mouvement",
-  "type_transaction",
-  "montant",
   "date_mouvement",
+  "type_mouvement",
+  "montant",
+  "column_break_brlr",
   "section_break_1",
   "reference_doctype",
+  "column_break_pxmf",
   "reference_docname",
-  "reference_externe",
   "section_break_2",
-  "description",
   "notes",
   "section_break_3",
   "solde_avant",
@@ -28,9 +27,9 @@
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "S\u00e9rie de nommage",
-   "options": "MV-.YYYY.-.#####",
-   "reqd": 1
+   "options": "MV-.YY.-.MM.-.#####"
   },
   {
    "fieldname": "type_mouvement",
@@ -38,14 +37,6 @@
    "in_list_view": 1,
    "label": "Type Mouvement",
    "options": "Entr\u00e9e\nSortie",
-   "reqd": 1
-  },
-  {
-   "fieldname": "type_transaction",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Type Transaction",
-   "options": "Paiement locataire\nPaiement propri\u00e9taire\nCommission r\u00e9f\u00e9rent\nCharge\nPaiement bloc\nApport manuel\nRetrait manuel",
    "reqd": 1
   },
   {
@@ -70,9 +61,8 @@
   },
   {
    "fieldname": "reference_doctype",
-   "fieldtype": "Select",
-   "label": "Type Document Source",
-   "options": "Paiement Locataire\nPaiement Proprietaire\nCommission\nCharge\nPaiement Bloc\nApport Caisse\nRetrait Caisse"
+   "fieldtype": "Data",
+   "label": "Type Document Source"
   },
   {
    "fieldname": "reference_docname",
@@ -80,19 +70,10 @@
    "label": "Nom Document Source"
   },
   {
-   "fieldname": "reference_externe",
-   "fieldtype": "Data",
-   "label": "R\u00e9f\u00e9rence Externe"
-  },
-  {
+   "collapsible": 1,
    "fieldname": "section_break_2",
    "fieldtype": "Section Break",
    "label": "D\u00e9tails"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Text",
-   "label": "Description"
   },
   {
    "fieldname": "notes",
@@ -117,11 +98,19 @@
    "label": "Solde Apr\u00e8s",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_brlr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pxmf",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-21 12:40:13.626501",
+ "modified": "2025-08-23 19:22:07.460111",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Mouvement Caisse",

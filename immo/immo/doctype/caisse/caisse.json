@@ -14,8 +14,7 @@
    "fieldname": "solde_actuel",
    "fieldtype": "Currency",
    "label": "Solde Actuel",
-   "precision": "2",
-   "read_only": 1
+   "precision": "2"
   },
   {
    "fieldname": "date_derniere_maj",
@@ -27,7 +26,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-20 19:19:22.403633",
+ "modified": "2025-08-23 21:02:21.790494",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Caisse",
