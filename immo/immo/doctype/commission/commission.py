@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from frappe.utils import now
 
 
 class Commission(Document):
@@ -64,6 +65,24 @@ class Commission(Document):
 			self.montant_commission = location.marge_totale * (percentage / 100)
 			self.pourcentage_commission = percentage
 	
+	def on_submit(self):
+		"""Actions lors de la soumission"""
+		self.create_mouvement_caisse()
+
+	def create_mouvement_caisse(self):
+		"""Crée un mouvement de caisse pour la commission"""
+		from immo.immo.doctype.mouvement_caisse.mouvement_caisse import MouvementCaisse
+		
+		# Créer le mouvement de caisse (sortie pour paiement de commission)
+		mouvement = MouvementCaisse.create_mouvement(
+			type_mouvement="Sortie",
+			montant=self.montant_commission,
+			notes=f"Paiement commission - Référent: {self.referent_id} - Location: {self.location_courte_duree_id}",
+			reference_doctype="Commission",
+			reference_docname=self.name
+		)
+		mouvement.submit()
+
 	def on_update(self):
 		"""Actions après mise à jour"""
 		# Met à jour la commission dans la location courte durée
@@ -79,6 +98,18 @@ class Commission(Document):
 			location = frappe.get_doc("Location Courte Duree", self.location_courte_duree_id)
 			location.commission_referent = 0
 			location.save()
+		
+		# Annuler les mouvements de caisse associés
+		mouvements = frappe.get_all("Mouvement Caisse", 
+			filters={
+				"reference_doctype": "Commission",
+				"reference_docname": self.name,
+				"docstatus": 1
+			})
+		
+		for mouvement in mouvements:
+			mouvement_doc = frappe.get_doc("Mouvement Caisse", mouvement.name)
+			mouvement_doc.cancel()
 	
 	@frappe.whitelist()
 	def mark_as_paid(self, date_paiement, methode_paiement, reference_paiement=None):

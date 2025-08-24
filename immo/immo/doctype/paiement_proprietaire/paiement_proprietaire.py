@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from frappe.utils import now
 
 
 class PaiementProprietaire(Document):
@@ -105,6 +106,29 @@ class PaiementProprietaire(Document):
 		if self.mensualite_id and self.status == "Reçu":
 			self.update_mensualite_status()
 	
+	def on_submit(self):
+		"""Actions après soumission du document"""
+		# Créer un mouvement de caisse pour enregistrer la sortie
+		self.create_mouvement_caisse()
+	
+	def create_mouvement_caisse(self):
+		"""Crée un mouvement de caisse pour ce paiement propriétaire"""
+		from immo.immo.doctype.mouvement_caisse.mouvement_caisse import MouvementCaisse
+		
+		# Créer le mouvement de caisse
+		mouvement = MouvementCaisse.create_mouvement(
+			type_mouvement="Sortie",
+			montant=self.montant,
+			notes=f"Paiement propriétaire - {self.type_paiement or 'Paiement'}",
+			reference_doctype="Paiement Proprietaire",
+			reference_docname=self.name
+		)
+		
+		# Soumettre le mouvement
+		mouvement.submit()
+		
+		frappe.msgprint(f"Mouvement de caisse créé: {mouvement.name}")
+	
 	def update_mensualite_status(self):
 		"""Met à jour le statut de paiement de la mensualité (uniquement pour les locations longue durée)"""
 		# Ne met à jour la mensualité que si elle existe (locations longue durée)
@@ -127,6 +151,19 @@ class PaiementProprietaire(Document):
 				mensualite.methode_paiement_proprietaire = None
 				mensualite.reference_paiement_proprietaire = None
 				mensualite.save()
+		
+		# Annuler les mouvements de caisse associés
+		mouvements = frappe.get_all("Mouvement Caisse", 
+			filters={
+				"reference_doctype": "Paiement Proprietaire",
+				"reference_docname": self.name,
+				"docstatus": 1
+			})
+		
+		for mouvement in mouvements:
+			mouvement_doc = frappe.get_doc("Mouvement Caisse", mouvement.name)
+			mouvement_doc.cancel()
+			frappe.msgprint(f"Mouvement de caisse annulé: {mouvement_doc.name}")
 	
 	@frappe.whitelist()
 	def schedule_payment(self, scheduled_date=None):

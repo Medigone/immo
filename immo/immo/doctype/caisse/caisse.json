@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "solde_html",
   "solde_actuel",
   "date_derniere_maj"
  ],
@@ -13,20 +14,27 @@
   {
    "fieldname": "solde_actuel",
    "fieldtype": "Currency",
+   "hidden": 1,
    "label": "Solde Actuel",
    "precision": "2"
   },
   {
    "fieldname": "date_derniere_maj",
    "fieldtype": "Datetime",
+   "hidden": 1,
    "label": "Date Derni\u00e8re MAJ",
    "read_only": 1
+  },
+  {
+   "fieldname": "solde_html",
+   "fieldtype": "HTML"
   }
  ],
+ "hide_toolbar": 1,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-23 21:02:21.790494",
+ "modified": "2025-08-24 16:41:12.882663",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Caisse",
@@ -46,6 +54,5 @@
  "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+ "states": []
 }

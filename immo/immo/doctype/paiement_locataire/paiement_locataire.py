@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from frappe.utils import now
 
 
 class PaiementLocataire(Document):
@@ -83,6 +84,29 @@ class PaiementLocataire(Document):
 			mensualite.methode_paiement_locataire = self.methode_paiement
 			mensualite.reference_paiement_locataire = self.reference_paiement
 			mensualite.save()
+	
+	def on_submit(self):
+		"""Actions lors de la soumission du paiement"""
+		# Créer un mouvement de caisse pour enregistrer l'encaissement
+		self.create_mouvement_caisse()
+	
+	def create_mouvement_caisse(self):
+		"""Crée un mouvement de caisse pour ce paiement locataire"""
+		from immo.immo.doctype.mouvement_caisse.mouvement_caisse import MouvementCaisse
+		
+		# Créer le mouvement de caisse
+		mouvement = MouvementCaisse.create_mouvement(
+			type_mouvement="Entrée",
+			montant=self.montant,
+			notes=f"Paiement locataire - {self.type_paiement or 'Paiement'}",
+			reference_doctype="Paiement Locataire",
+			reference_docname=self.name
+		)
+		
+		# Soumettre le mouvement
+		mouvement.submit()
+		
+		frappe.msgprint(f"Mouvement de caisse créé: {mouvement.name}")
 	
 	def on_cancel(self):
 		"""Actions lors de l'annulation"""
