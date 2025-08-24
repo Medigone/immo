@@ -24,25 +24,7 @@ class ApportCaisse(Document):
 			self.create_mouvement_caisse()
 			self.date_validation = now()
 	
-	def on_cancel(self):
-		"""Actions après annulation du document."""
-		# Si l'apport était confirmé, créer un mouvement de caisse inverse
-		if self.status == "Confirmé":
-			from immo.immo.doctype.mouvement_caisse.mouvement_caisse import MouvementCaisse
-			
-			# Créer un mouvement de sortie pour compenser l'annulation de l'apport
-			mouvement = MouvementCaisse.create_mouvement(
-				type_mouvement="Sortie",
-				montant=self.montant,
-				notes=f"Annulation apport - {self.motif or 'Aucun motif spécifié'}",
-				reference_doctype="Apport Caisse",
-				reference_docname=f"{self.name}-ANNULE"
-			)
-			
-			# Sauvegarder le mouvement (pas de submit car non soumissible)
-			mouvement.save()
-		
-		self.status = "Annulé"
+
 	
 	def create_mouvement_caisse(self):
 		"""Crée un mouvement de caisse pour cet apport."""
@@ -52,13 +34,15 @@ class ApportCaisse(Document):
 		mouvement = MouvementCaisse.create_mouvement(
 			type_mouvement="Entrée",
 			montant=self.montant,
-			notes=f"Apport manuel - {self.motif or 'Aucun motif spécifié'}",
+			notes=f"Apport - {self.motif or 'Aucun motif spécifié'}",
 			reference_doctype="Apport Caisse",
 			reference_docname=self.name
 		)
 		
-		# Sauvegarder le mouvement (pas de submit car non soumissible)
-		mouvement.save()
+		# Soumettre le mouvement (maintenant submittable)
+		mouvement.submit()
+		
+		frappe.msgprint(f"Mouvement de caisse créé et soumis: {mouvement.name}")
 		
 		return mouvement
 	
@@ -70,10 +54,7 @@ class ApportCaisse(Document):
 		
 		self.status = "Confirmé"
 		self.date_validation = now()
-		self.save()
-		
-		# Créer le mouvement de caisse
-		self.create_mouvement_caisse()
+		self.submit()  # Ceci appelle on_submit() qui crée déjà le mouvement
 		
 		frappe.msgprint(f"Apport de {self.montant} confirmé avec succès")
 	

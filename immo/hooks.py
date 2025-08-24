@@ -191,6 +191,15 @@ doc_events = {
 		"on_update": "immo.hooks_handlers.paiement_bloc.on_update",
 		"on_trash": "immo.hooks_handlers.paiement_bloc.on_trash",
 		"validate": "immo.hooks_handlers.paiement_bloc.validate"
+	},
+	"Apport Caisse": {
+		"on_cancel": "immo.hooks_handlers.apport_caisse.on_cancel"
+	},
+	"Retrait Caisse": {
+		"on_cancel": "immo.hooks_handlers.retrait_caisse.on_cancel"
+	},
+	"Mouvement Caisse": {
+		"on_cancel": "immo.hooks_handlers.mouvement_caisse.on_cancel"
 	}
 }
 

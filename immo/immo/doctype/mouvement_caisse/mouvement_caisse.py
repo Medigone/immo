@@ -12,7 +12,7 @@ class MouvementCaisse(Document):
 	def validate(self):
 		"""Validation du document Mouvement Caisse."""
 		self.validate_montant()
-		self.set_soldes()
+		# Les soldes seront calculés dans after_insert() pour avoir le bon solde_avant
 	
 	def validate_montant(self):
 		"""Valide que le montant est positif."""
@@ -58,6 +58,10 @@ class MouvementCaisse(Document):
 	
 	def after_insert(self):
 		"""Actions après insertion du document."""
+		# Calculer les soldes avant et après AVANT de mettre à jour la caisse
+		self.set_soldes()
+		self.save()
+		# Maintenant mettre à jour le solde de la caisse
 		self.update_caisse_solde()
 	
 	@staticmethod

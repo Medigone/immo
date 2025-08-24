@@ -34,25 +34,7 @@ class RetraitCaisse(Document):
 			self.create_mouvement_caisse()
 			self.date_validation = now()
 	
-	def on_cancel(self):
-		"""Actions après annulation du document."""
-		# Si le retrait était confirmé, créer un mouvement de caisse inverse
-		if self.status == "Confirmé" or self.date_validation:
-			from immo.immo.doctype.mouvement_caisse.mouvement_caisse import MouvementCaisse
-			
-			# Créer un mouvement d'entrée pour compenser l'annulation du retrait
-			mouvement = MouvementCaisse.create_mouvement(
-				type_mouvement="Entrée",
-				montant=self.montant,
-				notes=f"Annulation retrait - {self.motif or 'Aucun motif spécifié'}",
-				reference_doctype="Retrait Caisse",
-				reference_docname=f"{self.name}-ANNULE"
-			)
-			
-			# Sauvegarder le mouvement (pas de submit car non soumissible)
-			mouvement.save()
-		
-		self.status = "Annulé"
+
 	
 	def create_mouvement_caisse(self):
 		"""Crée un mouvement de caisse pour ce retrait."""
@@ -62,13 +44,15 @@ class RetraitCaisse(Document):
 		mouvement = MouvementCaisse.create_mouvement(
 			type_mouvement="Sortie",
 			montant=self.montant,
-			notes=f"Retrait manuel - {self.motif or 'Aucun motif spécifié'}",
+			notes=f"Retrait - {self.motif or 'Aucun motif spécifié'}",
 			reference_doctype="Retrait Caisse",
 			reference_docname=self.name
 		)
 		
-		# Sauvegarder le mouvement (pas de submit car non soumissible)
-		mouvement.save()
+		# Soumettre le mouvement (maintenant submittable)
+		mouvement.submit()
+		
+		frappe.msgprint(f"Mouvement de caisse créé et soumis: {mouvement.name}")
 		
 		return mouvement
 	
@@ -78,15 +62,12 @@ class RetraitCaisse(Document):
 		if self.status != "Nouveau":
 			frappe.throw("Seuls les retraits avec le statut 'Nouveau' peuvent être confirmés")
 		
-		# Vérifier le solde avant confirmation
+		# Valider le solde suffisant
 		self.validate_solde_suffisant()
 		
 		self.status = "Confirmé"
 		self.date_validation = now()
-		self.save()
-		
-		# Créer le mouvement de caisse
-		self.create_mouvement_caisse()
+		self.submit()  # Ceci appelle on_submit() qui crée déjà le mouvement
 		
 		frappe.msgprint(f"Retrait de {self.montant} confirmé avec succès")
 	
