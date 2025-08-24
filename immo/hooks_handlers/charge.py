@@ -33,6 +33,13 @@ def on_update(doc, method):
 	notify_stakeholders(doc)
 
 
+def on_submit(doc, method):
+	"""Actions lors de la soumission"""
+	# Cette fonction est appelée automatiquement lors de la soumission
+	# La logique de création de mouvement de caisse est gérée dans charge.py
+	pass
+
+
 def on_cancel(doc, method):
 	"""Actions lors de l'annulation"""
 	# Remet à jour les marges des mensualités
@@ -43,19 +50,24 @@ def on_cancel(doc, method):
 
 
 def validate_amounts_and_distribution(doc):
-	"""Valide les montants et la répartition"""
+	"""Valide les montants et la répartition selon le responsable de paiement"""
 	if doc.montant and doc.montant <= 0:
 		frappe.throw("Le montant de la charge doit être positif")
 	
-	# Validation de la répartition
-	if doc.repartition_locataire < 0 or doc.repartition_locataire > 100:
-		frappe.throw("La répartition locataire doit être entre 0 et 100%")
+	# Définir le responsable par défaut si non spécifié
+	if not doc.responsable_paiement:
+		doc.responsable_paiement = "Agent immobilier"
 	
-	if doc.repartition_proprietaire < 0 or doc.repartition_proprietaire > 100:
-		frappe.throw("La répartition propriétaire doit être entre 0 et 100%")
-	
-	if (doc.repartition_locataire + doc.repartition_proprietaire) != 100:
-		frappe.throw("La somme des répartitions doit être égale à 100%")
+	# Validation de la répartition seulement pour les charges partagées
+	if doc.responsable_paiement == "Partagé":
+		if doc.repartition_locataire < 0 or doc.repartition_locataire > 100:
+			frappe.throw("La répartition locataire doit être entre 0 et 100%")
+		
+		if doc.repartition_proprietaire < 0 or doc.repartition_proprietaire > 100:
+			frappe.throw("La répartition propriétaire doit être entre 0 et 100%")
+		
+		if abs((doc.repartition_locataire + doc.repartition_proprietaire) - 100) > 0.01:
+			frappe.throw("La somme des répartitions doit être égale à 100%")
 	
 	# Validation des détails de paiement si nécessaire
 	if doc.status == "Payée":

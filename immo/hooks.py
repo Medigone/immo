@@ -157,6 +157,7 @@ doc_events = {
 	},
 	"Charge": {
 		"on_update": "immo.hooks_handlers.charge.on_update",
+		"on_submit": "immo.hooks_handlers.charge.on_submit",
 		"on_cancel": "immo.hooks_handlers.charge.on_cancel",
 		"validate": "immo.hooks_handlers.charge.validate"
 	},

@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe import _
+from frappe.utils import now
 
 
 class Charge(Document):
@@ -43,32 +44,48 @@ class Charge(Document):
 			frappe.throw(_("Le montant de la charge doit être positif"))
 	
 	def validate_repartition(self):
-		"""Valide la répartition des charges"""
-		if self.repartition_locataire is None:
+		"""Valide la répartition des charges selon le responsable de paiement"""
+		# Définir les valeurs par défaut si non spécifiées
+		if not self.responsable_paiement:
+			self.responsable_paiement = "Agent immobilier"
+		
+		# Ajuster automatiquement les répartitions selon le responsable
+		if self.responsable_paiement == "Agent immobilier":
 			self.repartition_locataire = 0
-		if self.repartition_proprietaire is None:
+			self.repartition_proprietaire = 0
+		elif self.responsable_paiement == "Locataire":
+			self.repartition_locataire = 100
+			self.repartition_proprietaire = 0
+		elif self.responsable_paiement == "Propriétaire":
+			self.repartition_locataire = 0
 			self.repartition_proprietaire = 100
-		
-		# Convert to float to handle string values from form
-		try:
-			repartition_locataire = float(self.repartition_locataire or 0)
-			repartition_proprietaire = float(self.repartition_proprietaire or 100)
-		except (ValueError, TypeError):
-			frappe.throw(_("Les valeurs de répartition doivent être numériques"))
-		
-		# Update the actual values
-		self.repartition_locataire = repartition_locataire
-		self.repartition_proprietaire = repartition_proprietaire
-		
-		if repartition_locataire < 0 or repartition_locataire > 100:
-			frappe.throw(_("La répartition locataire doit être entre 0 et 100%"))
-		
-		if repartition_proprietaire < 0 or repartition_proprietaire > 100:
-			frappe.throw(_("La répartition propriétaire doit être entre 0 et 100%"))
-		
-		total_repartition = repartition_locataire + repartition_proprietaire
-		if abs(total_repartition - 100) > 0.01:  # Tolérance pour les erreurs d'arrondi
-			frappe.throw(_("La somme des répartitions doit être égale à 100%"))
+		elif self.responsable_paiement == "Partagé":
+			# Pour les charges partagées, valider les répartitions manuelles
+			if self.repartition_locataire is None:
+				self.repartition_locataire = 0
+			if self.repartition_proprietaire is None:
+				self.repartition_proprietaire = 100
+			
+			# Convert to float to handle string values from form
+			try:
+				repartition_locataire = float(self.repartition_locataire or 0)
+				repartition_proprietaire = float(self.repartition_proprietaire or 100)
+			except (ValueError, TypeError):
+				frappe.throw(_("Les valeurs de répartition doivent être numériques"))
+			
+			# Update the actual values
+			self.repartition_locataire = repartition_locataire
+			self.repartition_proprietaire = repartition_proprietaire
+			
+			if repartition_locataire < 0 or repartition_locataire > 100:
+				frappe.throw(_("La répartition locataire doit être entre 0 et 100%"))
+			
+			if repartition_proprietaire < 0 or repartition_proprietaire > 100:
+				frappe.throw(_("La répartition propriétaire doit être entre 0 et 100%"))
+			
+			total_repartition = repartition_locataire + repartition_proprietaire
+			if abs(total_repartition - 100) > 0.01:  # Tolérance pour les erreurs d'arrondi
+				frappe.throw(_("La somme des répartitions doit être égale à 100%"))
 	
 	def validate_payment_details(self):
 		"""Valide les détails de paiement selon le statut"""
@@ -101,8 +118,28 @@ class Charge(Document):
 		"""Calcule les montants pour le locataire et le propriétaire"""
 		if self.montant is not None:
 			self.montant_locataire = self.montant * (self.repartition_locataire or 0) / 100
-			self.montant_proprietaire = self.montant * (self.repartition_proprietaire or 100) / 100
+			self.montant_proprietaire = self.montant * (self.repartition_proprietaire or 0) / 100
 	
+	def on_submit(self):
+		"""Actions lors de la soumission"""
+		self.create_mouvement_caisse()
+
+	def create_mouvement_caisse(self):
+		"""Crée un mouvement de caisse pour la charge seulement si l'agent immobilier est responsable"""
+		# Ne créer un mouvement de caisse que si l'agent immobilier est responsable du paiement
+		if self.responsable_paiement == "Agent immobilier":
+			from immo.immo.doctype.mouvement_caisse.mouvement_caisse import MouvementCaisse
+			
+			# Créer le mouvement de caisse (sortie pour paiement de charge)
+			mouvement = MouvementCaisse.create_mouvement(
+				type_mouvement="Sortie",
+				montant=self.montant,
+				notes=f"Paiement charge - Appartement: {self.appartement_id} - Type: {self.type_charge}",
+				reference_doctype="Charge",
+				reference_docname=self.name
+			)
+			mouvement.submit()
+
 	def on_update(self):
 		"""Actions après mise à jour"""
 		# Met à jour les marges des locations si nécessaire
@@ -129,6 +166,20 @@ class Charge(Document):
 				# Ajoute la charge aux charges locatives
 				mensualite.charges_locatives = (mensualite.charges_locatives or 0) + self.montant_locataire
 				mensualite.save()
+
+	def on_cancel(self):
+		"""Actions lors de l'annulation"""
+		# Annuler les mouvements de caisse associés
+		mouvements = frappe.get_all("Mouvement Caisse", 
+			filters={
+				"reference_doctype": "Charge",
+				"reference_docname": self.name,
+				"docstatus": 1
+			})
+		
+		for mouvement in mouvements:
+			mouvement_doc = frappe.get_doc("Mouvement Caisse", mouvement.name)
+			mouvement_doc.cancel()
 	
 	@frappe.whitelist()
 	def validate_charge(self):

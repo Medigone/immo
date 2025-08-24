@@ -10,15 +10,18 @@
  "field_order": [
   "naming_series",
   "status",
+  "section_break_zepk",
+  "type_charge",
+  "categorie",
+  "column_break_iwvh",
+  "responsable_paiement",
   "section_break_2",
   "appartement_id",
+  "description",
+  "column_break_6",
   "proprietaire_id",
   "location_longue_duree_id",
   "location_courte_duree_id",
-  "column_break_6",
-  "type_charge",
-  "categorie",
-  "description",
   "section_break_10",
   "montant",
   "date_charge",
@@ -100,6 +103,7 @@
    "reqd": 1
   },
   {
+   "default": "Ponctuelle",
    "fieldname": "categorie",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -111,6 +115,15 @@
    "fieldname": "description",
    "fieldtype": "Data",
    "label": "Description",
+   "reqd": 1
+  },
+  {
+   "default": "Agent immobilier",
+   "fieldname": "responsable_paiement",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Responsable du paiement",
+   "options": "Agent immobilier\nLocataire\nPropri\u00e9taire\nPartag\u00e9",
    "reqd": 1
   },
   {
@@ -260,13 +273,21 @@
    "fieldtype": "Select",
    "hidden": 1,
    "label": "Statut",
-   "options": "Nouveau\nValid\u00e9\nPay\u00e9\nRejet\u00e9\nAnnul\u00e9"
+   "options": "Nouveau\nValid\u00e9e\nPay\u00e9\nRejet\u00e9\nAnnul\u00e9"
+  },
+  {
+   "fieldname": "section_break_zepk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_iwvh",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-21 15:11:22.292100",
+ "modified": "2025-08-24 21:22:13.811378",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Charge",
