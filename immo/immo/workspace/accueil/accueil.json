@@ -1,11 +1,15 @@
 {
  "charts": [],
- "content": "[{\"id\":\"x1F5g1Ugzq\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Accueil\",\"col\":12}},{\"id\":\"T44BYbISF3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Actions Rapides\",\"col\":12}}]",
+ "content": "[{\"id\":\"x1F5g1Ugzq\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Accueil\",\"col\":12}},{\"id\":\"VDtNhKSqFD\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Caisse\",\"col\":12}},{\"id\":\"T44BYbISF3\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Actions Rapides\",\"col\":12}}]",
  "creation": "2025-08-19 15:33:14.920234",
  "custom_blocks": [
   {
    "custom_block_name": "Accueil",
    "label": "Accueil"
+  },
+  {
+   "custom_block_name": "Caisse",
+   "label": "Caisse"
   },
   {
    "custom_block_name": "Actions Rapides",
@@ -22,7 +26,7 @@
  "is_hidden": 0,
  "label": "Accueil",
  "links": [],
- "modified": "2025-08-19 15:53:10.177255",
+ "modified": "2025-08-24 19:31:16.069906",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Accueil",

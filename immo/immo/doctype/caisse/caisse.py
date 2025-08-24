@@ -6,6 +6,16 @@ from frappe.model.document import Document
 from frappe.utils import now
 
 
+@frappe.whitelist()
+def get_solde_avec_date():
+	"""Récupère le solde actuel et la date de dernière mise à jour."""
+	caisse = frappe.get_single("Caisse")
+	return {
+		"solde": caisse.solde_actuel or 0,
+		"date_derniere_maj": caisse.date_derniere_maj
+	}
+
+
 class Caisse(Document):
 	"""DocType singleton pour la gestion de la caisse principale."""
 	
@@ -26,6 +36,15 @@ class Caisse(Document):
 		"""Récupère le solde actuel de la caisse."""
 		caisse = frappe.get_single("Caisse")
 		return caisse.solde_actuel or 0
+	
+	@staticmethod
+	def get_solde_avec_date():
+		"""Récupère le solde actuel et la date de dernière mise à jour."""
+		caisse = frappe.get_single("Caisse")
+		return {
+			"solde": caisse.solde_actuel or 0,
+			"date_derniere_maj": caisse.date_derniere_maj
+		}
 	
 	@staticmethod
 	def update_solde(nouveau_solde):
