@@ -42,10 +42,10 @@ function createCaisseDashboard(doc) {
 			status_text = "Négatif";
 			status_color = "#fee2e2";
 		} else {
-			color_class = "#f59e0b";
-			icon = "fa fa-minus";
-			status_text = "Nul";
-			status_color = "#fef3c7";
+			color_class = "#6b7280";
+			icon = "fa fa-balance-scale";
+			status_text = "Équilibré";
+			status_color = "#f3f4f6";
 		}
 		
 		// Formater le montant
@@ -55,83 +55,83 @@ function createCaisseDashboard(doc) {
 		const html = `
 		<style>
 			.caisse-dashboard {
-				font-family: 'Inter', sans-serif;
-				padding: 16px;
-				max-width: 100%;
-			}
-			
-			.caisse-card {
-				background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-				border: 1px solid #ddd;
-				border-radius: 12px;
-				padding: 24px;
-				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-				position: relative;
-				overflow: hidden;
-			}
+			font-family: 'Inter', sans-serif;
+			padding: 8px;
+			max-width: 100%;
+		}
+		
+		.caisse-card {
+			background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+			border: 1px solid #ddd;
+			border-radius: 8px;
+			padding: 16px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+			position: relative;
+			overflow: hidden;
+		}
 			
 			.caisse-header {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				margin-bottom: 20px;
-			}
-			
-			.caisse-title {
-				display: flex;
-				align-items: center;
-				color: #495057;
-				font-size: 1.5rem;
-				font-weight: 600;
-				margin: 0;
-			}
-			
-			.caisse-icon {
-				margin-right: 12px;
-				color: #6c757d;
-				font-size: 1.8rem;
-			}
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 12px;
+		}
+		
+		.caisse-title {
+			display: flex;
+			align-items: center;
+			color: #495057;
+			font-size: 1.1rem;
+			font-weight: 600;
+			margin: 0;
+		}
+		
+		.caisse-icon {
+			margin-right: 8px;
+			color: #6c757d;
+			font-size: 1.2rem;
+		}
 			
 			.caisse-status {
-				background: ${status_color};
-				color: ${color_class};
-				padding: 8px 16px;
-				border-radius: 20px;
-				font-size: 0.9rem;
-				font-weight: 600;
-				border: 1px solid ${color_class};
-			}
+			background: ${status_color};
+			color: ${color_class};
+			padding: 4px 12px;
+			border-radius: 16px;
+			font-size: 0.8rem;
+			font-weight: 600;
+			border: 1px solid ${color_class};
+		}
 			
 			.caisse-amount-section {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				margin-bottom: 20px;
-			}
-			
-			.caisse-amount {
-				color: ${color_class};
-				font-size: 3rem;
-				font-weight: 700;
-				margin: 0;
-				line-height: 1;
-			}
-			
-			.caisse-trend-icon {
-				color: ${color_class};
-				font-size: 4rem;
-				opacity: 0.3;
-			}
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 12px;
+		}
+		
+		.caisse-amount {
+			color: ${color_class};
+			font-size: 1.8rem;
+			font-weight: 700;
+			margin: 0;
+			line-height: 1;
+		}
+		
+		.caisse-trend-icon {
+			color: ${color_class};
+			font-size: 2rem;
+			opacity: 0.3;
+		}
 			
 			.caisse-footer {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				padding-top: 16px;
-				border-top: 1px solid #dee2e6;
-				font-size: 0.85rem;
-				color: #6c757d;
-			}
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding-top: 8px;
+			border-top: 1px solid #dee2e6;
+			font-size: 0.75rem;
+			color: #6c757d;
+		}
 			
 			.caisse-info {
 				display: flex;
@@ -178,7 +178,7 @@ function createCaisseDashboard(doc) {
 			<div class="caisse-card">
 				<div class="caisse-header">
 					<h2 class="caisse-title">
-						<i class="fa fa-university caisse-icon"></i>
+					
 						Solde de la Caisse
 					</h2>
 					<span class="caisse-status">${status_text}</span>
