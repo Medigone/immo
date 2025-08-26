@@ -21,8 +21,9 @@
   "notes",
   "section_break_3",
   "solde_avant",
-  "solde_apres",
-  "amended_from"
+  "amended_from",
+  "column_break_rigs",
+  "solde_apres"
  ],
  "fields": [
   {
@@ -71,7 +72,6 @@
    "label": "Nom Document Source"
   },
   {
-   "collapsible": 1,
    "fieldname": "section_break_2",
    "fieldtype": "Section Break",
    "label": "D\u00e9tails"
@@ -117,12 +117,16 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "column_break_rigs",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-24 15:39:45.916582",
+ "modified": "2025-08-26 13:56:53.463710",
  "modified_by": "Administrator",
  "module": "Immo",
  "name": "Mouvement Caisse",
